@@ -1,0 +1,51 @@
+#!/bin/bash
+# PharmTeX Linux bash script, part of the PharmTeX platform
+# Created by Christian Hove Rasmussen (hove99@gmail.com)
+# Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
+
+# Set main path for PharmTeX
+LDIR=$HOME/pharmtex; export LDIR
+
+# Get job name and mode
+NAME=$(basename "$1")
+EXT="${NAME##*.}"
+NAME="${NAME%.*}"
+MODE="$2"
+
+# If no options set, prompt user
+if [ -z "$NAME" ] && [ -z "$MODE" ]; then
+	read -p 'File to edit = ' NAME
+	MODE=gui
+fi
+
+# Choose batch mode if no mode set
+if [ -z "$MODE" ]; then
+	MODE=batch
+fi
+
+# Temporarily change paths
+OLDPATH="$PATH"
+PATH="$LDIR/bin:$LDIR/perl/bin:$LDIR/texlive/bin/x86_64-linux:$LDIR/texmaker:$PATH"; export PATH
+MANPATH="$LDIR/texlive/texmf-dist/doc/man:$MANPATH"; export MANPATH
+INFOPATH="$LDIR/texlive/texmf-dist/doc/info:$INFOPATH"; export INFOPATH
+
+# Exit if script is run to set path only
+if [ "$MODE" == "path" ]; then 
+	exit;
+fi
+
+# Load MiKTeX Tool if gui mode
+if [ "$MODE" == "gui" ]; then
+	texmaker "$NAME.tex"
+else
+	perl runlatex.pl "$NAME" "$MODE"
+fi
+
+# Clean up
+if [ -e jabref.xml ]; then
+	mv jabref.xml $LDIR/jabref/jabref.xml
+fi
+if [ -e dodel.txt ]; then
+	rm $NAME.pdf dodel.txt
+fi
+PATH="$OLDPATH"; export PATH
