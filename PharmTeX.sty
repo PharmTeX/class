@@ -1,0 +1,934 @@
+%%% PharmTeX Package, part of the PharmTeX platform
+%%% Created by Christian Hove Rasmussen (contact@pharmtex.org)
+%%% Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
+
+%%% Define PharmTeX Package for LaTeX
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{PharmTeX}[\pharmtexdate\space v\pharmtexversion\space PharmTeX Package]
+
+%%% Settings for the glossary
+\RequirePackage[toc,translate=babel,hyperfirst=false]{glossaries}
+\newcounter{mycnt}
+\makeglossaries
+\renewcommand{\entryname}{Abbreviation}
+\renewcommand{\descriptionname}{Definition}
+\newlength\maxlength
+\newlength\thislength
+\newglossarystyle{mystyle}{%
+  \renewenvironment{theglossary}%
+     {
+    \setlength{\maxlength}{0pt}%
+    \forglsentries[\currentglossary]{\thislabel}%
+    {%
+       \settowidth{\thislength}{\glsentryshort{\thislabel}}%
+       \ifdim\thislength>\maxlength
+         \setlength{\maxlength}{\thislength}%
+       \fi%  \@starttoc{lof}%
+%}
+    }%
+    \settowidth{\thislength}{\hspace{1.5em} \hspace{1em}}%
+    \begin{longtable*}{p{\maxlength+0.1\maxwidth}p{\maxwidth-\maxlength-4\tabcolsep-0.1\maxwidth}}}%
+     {\end{longtable*}}%
+  \renewcommand*{\glossaryheader}{}%
+  \renewcommand*{\glsgroupheading}[1]{}%
+  \renewcommand{\glossentry}[2]{%
+    \glsentryitem{##1}\glstarget{##1}{\glossentryname{##1}} &
+    \Glossentrydesc{##1}\glspostdescription\space ##2%
+    \addtocounter{mycnt}{1}
+    \tabularnewline
+  }%
+  \renewcommand{\subglossentry}[3]{%
+     &
+     \glssubentryitem{##2}%
+     \glstarget{##2}{\strut}\glossentrydesc{##2}%
+     \glspostdescription\space ##3%
+     \tabularnewline
+  }%
+  \renewcommand*{\glsgroupskip}{\ifglsnogroupskip\else & \tabularnewline\fi}%
+  \renewcommand*{\glossaryheader}{%
+  \bfseries \entryname & \bfseries \descriptionname
+    \tabularnewline
+    \endhead
+    \endfoot}%
+}
+\newcommand{\glsfile}[1]{\checkfile{#1}{GlsFile}\IfFileExists{\GlsFile.tex}{\fixgls{\GlsFile}}{}}
+\ifglosshyper
+\else
+\glsdisablehyper
+\fi
+
+%%% Perl custom commands
+
+\IfFileExists{noperl.txt}{\newcommand{\dopharmtexperl}{0}}{\newcommand{\dopharmtexperl}{1}}
+
+\ifnum\dopharmtexperl=1
+
+\RequirePackage{perltex}
+\perlnewcommand{\findartifact}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use PDF::API2;
+my $artid = $_[0];
+if ($artid =~ /RA[0-9]+/) {
+	opendir D, '.';
+	my @filelist = grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D)));
+	closedir D;
+	my $nl = scalar @filelist;
+	if ($nl > 0) {return "\\renewcommand{\\ioutput}{0}\\renewcommand{\\fname}{$filelist[0]}\\addtocounter{itemnumber}{1}";}
+	else {return "\\renewcommand{\\ioutput}{0}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";}
+}
+else {
+	if (-f $artid) {
+		my ($ext) = $artid =~ /\.([^.]+)$/; my $pages;
+		if ($ext eq 'pdf') {
+			my $pdf = PDF::API2->open($artid);
+			$pages = $pdf->pages;
+		}
+		else {
+			$pages = 1;
+		}
+		if ($pages > 0) {
+			return "\\renewcommand{\\ioutput}{1}\\renewcommand{\\fname}{$artid}\\addtocounter{itemnumber}{1}";
+		}
+		else {
+			return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";
+		}
+	}
+	else {
+		return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";
+	}
+}}
+\perlnewcommand{\dotwice}{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+open(my $file, '>:utf8', 'dotwice');
+close $file;
+return
+}
+\perlnewcommand{\includetex}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+my $mkfile = 0;
+open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $lines;
+
+$str =~ s/^.*\\begin\{document\}\n*//s;
+$str =~ s/\n*\\references.*//s;
+$str =~ s/\n*\\appendix.*//s;
+$str =~ s/\n*\\itemlist.*//s;
+$str =~ s/\n*\\end\{document\}.*//s;
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file.tmp.txt");
+	print FILE "\n$str\n";
+	close(FILE);
+	return "\\renewcommand{\\includetexdoc}{\\input{$file.tmp.txt}}";
+} else {
+	return "\\renewcommand{\\includetexdoc}{\n$str\n}";
+}}
+\perlnewcommand{\inputtext}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+my $mkfile = 0;
+open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $lines;
+
+$str =~ s/\n$//s;
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file.tmp.txt");
+	print FILE "$str\\footnote{\\itemid{#1}}\\ignorespaces";
+	close(FILE);
+	return "\\input{$file.tmp.txt}";
+} else {
+	return "$str\\footnote{\\itemid{#1}}\\ignorespaces";
+}}
+\perlnewcommand{\fixbib}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+
+if ( -e 'fixfiles' ) {
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+my $mkfile = 0;
+open my $lines, '<:raw', "$file.bib"; my $str = do { local $/; <$lines> }; close $lines;
+$str =~ s/abstract *=[^\n]+\n\t* *//g;
+$str =~ s/akeywords *=[^\n]+\n\t* *//g;
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file.bib. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file-tmpfixfile.bib");
+	print FILE "$str";
+	close(FILE);
+	return "\\edef\\RefFile{$file-tmpfixfile}";
+} else {
+	return "\\edef\\RefFile{$file}";
+}
+
+} else {
+
+if ( -e "$file-tmpfixfile.bib" ) {
+	return "\\edef\\RefFile{$file-tmpfixfile}";
+} else {
+	return "\\edef\\RefFile{$file}";
+}
+
+}}
+\perlnewcommand{\fixgls}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+
+if ( -e 'fixfiles' ) {
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+my $mkfile = 0;
+open my $lines, '<:raw', "$file.tex"; my $str = do { local $/; <$lines> }; close $lines;
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file.tex. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file-tmpfixfile.tex");
+	print FILE "$str";
+	close(FILE);
+	return "\\loadglsentries{$file-tmpfixfile}";
+} else {
+	return "\\loadglsentries{$file}";
+}
+
+} else {
+
+if ( -e "$file-tmpfixfile.tex" ) {
+	return "\\loadglsentries{$file-tmpfixfile}";
+} else {
+	return "\\loadglsentries{$file}";
+}
+
+}}
+\perlnewcommand{\checkfile}[2]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $str = $_[0];
+my $name = $_[1];
+$str =~ s/\.[^\.]+$//g;
+return "\\edef\\$name\{$str\}";
+}
+\perlnewcommand{\includecsv}[9]{
+use 5.010;
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use List::Util qw(sum min max);
+use Encoding::FixLatin qw(fix_latin);
+
+my $nhead = $_[0];
+my $file = $_[1];
+my $sepstr = $_[2];
+my $colspec = $_[3];
+my $key = $_[4];
+my $label = $_[5];
+my $newhead = $_[6];
+my $dotight = $_[7];
+my $domake = $_[8];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+# Apply filter for streamlining text encoding in file
+my $str; my $fh;
+if ($file ne '') {
+	open $fh, '<:raw', $file; $str = do { local $/; <$fh> }; close $fh;
+	$str=~ s/(\n|^)\%.*//g; # remove commented lines
+	$str =~ s/(\n|^)(\n)/$1/g; # remove empty lines
+	$str =~ s/(^|.+)([^\\]\%.*)/$1/g; # remove end of line comments
+	$str =~ s/\n?\z/\n/; # make sure that the last line break is there
+} else {
+	$str = $newhead; $newhead = '';
+}
+if ( $domake == 1 ) { $str =~ s/\\\\/\\\\\n/g; }
+
+$str =~ s/ *\\begin *\{table\}\[[a-zA-Z]+\]//g;
+$str =~ s/ *\\centering//g;
+$str =~ s/ *\\caption *\{[a-zA-Z ]+\}//g;
+$str =~ s/ *\\begin *\{tabular\}[^ ]+//g;
+$str =~ s/\\end *\{tabular\}//g;
+$str =~ s/\\label *\{[a-z\:]+\}//g;
+$str =~ s/\\end *\{table\}\%*//g;
+$str =~ s/\\bigstrut *(\[[a-z]\])*//g;
+
+$str =~ s/\\textbackslash *\{\}/myunback/g;
+$str =~ s/\\\#/myunhash/g;
+$str =~ s/\\\%/myunperc/g;
+$str =~ s/\\\_/myununder/g;
+$str =~ s/\\\^ *(\{\})*/myunhat/g;
+$str =~ s/\\&/myunand/g;
+$str =~ s/\\\{/myunleft/g;
+$str =~ s/\\\}/myunright/g;
+$str =~ s/\\\$/myundollar/g;
+$str =~ s/\~/myuntilde/g;
+
+$str =~ s/\\multicolumn *\{1\}\{[\|]*[a-z]\{[0-9a-z\.]+\}[\|]*\}\{([^\&\\\\]+)\}/$1/g;
+$str =~ s/\\multicolumn *\{1\}\{[\|]*[a-z][\|]*\}\{([^\&\\\\]*)\}/$1/g;
+# $str =~ s/(\\multirow *\{[0-9]+\})(\[[0-9]+\])/$1/g;
+
+$str =~ s/myunback/\\textbackslash \{\}/g;
+$str =~ s/myunhash/\\\#/g;
+$str =~ s/myunperc/\\\%/g;
+$str =~ s/myununder/\\\_/g;
+$str =~ s/myunhat/\\\^{}/g;
+$str =~ s/myunand/\\&/g;
+$str =~ s/myunleft/\\\{/g;
+$str =~ s/myunright/\\\}/g;
+$str =~ s/myundollar/\\\$/g;
+$str =~ s/myuntilde/\\string\~/g;
+
+$str =~ s/\\textbackslash *\{\}newline\{\}/\\newline\{\}/g;
+
+if ( $domake == 1 ) { 
+	$str=~ s/\r\n?/\n/g;
+	$str=~ s/ *\n/\n/g;
+
+	$str=~ s/(\n|^)\%.*//g; # remove commented lines
+	$str =~ s/(\n|^)(\n)/$1/g; # remove empty lines
+	$str =~ s/(^|.+)([^\\]\%.*)/$1/g; # remove end of line comments
+	$str =~ s/\n?\z/\n/; # make sure that the last line break is there
+}
+
+my $x; my $i; my $modcolspec;
+my $sep = $sepstr; my $sepp; $i=0; my $j=0;
+if ($sepstr eq 'comma') {$sep = ','; $sepp = ",";}
+elsif ($sepstr eq 'semicolon') {$sep = ';'; $sepp = ";";}
+elsif ($sepstr eq 'pipe') {$sep = '\|'; $sepp = "\|";}
+elsif ($sepstr eq 'tab') {$sep = '\t'; $sepp = "\t";}
+elsif ($sepstr eq 'texcomma') {$sep = ','; $sepp = ",";}
+elsif ($sepstr eq 'texsemicolon') {$sep = ';'; $sepp = ";";}
+elsif ($sepstr eq 'texpipe') {$sep = '\|'; $sepp = "\|";}
+elsif ($sepstr eq 'textab') {$sep = '\t'; $sepp = "\t";}
+elsif ($sepstr eq 'tex') {$sep = 'myveryuniquetexseparator'; $sepp = "myveryuniquetexseparator";}
+else {die "Undefined table separator! Use only (tex)comma, (tex)semicolon, (tex)pipe), (tex)tab, and tex!";}
+
+# Further process file lines
+if ($sepstr eq 'tex') {
+	$str =~ s/\n/ /g;
+	$str =~ s/\\\\\*(( *\\hline|\\midrule|\\toprule|\\bottomrule *)*)/$1\n/g;
+	$str =~ s/\\\\(( *\\hline|\\midrule|\\toprule|\\bottomrule *)*)/$1\n/g;
+	$str =~ s/( *\n *)+/\n/g;
+	$str =~ s/^ +//g;
+	$str =~ s/\n +/\n/g;
+	$str =~ s/ +\n/\n/g;
+	$str =~ s/ +$//g;
+	$str =~ s/\n+/\n/g;
+	$str =~ s/\n *\\newline *{}/\n/g;
+	$str =~ s/\& *\\newline *{}/\&/g;
+	$str =~ s/\\newline *{} *\&/\&/g;
+	$str =~ s/([^\\])\&/$1 myveryuniquetexseparator/g;
+}
+$str =~ s/\n?\z//;
+my @lines = split "\n", $str; my $nline = scalar @lines - 1;
+
+my @ishline; my $tmpstr;
+for ($i=0; $i <= $nline; $i++) {
+	$lines[$i] =~ s/\n//g;
+	($ishline[$i]) = $lines[$i] =~ m/(( *\\hline|\\midrule|\\toprule|\\bottomrule *)+)/;
+	$lines[$i] =~ s/\\hline|\\midrule|\\toprule|\\bottomrule//g;
+}
+
+# Check for multicolumn and column swapping
+if ((index($str, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
+
+# Get rid of spaces in $colspec
+$colspec =~ s/ //g;
+
+# Assume column number = position in input string, if no [column] is present
+$modcolspec = $colspec;
+$modcolspec =~ s/([\d\.]+)(pt)/$1uu1/g;
+$modcolspec =~ s/([\d\.]+)(pc)/$1uu2/g;
+$modcolspec =~ s/([\d\.]+)(in)/$1uu3/g;
+$modcolspec =~ s/([\d\.]+)(bp)/$1uu4/g;
+$modcolspec =~ s/([\d\.]+)(cm)/$1uu5/g;
+$modcolspec =~ s/([\d\.]+)(mm)/$1uu6/g;
+$modcolspec =~ s/([\d\.]+)(dd)/$1uu7/g;
+$modcolspec =~ s/([\d\.]+)(cc)/$1uu8/g;
+$modcolspec =~ s/([\d\.]+)(sp)/$1uu9/g;
+$modcolspec =~ s/([\d\.]+)(ex)/$1uu10/g;
+$modcolspec =~ s/([\d\.]+)(em)/$1uu11/g;
+my @modcols = $modcolspec =~ /\|?[A-Za-z][u\{\}\[\]\d\.]*\|?/xg;
+$i = 1;
+foreach $x (@modcols) {
+	$x =~ s/(\|?[A-Za-z])(\{[\d\.]+uu[0-9]+\}\|?)$/$1\[$i\]$2/g;
+	$x =~ s/(\|?[A-Za-z])(\{[\d\.]+\}\|?)$/$1\[$i\]$2/g;
+	$x =~ s/(\|?[A-Za-z]\|?)$/$1\[$i\]/g;
+	$i = $i + 1;
+}
+$modcolspec = "@modcols"; $modcolspec =~ s/ //g;
+$modcolspec =~ s/uu1/pt/g;
+$modcolspec =~ s/uu2/pc/g;
+$modcolspec =~ s/uu3/in/g;
+$modcolspec =~ s/uu4/bp/g;
+$modcolspec =~ s/uu5/cm/g;
+$modcolspec =~ s/uu6/mm/g;
+$modcolspec =~ s/uu7/dd/g;
+$modcolspec =~ s/uu8/cc/g;
+$modcolspec =~ s/uu9/sp/g;
+$modcolspec =~ s/uu10/ex/g;
+$modcolspec =~ s/uu11/em/g;
+$colspec = $modcolspec;
+
+my $ncolinp = scalar @modcols; my @ncoltots = 0; my $ncoltot;
+for ($i=0; $i <= $nline; $i++) {
+	$ncoltots[$i] = () = $lines[$i] =~ /$sep/gi;
+	$ncoltots[$i] = $ncoltots[$i] + 1;
+}
+$ncoltot = max(@ncoltots);
+
+my $nsep = length($sepp); my $colorder = '';
+if ($nhead < 1) { $nhead = 1; }
+if (($sepstr eq 'comma') || ($sepstr eq 'semicolon') || ($sepstr eq 'pipe') || ($sepstr eq 'tab')) {
+	for ($i=0; $i <= $nline; $i++) { $lines[$i] =~ s/([^$sep\n]{1,})/\\detokenize{$1}/g;}
+}
+if (($sepstr ne 'comma') && ($sepstr ne 'texcomma')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/,/myveryuniquecomma/g;}}
+if (($sepstr ne 'tab') && ($sepstr ne 'textab')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/\t/myveryuniquetab/g;}}
+
+my @cols = $colspec =~ /\[(.*?)\]/xg; my $ncol = scalar @cols - 1; my $maxcol = max(@cols);
+my @fields; my @newline; $str; my @colseq = (1..$ncoltot); my $docol;
+
+if (@cols ~~ @colseq) {$docol = 0;} else {
+	$docol = 1;
+	if ($maxcol <= $ncoltot) {
+		for ($i=0; $i <= $nline; $i++) {
+			@fields = split("$sep", $lines[$i]);
+			for ($j=0; $j <= $ncol; $j++) {
+				$newline[$j] = $fields[$cols[$j]-1];
+			}
+			$lines[$i] = join("$sepp", @newline);;
+		}
+		$colorder = "@cols "; $colorder = substr($colorder, 0, -1); $colorder = "Columns [$colorder] out of $ncoltot";
+	}
+	else {die "Too many input columns specified in \\pmxtable compared to contents of CSV file!";}
+}
+$colspec =~ s/\[(.*?)\]//g;
+
+$lines[0] = "$lines[0] myveryuniquenewline\n";
+for ($i=1; $i <= $nline; $i++) {
+	$lines[$i] = "$ishline[$i-1] $lines[$i] myveryuniquenewline\n";
+	$lines[$i] =~ s/ +/ /g;
+	$lines[$i] =~ s/\\(hline|midrule|toprule|bottomrule)/\\midrule/g;
+}
+$lines[-1] = "$lines[-1] $ishline[-1]\n";
+
+my @header = @lines[0..$nhead-1];
+my @body = @lines[$nhead..$nline];
+
+$header[0] =~ s/^ *\\(hline|midrule|toprule|bottomrule)//g;
+$body[0] =~ s/^ *\\(hline|midrule|toprule|bottomrule)//g;
+$body[-1] =~ s/ *\\(hline|midrule|toprule|bottomrule) *$//g;
+
+if ($nhead < 1) { $nhead = 1; }
+for ($i=0; $i <= $nhead-1; $i++) {
+	$header[$i] =~ s/$sep/ \& /g;
+}
+for ($i=0; $i <= $nhead-2; $i++) {
+	$header[$i] =~ s/myveryuniquenewline/ \\\\/g; # \\* keeps table "more together" with less splitting over pages as opposed to \\
+}
+for ($i=0; $i <= $nline-$nhead; $i++) {
+	$body[$i] =~ s/$sep/ \& /g;
+}
+for ($i=0; $i <= $nline-$nhead; $i++) {
+	$body[$i] =~ s/myveryuniquenewline/ \\\\/g;
+}
+for ($i=0; $i <= $nhead-1; $i++) { $header[$i] =~ s/myveryuniquenewline//g; }
+for ($i=0; $i <= $nline-$nhead; $i++) { $body[$i] =~ s/myveryuniquenewline//g; }
+
+my $substnote = '.'; my $headnote; my $colnote;
+if ($nhead == 1) {$headnote = "Line 1 substituted";};
+if ($nhead > 1) {$headnote = "Lines 1--$nhead substituted";}
+if ($newhead ne '') {@header = $newhead; $substnote = "$substnote $headnote.";}
+if (($ncolinp < $ncoltot) || ($docol == 1)) {$substnote = "$substnote $colorder.";}
+
+# Assume scale = 1 for unscaled columns (without {#})
+my $newcolspec = $colspec;
+my @newcols = $newcolspec =~ /\|?[A-Za-z][\{\}\[\]\d\.]*\|?/xg;
+foreach $x (@newcols) {$x =~ s/([A-Z])(\|?)$/$1\{1\}$2/g;}
+$newcolspec = "@newcols"; $newcolspec =~ s/ //g;
+
+# Rescale column scalers
+@newcols = $newcolspec =~ /\{([0-9\.]*?)\}/xg;
+my $sum = sum(@newcols);
+my $newncol = scalar @newcols;
+my $y; $i = 1; foreach my $x (@newcols) {$y = $x/$sum*$newncol; $y = sprintf('%.3f', $y); $newcolspec =~ s/\{$x\}/\{$y\_number\}/; $i = $i + 1;}
+$newcolspec =~ s/\_number//g;
+$newcolspec =~ s/L\{([0-9\.]*?[a-zA-Z]+)\}/O\{$1\}/g;
+$newcolspec =~ s/R\{([0-9\.]*?[a-zA-Z]+)\}/P\{$1\}/g;
+$newcolspec =~ s/C\{([0-9\.]*?[a-zA-Z]+)\}/Q\{$1\}/g;
+$colspec = $newcolspec;
+
+# Check for vertical lines
+my $dovert;
+if (index($colspec, '|') != -1) { $dovert = 1 } else { $dovert = 0; }
+
+# Space between columns - here measured in a number of phantom dots
+if ($dotight == 1) {
+	my $sepspace = '||';
+	@cols = $colspec =~ /\|?[A-Za-z][u\{\}\d\.]*\|?/xg;
+	$ncol = scalar @cols - 1;
+	for ($i=0; $i <= $ncol; $i++) {
+		$cols[$i] =~ s/(\|)?([A-Za-z][u\{\}\d\.]*)(\|)?/$1\@{\\phantom{$sepspace}}$2\@{\\phantom{$sepspace}}$3/g;
+	}
+	$colspec = "@cols"; $colspec =~ s/ //g;
+}
+
+my $retstr = "
+\\renewcommand{\\tmpsubstnote}{$substnote}
+\\renewcommand{\\csvtable}{
+\\begin{tabularx}{\\maxwidth}{$colspec} \\tablabel{$label}{$key}
+	\\\\\\pmxtoprule
+	 @header \\\\\\pmxmidrule\\endfirsthead\\caption[]{$label}\\\\\\pmxtoprule
+	 @header \\\\\\pmxmidrule\\endhead
+	\\endfoot\\pmxbottomrule\\endlastfoot
+	 @body 
+\\end{tabularx}
+}";
+$retstr =~ s/ +/ /g;
+
+if ($dovert == 1) {
+	$retstr = "$retstr \\renewcommand{\\pmxtoprule}{\\hlinewd{1pt}}\\renewcommand{\\pmxmidrule}{\\hlinewd{1pt}}\\renewcommand{\\pmxbottomrule}{\\hlinewd{1pt}}";
+	$retstr =~ s/\\midrule/\\hline/g;
+	$retstr =~ s/\\toprule/\\hline/g;
+	$retstr =~ s/\\bottomrule/\\hline/g;
+}
+
+$retstr =~ s/[\t,\n]//g;
+$retstr =~ s/myveryuniquecomma/,/g;
+$retstr =~ s/myveryuniquetab/\t/g;
+
+## Debugging the final table if needed, look for debug.txt after running. Remember to comment this out again using # when finished.
+#$retstr =~ s/\\\\/\\\\\n/g; # add newlines for easy viewing
+#open(FILE, '>:utf8', 'test.txt');
+#print FILE "$retstr";
+#close(FILE);
+
+my $mkfile = 0; $str = $retstr;
+$str = "\\catcode`\\%=12 \\catcode`\\#=12 $str \\catcode`\\%=14 \\catcode`\\#=6";
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file.tmp.txt");
+	print FILE "$str";
+	close(FILE);
+	return "\\input{$file.tmp.txt}";
+} else {
+	return "$str";
+}}
+\perlnewcommand{\includemetacsv}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use File::stat;
+use POSIX qw(strftime);
+
+my $afiles = $_[0];
+my $rfiles = $_[1];
+my $nitems = $_[2];
+my $nhead = 1;
+my $header = "ITEM & PATH & UPDATE (GMT)";
+my $ncoltot = 2;
+my $i;
+sub uniq { my %seen; grep !$seen{$_}++, @_; }
+
+# Artifacts
+my @af = split ",", $afiles; my $na = scalar @af;
+my $nl; my @aff; my @tmpfile; 
+for ($i=0; $i <= $na-1; $i++) { @tmpfile = glob $af[$i] . "_*"; $aff[$i] = @tmpfile[0]; }
+for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID $af[$i]"; }
+#{ $af[$i] = "Artifact ID \\artiref\{$af[$i]\}"; }
+
+# Inline/R files
+my @rf = split "myveryuniqueseparator", $rfiles; @rf = @rf[1..$#rf]; my @rff;
+@rff = (@aff, @rf); @rf = (@af, @rf);
+#@rff = uniq(@rff); @rf = uniq(@rf);
+my @items = (1..$nitems);
+my $nr = scalar @rf; my $newlines = '';
+
+my @delfiles; my $ext; my $name;
+open(FILE, '>:utf8', 'delauxitems.pl');
+for ($i=0; $i <= $nr-1; $i++) {
+	($ext) = $rff[$i] =~ /^.+\.([^.]+)$/;
+	($name) = $rff[$i] =~ /(^.+)\.[^.]+$/;
+	if ($ext eq "pdf") {
+		$delfiles[$i] = "\"$name.pax\", \"$name.pay\"";
+	} elsif ($ext eq "bib") {
+		$delfiles[$i] = "\"$name-tmpfixfile.$ext\"";
+	} else {
+		$delfiles[$i] = "\"$name.$ext.tmp.txt\"";
+	}
+}
+my $allfile = join( ', ', @delfiles );
+print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");\nunlink ($allfile);";
+close(FILE);
+# print FILE "if (\! -e \"$docname.pdf\") \{copy \"$name.pdf\", \"$docname.pdf\";\}";
+
+my $timestamp; my $epoch;
+my $sec; my $min; my $hour; my $mday; my $mon; my $year; my $wday; my $yday; my $isdst; my $tmpstr;
+if ($nr > 0) {
+	for ($i=0; $i <= $nr-1; $i++) {
+		if (-e $rff[$i]) {
+			$epoch = stat($rff[$i])->mtime; $timestamp = strftime('%Y-%m-%d %H:%M', gmtime( $epoch ) );
+		} else {
+			$timestamp = "MISSING FILE";
+		}
+		
+		if ($i==0) {
+			$newlines = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\hyperlink{itemnumber$items[$i]}{Item $items[$i]} & \\detokenize{$rf[$i]} & $timestamp";
+		} else {
+			$newlines = "$newlines \\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\hyperlink{itemnumber$items[$i]}{Item $items[$i]} & \\detokenize{$rf[$i]} & $timestamp";
+		}
+	}
+}
+
+# Use the lines below to have LIST OF ITEMS on the first page ONLY of the itemlist table
+# Use \@{} on left/right side of table specification to remove whitespace around table
+my $retstr = "
+\\renewcommand{\\csvtable}{
+\\catcode`\\%=12 \\catcode`\\#=12
+\\begin{longtable*}{\@{}l\@{\\mysp}l\@{\\extracolsep{\\fill}}*{1}{l}\@{}}
+	\\toprule $header \\\\\\toprule\\endfirsthead
+	\\toprule $header \\\\\\toprule\\endhead
+	\\endfoot\\bottomrule\\endlastfoot
+	 $newlines
+\\end{longtable*}
+\\catcode`\\%=14 \\catcode`\\#=6
+}";
+$retstr =~ s/[\t,\n]//g;
+
+#my $tmpstr = $retstr;
+#$tmpstr =~ s/\\\\/\\\\\n/g;
+#open(FILE, '>:utf8', 'test.txt');
+#print FILE "$tmpstr";
+#close(FILE);
+
+# Return table command
+return $retstr;
+}
+\perlnewcommand{\makesubfigopt}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >;
+my $str = $_[0]; my $i = 0;
+$str =~ s/\|/ /g;
+$str =~ s/(\s{0,}&\s{0,})/ /g;
+$str =~ s/\[/$i++ >= 28 ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
+$str =~ s/]/}/g;
+return "$str";
+}
+\perlnewcommand{\makesubfig}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $str = $_[0];
+my $lbl = $_[1];
+my $cap = $_[2];
+
+$str =~ s/\.\./myveryuniquedoubledot/g;
+$str =~ s/[ \n]//g; $lbl =~ s/[ \n]//g;
+my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; my @lbllst; 
+if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
+	$lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
+	@lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\itemid{$1$2} \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
+	$str =~ s/&/\\hspace{0cm}/g;
+	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
+	$str = "\\figlabelpl{$cap}{$lblmain} $str";
+}
+else {
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\artifacid{$1$2} \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
+	$str =~ s/&/\\hspace{-1cm}/g;
+	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
+	$str = "\\figlabelpl{$cap}{$lbl} $str";
+}
+$str =~ s/myveryuniquedoubledot/\.\./g;
+
+return "$str";
+}
+\perlnewcommand{\printlstlisting}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $lstchar = '\x{00A1}\x{00A2}\x{00A3}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B4}\x{00B6}\x{00B7}\x{00B8}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}';
+my $cuschar = '';
+
+my $mkfile = 0;
+open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $lines;
+
+# Supports $lstchar as well with listingsutf8, but there seems to be a few bugs in the package
+$str = fix_latin($str);
+$str =~ s/([^$asciichar$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} }
+
+my $n = 65;
+$str =~ s/(.{1})(\1{$n})/$1$2 /g; # put in spaces every $1 character in long lines with repeated characters, e.g. * in NONMEM
+
+open(FILE, '>:utf8', "$file.tmp.txt");
+print FILE "$str";
+close(FILE);
+return
+}
+\perlnewcommand{\printtmplisting}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $artid = $_[0];
+open(FILE, '>:utf8', "$artid.tmp.txt");
+print FILE "ITEM $artid NOT FOUND";
+close(FILE);
+return
+}
+\perlnewcommand{\pdfloadfile}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encoding::FixLatin qw(fix_latin);
+my $data; my $page; my $ang; my $dima; my $dimb; my $string;my $level; my $section; my $stringc;
+my $cpage; my $sec; my $doprint; my $curpdfpage; my $douse; my $islst; my $fbase;
+my $pdfmakeinclude = ''; my $pdfmakebookmark = ''; my $pdfmakecontents = '';
+$fbase = $_[0];
+$section = $_[1];
+$curpdfpage = $_[2];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+open(FILE, '<', "$fbase.pay");
+while (<FILE>) {
+    $data .= $_;
+}
+close(FILE);
+while ($data =~ m/PageMediaNumber: (\d*\.?\d+)\nPageMediaRotation: (\d*\.?\d+)\nPageMediaRect: (\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+) (\d*\.?\d+)/g) {
+	$page = $1;	$ang = $2; $dima = $5; $dimb = $6;
+	if ( ((($ang == 90) || ($ang == 270)) && ($dimb > $dima) ) || (($ang == 0) && ($dima > $dimb)) ) {$pdfmakeinclude = "$pdfmakeinclude\\includepdf[pages={$page},landscape,pagecommand={\\pdflmark\\hypertarget{pmxapp$section.$page}{}}]{$fbase.pdf}\n";}
+	else {$pdfmakeinclude = "$pdfmakeinclude\\includepdf[pages={$page},pagecommand={\\pdfmark\\hypertarget{pmxapp$section.$page}{}}]{$fbase.pdf}\n";}
+}
+while ($data =~ m/BookmarkTitle: (.*)\nBookmarkLevel: (\d*\.?\d+)\nBookmarkPageNumber: (\d*\.?\d+)/g) {
+	$string  = $1; $level = 1+$2; $page = $3; $stringc = $string;
+	$cpage = $curpdfpage+$page;
+	
+	# Replace: |~|\|{|}|%|$|&|#| for PDF bookmarks
+	$string =~ s/\\/\\back\\{\\}/g;
+	$string =~ s/\#/\\#/g;
+	$string =~ s/\%/\\%/g;
+	$string =~ s/\_/\\\_/g;
+	$string =~ s/\^/\\^\{\}/g;
+	$string =~ s/\&/\\&/g;
+	$string =~ s/\{/\\{/g;
+	$string =~ s/\}/\\}/g;
+	$string =~ s/\$/\\\$/g;
+	$string =~ s/\~/\\string\~/g;
+
+	# Write PDF input command \pdfmakeinclude and bookmarks command \pdfmakebookmark
+	if ($level == 2) {$sec = 'subsection';} elsif ($level == 3) {$sec = 'subsubsection';} elsif ($level == 4) {$sec = 'paragraph';} elsif ($level == 5) {$sec = 'subparagraph';}
+	if (index(lc($string), lc('cover page')) != -1) {$doprint = 0;}
+	elsif (index(lc($string), lc('approval page')) != -1) {$doprint = 0;}
+	elsif (index(lc($string), lc('synopsis')) != -1) {$doprint = 0;}
+	elsif (index(lc($string), lc('table of contents')) != -1) {$doprint = 0;}
+	else {$doprint = 1;}
+	if (index(lc($string), lc('list of tables')) != -1) {$islst = 1; $douse = 1;}
+	elsif (($islst) && ($level==3)) {$islst = 1; $douse = 0;}
+	elsif (index(lc($string), lc('list of figures')) != -1) {$islst = 1; $douse = 1;}
+	elsif (($islst) && ($level==3)) {$islst = 1; $douse = 0;}
+	else {$islst = 0; $douse = 1;}
+	if ($level <= 5) {$pdfmakebookmark = "$pdfmakebookmark\\bookmark[level=$level,page=$cpage]{$string}\n";}
+
+	# Special string replacement of |~|\|{|}|%|$|&|#| for table of contents
+	$stringc =~ s/\\/myveryuniquenameofabackslash/g;
+	$stringc =~ s/\#/\\#/g;
+	$stringc =~ s/\%/\\%/g;
+	$stringc =~ s/\_/\\\_/g;
+	$stringc =~ s/\^/\\^\{\}/g;
+	$stringc =~ s/\&/\\&/g;
+	$stringc =~ s/\{/\\{/g;
+	$stringc =~ s/\}/\\}/g;
+	$stringc =~ s/\$/\\\$/g;
+	$stringc =~ s/\~/\\\@backslashchar string~/g;
+	$stringc =~ s/myveryuniquenameofabackslash/\\\@backslashchar textbackslash{}/g;
+
+	# Write table of contents command \pdfmakecontents
+	if (($level <= 5) && ($doprint) && ($douse)) {$pdfmakecontents = "$pdfmakecontents\\addtocontents{toc}{\\\@backslashchar contentsline {$sec}{$stringc}{$cpage}{pmxapp$section.$page}}\n";}
+}
+
+my $mkfile = 0; my $file = "$fbase.pay";
+my $str = "\\renewcommand{\\pdfmakeinclude}{$pdfmakeinclude}\\renewcommand{\\pdfmakebookmark}{$pdfmakebookmark}\\renewcommand{\\pdfmakecontents}{$pdfmakecontents}";
+
+my $tmpstr = fix_latin($str); my $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
+
+if ( $mkfile == 1 ) {
+	open(FILE, '>:utf8', "$file");
+	print FILE "$str";
+	close(FILE);
+	return "\\input{$file}";
+} else {
+	return "$str";
+}
+}
+\perlnewcommand{\fixpax}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Path::Tiny;
+my $paxfile = $_[0];
+my $str;
+$str = path($paxfile)->slurp;
+$str =~ s/\\\[\{dest\}\{([0-9]+)\}\{([0-9]+)\}\{FitR\}\{\n  Rect=\{([+-]?([0-9]*[.])?[0-9]+) ([+-]?([0-9]*[.])?[0-9]+) [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+\},\n\}\\\\/\\\[\{dest\}\{$1\}\{$2\}\{XYZ\}\{\n  DestY=\{$5\},DestX=\{$3\},\n\}\\\\/g;
+open(FILE, '>:utf8', "$paxfile");
+print FILE "$str";
+close(FILE);
+}
+\perlnewcommand{\addsynsec}[3]{
+$mysyncnt = $_[0];
+$mysynlev = $_[1];
+$mysynstr = $_[2];
+if ($mysyncnt eq "none") {$mysyncmd = "$mysyncmd"}
+else {$mysyncmd = "$mysyncmd\\bookmark[level=$mysynlev,dest=mysynhyper$mysyncnt]{$mysynstr}\n";}
+return "\\renewcommand{\\cussyncmd}{$mysyncmd}"
+}
+\perlnewcommand{\createfiles}[5]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $name = $_[0];
+my $docname = $_[1];
+my $artifacts = $_[2];
+my $dogetartifacts = $_[3];
+my $doprintsig = $_[4];
+my $narti = () = $artifacts =~ /,/gi; $narti = $narti + 1;
+$docname =~ s/\\xspace *//g;
+
+# Print list of artifacts to download
+open(FILE, '>:utf8', 'getartifacts.txt');
+if ($dogetartifacts == 1) { print FILE "$artifacts"; }
+else { print FILE ""; }
+close(FILE);
+
+# Print finalize.pl for cleaning up after a run. Not used: \nunlink <RA*_*>;
+open(FILE, '>:utf8', 'finalize.pl');
+print FILE "use strict;\nuse warnings;\nuse File::Copy qw(copy);\n";
+if ($doprintsig == 1) {print FILE "system('pdftk A=\"$name.pdf\" cat A2 output sigpage.pdf');\n";}
+if (-e "$name.pdf") {
+	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"$docname.pdf\" > nul 2>&1') ) { print STDERR \"Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" }\n";
+	print FILE "if (\! -e \"$docname.pdf\") \{copy \"$name.pdf\", \"$docname.pdf\";\}\n";
+	print FILE "if ( \"$docname.pdf\" ne \"$name.pdf\" ) \{open(FILENEW, '\>\:utf8', 'dodel.txt'); close(FILENEW);\}";
+}
+close(FILE);
+
+return
+}
+
+\else
+
+\IfFileExists{noperlfirst.txt}{\RequirePackage{noperltex}}{}
+\newcounter{perlcount}\setcounter{perlcount}{0}
+\newcommand{\findartifact}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\dotwice}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includetex}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\inputtext}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixbib}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixgls}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\checkfile}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includecsv}[9]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includemetacsv}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\makesubfigopt}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\makesubfig}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printlstlisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printtmplisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\pdfloadfile}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixpax}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\addsynsec}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\createfiles}[5]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+
+\fi
+
+\endinput
