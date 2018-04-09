@@ -1,8 +1,8 @@
-%%% PharmTeX class, part of the PharmTeX platform
-%%% Created by Christian Hove Rasmussen (contact@pharmtex.org)
-%%% Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
-\def\pharmtexdate{2018/03/14}
-\def\pharmtexversion{1.0}
+%%% PharmTeX class, part of the PharmTeX platform.
+%%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+%%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
+\def\pharmtexdate{2018/04/08}
+\def\pharmtexversion{1.1}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -732,7 +732,7 @@ ITEM \QAPage{} NOT FOUND
 	frame=single,
 	basicstyle={\small\ttfamily},
 	language={[LaTeX]TeX},
-	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function}
+	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text}
 }
 \lstdefinelanguage{Nonmem}{alsoletter={...}, morekeywords={\$PROBLEM, \$INPUT, \$DATA, \$SUBROUTINES, \$PK, \$MODEL, \$DES, \$THETA, \$OMEGA, \$SIGMA, \$ERROR, \$COV, \$TABLE, \$ESTIMATION, \$COVARIANCE, \$EST, \$COV, \$SUBR, \$ERR, BLOCK, COMP, THETA, ETA, ERR, EPS, IF, THEN, ELSE, ENDIF}, comment=[l];, morecomment=[l]..., morestring=[m]'}[keywords, comments, strings]
 \newcommand{\matlabfont}[1]{\matlabbasicfont{#1}\normalfont}
@@ -1138,8 +1138,8 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 	pdfauthor={},
 	pdfsubject={},
 	pdfkeywords={},
-	pdfcreator={PharmTeX v. \pharmtexversion},
-%	pdfproducer={PharmTeX v. \pharmtexversion}
+	pdfcreator={PharmTeX-\pharmtexversion},
+%	pdfproducer={PharmTeX-\pharmtexversion}
 }
 %\pdfminorversion=7 % PDF version 1.X, currently 1.5
 %\pdfcompresslevel=9 % PDF compression

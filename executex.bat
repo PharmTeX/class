@@ -1,7 +1,7 @@
 @echo off
-REM PharmTeX Windows shell script, part of the PharmTeX platform
-REM Created by Christian Hove Rasmussen (contact@pharmtex.org)
-REM Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
+REM PharmTeX Windows shell script, part of the PharmTeX platform.
+REM Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+REM This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 REM Change this path to fit your installation
 set "LDIR=%USERPROFILE%\pharmtex"
@@ -30,7 +30,7 @@ if "%MODE%"=="path" ( exit )
 REM Load MiKTeX Tool if gui mode
 if "%MODE%"=="gui" (
 	call miktex-taskbar-icon
-	call texmaker %NAME%.tex
+	call texmaker "%NAME%.tex"
 )
 
 REM Pass arguments on
@@ -39,6 +39,6 @@ if not "%MODE%"=="gui" ( call perl runlatex.pl %NAME% %MODE% )
 REM Clean up
 if "%MODE%"=="gui" ( call taskkill /IM miktex-taskbar-icon.tmp )
 if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" > nul 2>&1 )
-if exist dodel.txt ( del "%NAME%.pdf" dodel.txt > nul 2>&1 )
+if exist dodel.txt ( del dodel.txt "%NAME%.pdf" > nul 2>&1 )
 set "PATH=%OLDPATH%"
 set "PATH=%PATH%"

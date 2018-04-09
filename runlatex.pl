@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-# PharmTeX perl script, part of the PharmTeX platform
-# Created by Christian Hove Rasmussen (contact@pharmtex.org)
-# Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
+# PharmTeX perl script, part of the PharmTeX platform.
+# Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+# This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 # Load packages
 use strict;
@@ -26,7 +26,7 @@ if ( not defined $mode ) { $mode = 'batch'; }
 if ( grep $_ eq $mode, < batch full fast err syn fmt noperl clear jabref > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
 
 # Files to delete in cleanup
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.log", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.pdf", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "getartifacts.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "batch.txt", "dotwice", "rpath.txt", "PharmTeX.log", "PharmTeX.fmt", "useroptions.txt", "useroptionscomp.txt", "delauxitems.pl", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.tmp.txt>, <*.pax>, <*.pay>, <noperltex-*.tex>);
+my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "getartifacts.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "batch.txt", "dotwice", "rpath.txt", "PharmTeX.log", "PharmTeX.fmt", "useroptions.txt", "useroptionscomp.txt", "delauxitems.pl", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.tmp.txt>, <*.pax>, <*.pay>, <noperltex-*.tex>);
 
 # Start JabRef if requested
 if ( $mode eq 'jabref' ) {
@@ -196,10 +196,10 @@ if ( $cp == 1 ) {
 if ( $finalize == 1 ) { 
 	if ( -e 'finalize.pl' ) {
 		do './finalize.pl';
-		unlink "$name.pdf", "batch.txt";
+		unlink "batch.txt";
 	}
 	do './delauxitems.pl';
-	unlink @delfiles;
+	unlink @delfiles, 'textable.tmp.txt';
 }
 
 # Move original file back if needed
@@ -210,5 +210,4 @@ if (( $save == 1 ) && ( -e "$namesave.tex" )) {
 
 # Reset to old path and clean up
 $ENV{PATH} = "$oldpath";
-if ( $finalize == 1 ) { do './delauxitems.pl'; unlink @delfiles; }
 if ( -e "noperlfirst.txt" ) { unlink "noperlfirst.txt"; }

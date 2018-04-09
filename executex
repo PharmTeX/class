@@ -1,10 +1,10 @@
 #!/bin/bash
-# PharmTeX Linux bash script, part of the PharmTeX platform
-# Created by Christian Hove Rasmussen (hove99@gmail.com)
-# Released under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3
+# PharmTeX Linux bash script, part of the PharmTeX platform.
+# Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+# This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 # Set main path for PharmTeX
-LDIR=$HOME/pharmtex; export LDIR
+LDIR="$HOME/pharmtex"; export LDIR
 
 # Get job name and mode
 NAME=$(basename "$1")
@@ -43,9 +43,9 @@ fi
 
 # Clean up
 if [ -e jabref.xml ]; then
-	mv jabref.xml $LDIR/jabref/jabref.xml
+	mv jabref.xml "$LDIR/jabref/jabref.xml"
 fi
 if [ -e dodel.txt ]; then
-	rm $NAME.pdf dodel.txt
+	rm dodel.txt "$NAME.pdf" 
 fi
 PATH="$OLDPATH"; export PATH
