@@ -15,6 +15,7 @@ use PDF::API2;
 use Encoding::FixLatin qw(fix_latin);
 my $OS = "$^O";
 my $oldpath = $ENV{PATH};
+unlink ('dodel.txt');
 
 # Get filename, extension, and mode
 my $fname = $ARGV[0];
@@ -40,7 +41,8 @@ if ( $mode eq 'jabref' ) {
 # Make sure that auxiliary files are deleted
 if ( $mode eq 'clear' ) {
 	do './delauxitems.pl';
-	unlink ("sigpage.pdf", @delfiles);
+	unlink ("sigpage.pdf", "$name.log", "$name.pdf", @delfiles);
+	open(FILENEW, '>:utf8', 'dodel.txt'); close(FILENEW);
 	$ENV{PATH} = "$oldpath";
 	exit;
 }

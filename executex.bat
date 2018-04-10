@@ -29,7 +29,7 @@ if "%MODE%"=="path" ( exit )
 
 REM Load MiKTeX Tool if gui mode
 if "%MODE%"=="gui" (
-	call miktex-taskbar-icon
+	start miktex-taskbar-icon
 	call texmaker "%NAME%.tex"
 )
 
@@ -37,8 +37,8 @@ REM Pass arguments on
 if not "%MODE%"=="gui" ( call perl runlatex.pl %NAME% %MODE% )
 
 REM Clean up
-if "%MODE%"=="gui" ( call taskkill /IM miktex-taskbar-icon.tmp )
-if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" > nul 2>&1 )
-if exist dodel.txt ( del dodel.txt "%NAME%.pdf" > nul 2>&1 )
+if "%MODE%"=="gui" ( call taskkill /IM miktex-taskbar-icon.exe )
+if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" >nul 2>&1 )
+if exist dodel.txt ( del dodel.txt "%NAME%.pdf" >nul 2>&1 )
 set "PATH=%OLDPATH%"
 set "PATH=%PATH%"

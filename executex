@@ -25,7 +25,7 @@ fi
 
 # Temporarily change paths
 OLDPATH="$PATH"
-PATH="$LDIR/bin:$LDIR/perl/bin:$LDIR/texlive/bin/x86_64-linux:$LDIR/texmaker:$PATH"; export PATH
+PATH="$LDIR/bin:$LDIR/java/bin:$LDIR/perl/bin:$LDIR/texlive/bin/x86_64-linux:$LDIR/texmaker:$PATH"; export PATH
 MANPATH="$LDIR/texlive/texmf-dist/doc/man:$MANPATH"; export MANPATH
 INFOPATH="$LDIR/texlive/texmf-dist/doc/info:$INFOPATH"; export INFOPATH
 
