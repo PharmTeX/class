@@ -18,11 +18,9 @@ if "%NAME%"=="" (
 	)
 )
 
-REM Set variables and system PATH. %NAME% is filename without extension.
+REM Temporarily change system PATH if PharmTeX software bundle is present
 set "OLDPATH=%PATH%"
-set "PATH=%LDIR%\bin;%LDIR%\java\bin;%LDIR%\miktex\miktex\bin;%LDIR%\perl\perl\bin;%LDIR%\perl\perl\site\bin;%LDIR%\perl\c\bin;%LDIR%\pdftk\bin;%LDIR%\texmaker;%LDIR%\qpdf\bin;%PATH%"
-set "PATH=%PATH%"
-call perlportable
+if exist "%LDIR%" ( call %LDIR%\bin\setpath )
 
 REM Exit if script is run to set path only
 if "%MODE%"=="path" ( exit )
@@ -38,7 +36,8 @@ if not "%MODE%"=="gui" ( call perl runlatex.pl %NAME% %MODE% )
 
 REM Clean up
 if "%MODE%"=="gui" ( call taskkill /IM miktex-taskbar-icon.exe )
-if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" >nul 2>&1 )
+if exist "%LDIR%" ( if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" >nul 2>&1 ) )
+if not exist "%LDIR%" ( del jabref.xml >nul 2>&1 )
 if exist dodel.txt ( del dodel.txt "%NAME%.pdf" >nul 2>&1 )
 set "PATH=%OLDPATH%"
 set "PATH=%PATH%"

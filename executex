@@ -23,11 +23,13 @@ if [ -z "$MODE" ]; then
 	MODE=batch
 fi
 
-# Temporarily change paths
+# Temporarily change paths if PharmTeX bundle is present
 OLDPATH="$PATH"
-PATH="$LDIR/bin:$LDIR/java/bin:$LDIR/perl/bin:$LDIR/texlive/bin/x86_64-linux:$LDIR/texmaker:$PATH"; export PATH
-MANPATH="$LDIR/texlive/texmf-dist/doc/man:$MANPATH"; export MANPATH
-INFOPATH="$LDIR/texlive/texmf-dist/doc/info:$INFOPATH"; export INFOPATH
+OLDMANPATH="MANPATH"
+OLDINFOPATH="INFOPATH"
+if [ -d "$LDIR" ]; then
+	. $LDIR/bin/setpath
+fi
 
 # Exit if script is run to set path only
 if [ "$MODE" == "path" ]; then 
@@ -42,10 +44,14 @@ else
 fi
 
 # Clean up
-if [ -e jabref.xml ]; then
+if [ -e jabref.xml ] && [-d "$LDIR" ]; then
 	mv jabref.xml "$LDIR/jabref/jabref.xml"
+elif [ -e jabref.xml ]; then
+	rm jabref.xml
 fi
-if [ -e dodel.txt ]; then
+if [ -e dodel.txt ] && [ -e "$NAME.pdf" ]; then
 	rm dodel.txt "$NAME.pdf" 
 fi
 PATH="$OLDPATH"; export PATH
+MANPATH="OLDMANPATH"; export MANPATH
+INFOPATH="OLDINFOPATH"; export INFOPATH
