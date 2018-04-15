@@ -194,6 +194,17 @@ if ( $cp == 1 ) {
 	unlink "$nametex.tex", "$nametex.lgpl", "$nametex.pipe", "$nametex.Rnw", "$name.synctex.gz";
 }
 
+# Remove a few pointless warnings from log file
+if ( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) {
+	$file = "$name.log"; open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
+	$str =~ s/Underfull \\hbox \(badness 10000\)[^\n]+\n//g;
+	$str =~ s/Underfull \\vbox \(badness 10000\)[^\n]+\n//g;
+	my @textwidth = $str =~ /\* \\textwidth=(\d+\.\d+pt)/g;
+	my $ntextwidth = scalar @textwidth - 1; my $i;
+	for ($i=0; $i <= 0; $i++) { $str =~ s/Overfull \\hbox \(\Q$textwidth[$i]\E too wide\)[^\n]+\n//g; }
+	open $fh, '>:utf8', "$name.log"; print $fh "$str"; close($fh);
+}
+
 # Run finalize.pl if needed
 if ( $finalize == 1 ) { 
 	if ( -e 'finalize.pl' ) {
