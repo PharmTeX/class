@@ -1,7 +1,7 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/04/15}
+\def\pharmtexdate{2018/04/16}
 \def\pharmtexversion{1.4}
 
 %%% Define PharmTeX Class for LaTeX
@@ -431,6 +431,13 @@ ITEM #1 NOT FOUND%
 }
 \setlength{\LTleft}{0pt} % fills out longtables (used for glossary and List of Items) to fill the full page width
 \setlength{\LTright}{0pt} % fills out longtables to fill the full page width
+
+%%% Turn off badness 10000 and set threshold for overfull hbox
+\hbadness=10000
+\vbadness=10000
+\hfuzz=15pt
+\newcount\hbadness
+\newdimen\hfuzz
 
 %%% Tablenotes. These are local notes within a given table that reset their alpha counter (a, b, c, etc.) for each new table.
 \newcounter{tnote}
@@ -1307,15 +1314,15 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Bookmarks
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\captionsetup{singlelinecheck=off}
+\captionsetup*{singlelinecheck=off}
 \DeclareCaptionLabelSeparator{dotquad}{.\quad}
 \DeclareCaptionTextFormat{Tablebookmark}{#1}
-\captionsetup[table]{textformat=Tablebookmark,labelsep=dotquad,font={normalsize,bf}}
+\captionsetup*[table]{textformat=Tablebookmark,labelsep=dotquad,font={normalsize,bf}}
 \DeclareCaptionTextFormat{Figurebookmark}{#1}
-\captionsetup[figure]{textformat=Figurebookmark,labelsep=dotquad,font={normalsize,bf}}
-\captionsetup[lstlisting]{textformat=Tablebookmark,labelsep=dotquad,font={normalsize,bf}}%,aboveskip=0.5\normalbaselineskip,margin={-0.35cm,0cm}
-\captionsetup[sub]{position=bottom,justification=centering,font={rm,footnotesize},labelfont={bf,footnotesize}}
-\captionsetup{subrefformat=parens}
+\captionsetup*[figure]{textformat=Figurebookmark,labelsep=dotquad,font={normalsize,bf}}
+\captionsetup*[lstlisting]{textformat=Tablebookmark,labelsep=dotquad,font={normalsize,bf}}%,aboveskip=0.5\normalbaselineskip,margin={-0.35cm,0cm}
+\captionsetup*[sub]{position=bottom,justification=centering,font={rm,footnotesize},labelfont={bf,footnotesize}}
+\captionsetup*{subrefformat=parens}
 %\captionsetup[subfloat]{position=bottom,justification=centering,labelfont={bf}}
 
 % Redefine ToC, LoT, and LoF
@@ -1565,6 +1572,11 @@ Date Issued: & \DocDate \\ \hline
 \def\oldcite{}
 \let\oldcite=\bibcite
 \def\bibcite{\stepcounter{citenum}\oldcite}
+
+%%% Disable empty bibliography warning
+\let\myBib\thebibliography
+\let\endmyBib\endthebibliography
+\renewcommand\thebibliography[1]{\ifx\relax#1\relax\else\myBib{#1}\fi}
 
 %%% Bibliography setup
 \newcommand{\references}{
@@ -1898,7 +1910,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi\fi
 
 % True false variables as well as perl script printing
-\ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{PharmTeX}\fi
+\ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{\jobname}\fi
 \newcommand{\doprintsig}{0}\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{0}\ifx\missingartifacts\empty\else\renewcommand{\dogetartifacts}{1}\fi
 \ifdraftmode

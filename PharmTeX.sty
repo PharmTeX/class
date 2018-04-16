@@ -631,7 +631,6 @@ for ($i=0; $i <= $nr-1; $i++) {
 my $allfile = join( ', ', @delfiles );
 print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");\nunlink ($allfile);";
 close(FILE);
-# print FILE "if (\! -e \"$docname.pdf\") \{copy \"$name.pdf\", \"$docname.pdf\";\}";
 
 my $timestamp; my $epoch;
 my $sec; my $min; my $hour; my $mday; my $mon; my $year; my $wday; my $yday; my $isdst; my $tmpstr;
@@ -891,6 +890,11 @@ $docname =~ s/\\xspace *//g;
 open(FILE, '>:utf8', 'getartifacts.txt');
 if ($dogetartifacts == 1) { print FILE "$artifacts"; }
 else { print FILE ""; }
+close(FILE);
+
+# Save final document name
+open(FILE, '>:utf8', 'docname.txt');
+print FILE "$docname";
 close(FILE);
 
 # Print finalize.pl for cleaning up after a run. Not used: \nunlink <RA*_*>;
