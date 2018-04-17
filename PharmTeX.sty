@@ -877,6 +877,7 @@ use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
+my $OS = "$^O";
 
 my $name = $_[0];
 my $docname = $_[1];
@@ -898,11 +899,13 @@ print FILE "$docname";
 close(FILE);
 
 # Print finalize.pl for cleaning up after a run. Not used: \nunlink <RA*_*>;
+my $noerr;
+if ( $OS eq 'MSWin32' ) { $noerr = '>nul 2>&1'; } else { $noerr = '2>/dev/null'; }
 open(FILE, '>:utf8', 'finalize.pl');
 print FILE "use strict;\nuse warnings;\nuse File::Copy qw(copy);\n";
 if ($doprintsig == 1) {print FILE "system('pdftk A=\"$name.pdf\" cat A2 output sigpage.pdf');\n";}
 if (-e "$name.pdf") {
-	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"$docname.pdf\" >nul 2>&1') ) { print STDERR \"Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" }\n";
+	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"$docname.pdf\" $noerr') ) { print STDERR \"Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" }\n";
 	print FILE "if ( -e \"$docname.pdf\") \{copy \"$docname.pdf\", \"$name.pdf\";\}\n";
 	print FILE "if (\! -e \"$docname.pdf\") \{copy \"$name.pdf\", \"$docname.pdf\";\}\n";
 	print FILE "if ( \"$docname.pdf\" ne \"$name.pdf\" ) \{open(FILENEW, '\>\:utf8', 'dodel.txt'); close(FILENEW);\}";

@@ -48,7 +48,13 @@ my $finalize = 0;
 my $mkfile = 0;
 my $noperl = 0;
 my $fmtfile = 'PharmTeX';
-my $perltex = 'perltex -nosafe -latex=pdflatex';
+my $pdflatex;
+if ( $OS eq 'MSWin32' ) {
+	$pdflatex = 'pdflatex -extra_mem_top=50000000 -extra_mem_bot=50000000';
+} else {
+	$pdflatex = 'pdflatex';
+}
+my $perltex = "perltex -nosafe -latex=$pdflatex";
 my $nametex = $name;
 my $namesave = $name;
 my $runmode = 'batchmode';
@@ -152,7 +158,7 @@ if ( defined $rpath ) {
 # Check if class file should be compiled with new user options
 if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("useroptionscomp.txt", "useroptions.txt") != 0) || ( $mode eq 'fmt' )) {
 	copy 'useroptions.txt', 'useroptionscomp.txt';
-	system("pdflatex -interaction=$compmode -ini \"\&pdflatex\" PharmTeX.ini");
+	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" PharmTeX.ini");
 	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; exit; }
 }
 
@@ -167,14 +173,14 @@ if ( $knit == 1 ) {
 
 # Check for and run noperl mode
 if ( $mode eq 'noperl' ) {
-	system("perltex -makesty -nosafe -latex=pdflatex -fmt=$fmtfile --jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex\"");
+	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=$fmtfile --jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex\"");
 	open(FILE, '>', 'noperlfirst.txt'); close(FILE);
 	open(FILE, '>', 'noperl.txt'); close(FILE);
 	$mode = 'fast';
 }
 
 # Check for existence of noperl file
-if ( -e 'noperl.txt' ) { $perltex = 'pdflatex'; };
+if ( -e 'noperl.txt' ) { $perltex = "$pdflatex"; };
 
 # Check for and run fast/err mode
 if (( $mode eq 'fast' ) || ( $mode eq 'err' )) {
@@ -190,7 +196,7 @@ if ( $mode eq 'full' ) {
 	unlink "fixfiles";
 	## Download artifacts at this point
 	# if ( -e 'dotwice' ) {
-		# system("perltex -nosafe -latex=pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+		# system("perltex -nosafe -latex=$pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
 		# ## Download artifacts at this point
 		# unlink 'dotwice';
 	# }

@@ -49,8 +49,11 @@ if [ -e jabref.xml ] && [-d "$LDIR" ]; then
 elif [ -e jabref.xml ]; then
 	rm jabref.xml
 fi
-if [ -e dodel.txt ] && [ -e "$NAME.pdf" ]; then
-	rm dodel.txt "$NAME.pdf" 
+if [ -e dodel.txt ]; then
+	rm dodel.txt
+	if [ -e "$NAME.pdf" ]; then
+		rm "$NAME.pdf" 
+	fi
 fi
 PATH="$OLDPATH"; export PATH
 MANPATH="OLDMANPATH"; export MANPATH

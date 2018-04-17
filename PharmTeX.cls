@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/04/16}
-\def\pharmtexversion{1.4}
+\def\pharmtexdate{2018/04/17}
+\def\pharmtexversion{1.5}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -432,12 +432,14 @@ ITEM #1 NOT FOUND%
 \setlength{\LTleft}{0pt} % fills out longtables (used for glossary and List of Items) to fill the full page width
 \setlength{\LTright}{0pt} % fills out longtables to fill the full page width
 
-%%% Turn off badness 10000 and set threshold for overfull hbox
+%%% Turn off badness 10000 warning
 \hbadness=10000
 \vbadness=10000
-\hfuzz=15pt
-\newcount\hbadness
-\newdimen\hfuzz
+
+%%% Set threshold for overfull hbox
+%\hfuzz=5pt
+%\newcount\hbadness
+%\newdimen\hfuzz
 
 %%% Tablenotes. These are local notes within a given table that reset their alpha counter (a, b, c, etc.) for each new table.
 \newcounter{tnote}
