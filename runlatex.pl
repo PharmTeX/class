@@ -50,7 +50,7 @@ my $noperl = 0;
 my $fmtfile = 'PharmTeX';
 my $pdflatex;
 if ( $OS eq 'MSWin32' ) {
-	$pdflatex = 'pdflatex -extra_mem_top=50000000 -extra_mem_bot=50000000';
+	$pdflatex = 'pdflatex -extra-mem-top=50000000 -extra-mem-bot=50000000';
 } else {
 	$pdflatex = 'pdflatex';
 }
