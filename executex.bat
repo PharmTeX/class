@@ -21,7 +21,7 @@ for %%i in (%NAME%) do ( set "NAME=%%~ni" )
 
 REM Temporarily change system PATH if PharmTeX software bundle is present
 set "OLDPATH=%PATH%"
-if exist "%LDIR%" ( call %LDIR%\bin\setpath )
+if exist "%LDIR%" ( call %LDIR%\bin\setpath >nul 2>&1 )
 
 REM Exit if script is run to set path only
 if "%MODE%"=="path" ( exit )

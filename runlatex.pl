@@ -13,9 +13,10 @@ use File::Copy qw(copy);
 use File::Compare;
 use PDF::API2;
 use Encoding::FixLatin qw(fix_latin);
+use English;
+use FileHandle;
 my $OS = "$^O";
 my $oldpath = $ENV{PATH};
-unlink ('dodel.txt');
 
 # Get filename, extension, and mode
 my $fname = $ARGV[0];
@@ -23,14 +24,21 @@ my $fname = $ARGV[0];
 my $mode = $ARGV[1];
 if ( not defined $mode ) { $mode = 'batch'; }
 
+# Create log file and redirect STDOUR and STDERR to this file
+my $logfile = "$name.out"; unlink "$logfile";
+redirect_streams();
+my $txt = '';
+
 # Check for supported modes
 if ( grep $_ eq $mode, < batch full fast err syn fmt noperl clear jabref > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
 
 # Files to delete in cleanup
+unlink ('dodel.txt');
 my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "getartifacts.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "batch.txt", "dotwice", "rpath.txt", "PharmTeX.log", "PharmTeX.fmt", "useroptions.txt", "useroptionscomp.txt", "delauxitems.pl", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.tmp.txt>, <*.pax>, <*.pay>, <noperltex-*.tex>);
 
 # Start JabRef if requested
 if ( $mode eq 'jabref' ) {
+	$txt = "Starting JabReF - may take a few seconds to open\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	my @bibfiles = (<*.bib>); my $bibstr = "@bibfiles";
 	$bibstr =~ s/[^\s]+\.tmpfixfile\.bib//g; $bibstr =~ s/ +/ /g; $bibstr =~ s/ $//g; $bibstr =~ s/^ //g;
 	if ( $OS eq 'MSWin32' ) { system("start /b jabref $bibstr"); }
@@ -66,12 +74,14 @@ if ( $mode eq 'err' ) {
 
 # Synopsis only mode
 if ( $mode eq 'syn' ) {
+	$txt = "Finalized synopsis compilation initiated\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	$mode = 'batch';
 	$syn = 1;
 }
 
 # Batch mode settings
 if ( $mode eq 'batch' ) {
+	if ( $syn == 0 ) { $txt = "Finalized document compilation initiated\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
 	$mode = 'full';
 	do './delauxitems.pl';
 	unlink ("sigpage.pdf", @delfiles);
@@ -93,20 +103,21 @@ my $file = "$nametex.tex"; open my $fh, '<:raw', "$file"; my $str = do { local $
 my $docname = "$name.pdf"; ($docname) = $str =~ /\\docpdfname\{([^\}]+)\}/;
 "a" =~ /a/; # unset $1 for fix_latin lines further down
 
-# Load name of finalized PDF and clear any old finalized documents
-# if ( -e 'docname.txt' ) { my $newfile = 'docname.txt'; open my $newfh, '<:raw', "$newfile"; $docname = do { local $/; <$newfh> }; close $newfh; } else { $docname = "$name"; }
-my $docnameshort = $docname; $docnameshort =~ s/-synopsis//g;
+# Clear any old finalized documents
 if ( grep $_ eq $mode, < batch full fast err fmt clear syn > ) {
 	if ( ( -e "$docname.pdf" ) && ( "$docname.pdf" ne "$name.pdf" ) ) {
 		if ( $syn==1 ) { $docname = "$docname-synopsis"; }
-		unlink ("$docname.pdf", 'docname.txt');
+		unlink ("$docname.pdf");
 	}
 }
 
 # Make sure that auxiliary files are deleted
 if ( $mode eq 'clear' ) {
+	$txt = "\nClearing auxiliary files\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	restore_streams();
+	close(OLDOUT); close(OLDERR); close(STDERR); close(STDOUT);
 	do './delauxitems.pl';
-	unlink ("sigpage.pdf", "$name.log", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", 'docname.txt', @delfiles);
+	unlink ("sigpage.pdf", "$name.log", "$logfile", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", @delfiles);
 	open(FILENEW, '>:utf8', 'dodel.txt'); close(FILENEW);
 	$ENV{PATH} = "$oldpath";
 	exit;
@@ -157,6 +168,7 @@ if ( defined $rpath ) {
 
 # Check if class file should be compiled with new user options
 if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("useroptionscomp.txt", "useroptions.txt") != 0) || ( $mode eq 'fmt' )) {
+	$txt = "Compiling PharmTeX class\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	copy 'useroptions.txt', 'useroptionscomp.txt';
 	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" PharmTeX.ini");
 	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; exit; }
@@ -164,6 +176,7 @@ if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("user
 
 # If knitr insert R settings and clean out knitr generated preamble
 if ( $knit == 1 ) {
+	$txt = "\nRunning knitr\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	copy "$nametex.tex", "$nametex.Rnw";
 	$file = "$nametex.Rnw"; open $fh, '<', $file; $str = do { local $/; <$fh> }; close $fh; $str =~ s/( *(\\documentclass)( *\[[^\[^\]]{0,}\] *)*(\{ *PharmTeX *\}))/$1\n<<Preliminaries, cache=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE>>=\nlibrary(knitr)\nopts_knit\$set(self.contained=FALSE)\nopts_chunk\$set(message=FALSE, comment=NA, warning=FALSE, echo=FALSE, results='hide', cache=FALSE, tidy=FALSE, concordance=FALSE)\n@/g; open $fh, '>', "$file"; print $fh "$str"; close($fh);
 	system("Rscript -e \"library('knitr'); knit('$nametex.Rnw');\"");
@@ -173,7 +186,8 @@ if ( $knit == 1 ) {
 
 # Check for and run noperl mode
 if ( $mode eq 'noperl' ) {
-	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=$fmtfile --jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex\"");
+	$txt = "\nDetaching PharmTeX from Perl\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex\"");
 	open(FILE, '>', 'noperlfirst.txt'); close(FILE);
 	open(FILE, '>', 'noperl.txt'); close(FILE);
 	$mode = 'fast';
@@ -184,26 +198,35 @@ if ( -e 'noperl.txt' ) { $perltex = "$pdflatex"; };
 
 # Check for and run fast/err mode
 if (( $mode eq 'fast' ) || ( $mode eq 'err' )) {
+	$txt = "\nFast compile started\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	$txt = "Compiling document using Perltex\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
-	system("$perltex -fmt=$fmtfile --jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
 	unlink "fixfiles";
 }
 
 # Check for and run full mode
 if ( $mode eq 'full' ) {
+	$txt = "Full compile started\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	$txt = "Compiling document using Perltex (step 1/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
 	unlink "fixfiles";
 	## Download artifacts at this point
 	# if ( -e 'dotwice' ) {
-		# system("perltex -nosafe -latex=$pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+		# system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
 		# ## Download artifacts at this point
 		# unlink 'dotwice';
 	# }
-	if ( -e "$name.glo" ) { system("makeglossaries -q \"$name\""); }
+	$txt = "\nCompiling glossaries (step 2/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	if ( -e "$name.glo" ) { system("makeglossaries -q \"$name\"");}
+	$txt = "Compiling citations (step 3/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("bibtex \"$name\"");
+	$txt = "\nCompiling document using Perltex (step 4/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+	$txt = "\nCompiling document using Perltex (step 5/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+	$txt = "\nCompiling document using Perltex (step 6/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -synctex=$synctex \"$nametex\"");
 }
 
@@ -214,19 +237,9 @@ if ( $cp == 1 ) {
 	unlink "$nametex.tex", "$nametex.lgpl", "$nametex.pipe", "$nametex.Rnw", "$name.synctex.gz";
 }
 
-# Remove a few pointless warnings from log file
-if (( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) && ( -e "$name.log" )) {
-	$file = "$name.log"; open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
-	my @textwidth = $str =~ /\* \\textwidth=(\d+\.\d+pt)/g;
-	my @textheight = $str =~ /\* \\textheight=(\d+\.\d+pt)/g;
-	@textwidth = (@textwidth, @textheight);
-	my $ntextwidth = scalar @textwidth - 1; my $i;
-	for ($i=0; $i <= $ntextwidth; $i++) { $str =~ s/Overfull \\hbox \(\Q$textwidth[$i]\E too wide\)[^\n]+\n//g; }
-	open $fh, '>:utf8', "$name.log"; print $fh "@textwidth\n$str"; close($fh);
-}
-
 # Run finalize.pl if needed
-if ( $finalize == 1 ) { 
+if ( $finalize == 1 ) {
+	$txt = "\nFinalizing document\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	if ( -e 'finalize.pl' ) {
 		do './finalize.pl';
 		unlink "batch.txt";
@@ -241,6 +254,55 @@ if (( $save == 1 ) && ( -e "$namesave.tex" )) {
 	unlink "$namesave.tex";
 }
 
+# Remove a few pointless warnings from log file and add output from PharmTeX run sequence
+restore_streams();
+close(OLDOUT); close(OLDERR); close(STDERR); close(STDOUT);
+my $log = ''; my $out = '';
+if (( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) && ( -e "$name.log" )) {
+	# Load log file and out file
+	$file = "$name.log"; open $fh, '<:raw', "$file"; $log = do { local $/; <$fh> }; close $fh;
+	if ( -e "$logfile" ) { $file = "$logfile"; open $fh, '<:raw', "$file"; $out = do { local $/; <$fh> }; close $fh; }
+	
+	# Remove \textwidth warning
+	my @textwidth = $log=~ /\* \\textwidth=(\d+\.\d+pt)/g;
+	my @textheight = $log =~ /\* \\textheight=(\d+\.\d+pt)/g;
+	@textwidth = (@textwidth, @textheight);
+	my $ntextwidth = scalar @textwidth - 1; my $i;
+	for ($i=0; $i <= $ntextwidth; $i++) { $log =~ s/Overfull \\hbox \(\Q$textwidth[$i]\E too wide\)[^\n]+\n//g; }
+	
+	# Remove warning from glossaries package when "noglossary" option is used
+	$log=~ s/Package glossaries Warning: No \\printglossary or \\printglossaries found.//g;
+	
+	# Save log file
+	my ($ver)  = $log =~ /Package: PharmTeX [0-9]{4}\/[0-9]{2}\/[0-9]{2} v([0-9]+\.[0-9]+) PharmTeX Package/;
+	my ($date) = $log =~ /Package: PharmTeX ([0-9]{4}\/[0-9]{2}\/[0-9]{2}) v[0-9]+\.[0-9]+ PharmTeX Package/;
+	open $fh, '>:utf8', "$name.log";
+	print $fh "This is PharmTeX v. $ver of $date.";
+	if ( "$out" ne "" ) { print $fh "\n\n\n<<<<<<< Overall output of PharmTeX run sequence >>>>>>>\n\n\n$out"; }
+	print $fh "\n<<<<<<< Output of final perltex/pdflatex run >>>>>>>\n\n\n$log";
+	close $fh;
+}
+if ( "$out" ne "" ) { print "$out"; }
+unlink "$logfile";
+
 # Reset to old path and clean up
 $ENV{PATH} = "$oldpath";
 if ( -e "noperlfirst.txt" ) { unlink "noperlfirst.txt"; }
+
+##############################################################
+sub restore_streams
+{
+  close(STDOUT) || die "Can't close STDOUT: $!";
+  close(STDERR) || die "Can't close STDERR: $!";
+  open(STDERR, ">&OLDERR") || die "Can't restore stderr: $!";
+  open(STDOUT, ">&OLDOUT") || die "Can't restore stdout: $!";
+}
+##############################################################
+sub redirect_streams
+{
+  open OLDOUT,">&STDOUT" || die "Can't duplicate STDOUT: $!";
+  open OLDERR,">&STDERR" || die "Can't duplicate STDERR: $!";
+  open(STDOUT,">> $logfile");
+  open(STDERR,">&STDOUT");
+}
+##############################################################

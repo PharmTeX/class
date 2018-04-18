@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/04/17}
-\def\pharmtexversion{1.5}
+\def\pharmtexdate{2018/04/19}
+\def\pharmtexversion{1.6}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -379,6 +379,7 @@
 \newcommand{\pmxmidrule}{\toprule} % default midrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newcommand{\pmxbottomrule}{\bottomrule} % default bottomrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newoutputstream{tmp}\newcommand{\savefile}[2]{\openoutputfile{#1}{tmp}\addtostream{tmp}{#2}\closeoutputstream{tmp}}
+\newcommand{\hyperoff}[1]{\begin{NoHyper}#1\end{NoHyper}} % command for turning off a specific hyperlink for a \cref command
 
 %%% Spacing in enumerate and itemize. Can also be changed in each list using [noitemsep] etc.
 \setlist{noitemsep}
@@ -1181,6 +1182,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 { and~#2#1#3}{, #2#1#3}{ and~#2#1#3}
 \Crefmultiformat{equation}{#2Equations~#1#3}%
 { and~#2#1#3}{, #2#1#3}{ and~#2#1#3}
+\crefalias{subequation}{equation}
 \crefformat{appendices}{Appendix~(#2#1#3)}
 
 %%% Prevent links to same page
@@ -1216,7 +1218,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{nref}%
    \label{\thenref}%
    \ifnumequal{\getpagerefnumber{\thenref}}{\getpagerefnumber{#1}}%
-    {\ref*{#1}}{\ref{#1}}%
+    {\begin{NoHyper}\ref{#1}\end{NoHyper}}{\ref{#1}}%
 }
 \newcounter{pref}
    \renewcommand*{\thepref}{pref:\the\value{pref}}
@@ -1225,7 +1227,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{pref}%
    \label{\thepref}%
    \ifnumequal{\getpagerefnumber{\thepref}}{\getpagerefnumber{#1}}%
-    {\pageref*{#1}}{\pageref{#1}}%
+    {\begin{NoHyper}\pageref{#1}\end{NoHyper}}{\pageref{#1}}%
 }
 \newcounter{subref}
    \renewcommand*{\thesubref}{subref:\the\value{subref}}
@@ -1234,7 +1236,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{subref}%
    \label{\thesubref}%
    \ifnumequal{\getpagerefnumber{\thesubref}}{\getpagerefnumber{#1}}%
-    {\cussubref*{#1}}{\cussubref{#1}}%
+    {\begin{NoHyper}\cussubref{#1}\end{NoHyper}}{\cussubref{#1}}%
 }
 \let\sref\subref
 \newcounter{cref}
@@ -1244,7 +1246,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{cref}%
    \label{\thecref}%
    \ifnumequal{\getpagerefnumber{\thecref}}{\getpagerefnumber{#1}}%
-    {\cuscref*{#1}}{\cuscref{#1}}%
+    {\begin{NoHyper}\cuscref{#1}\end{NoHyper}}{\cuscref{#1}}%
 }
 \newcounter{Cref}
    \renewcommand*{\theCref}{Cref:\the\value{Cref}}
@@ -1253,7 +1255,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{Cref}%
    \label{\theCref}%
    \ifnumequal{\getpagerefnumber{\theCref}}{\getpagerefnumber{#1}}%
-    {\cusCref*{#1}}{\cusCref{#1}}%
+    {\begin{NoHyper}\cusCref{#1}\end{NoHyper}}{\cusCref{#1}}%
 }
 \newcounter{crefrange}
    \renewcommand*{\thecrefrange}{crefrange:\the\value{crefrange}}
@@ -1262,7 +1264,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{crefrange}%
    \label{\thecrefrange}%
    \ifnumequal{\getpagerefnumber{\thecrefrange}}{\getpagerefnumber{#1}}%
-    {\cuscrefrange*{#1}}{\cuscrefrange{#1}}%
+    {\begin{NoHyper}\cuscrefrange{#1}\end{NoHyper}}{\cuscrefrange{#1}}%
 }
 \newcounter{Crefrange}
    \renewcommand*{\theCrefrange}{Crefrange:\the\value{Crefrange}}
@@ -1271,7 +1273,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{Crefrange}%
    \label{\theCrefrange}%
    \ifnumequal{\getpagerefnumber{\theCrefrange}}{\getpagerefnumber{#1}}%
-    {\cusCrefrange*{#1}}{\cusCrefrange{#1}}%
+    {\begin{NoHyper}\cusCrefrange{#1}\end{NoHyper}}{\cusCrefrange{#1}}%
 }
 \newcounter{cpageref}
    \renewcommand*{\thecpageref}{cpageref:\the\value{cpageref}}
@@ -1280,7 +1282,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{cpageref}%
    \label{\thecpageref}%
    \ifnumequal{\getpagerefnumber{\thecpageref}}{\getpagerefnumber{#1}}%
-    {\cuscpageref*{#1}}{\cuscpageref{#1}}%
+    {\begin{NoHyper}\cuscpageref{#1}\end{NoHyper}}{\cuscpageref{#1}}%
 }
 \newcounter{Cpageref}
    \renewcommand*{\theCpageref}{Cpageref:\the\value{Cpageref}}
@@ -1289,7 +1291,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{Cpageref}%
    \label{\theCpageref}%
    \ifnumequal{\getpagerefnumber{\theCpageref}}{\getpagerefnumber{#1}}%
-    {\cusCpageref*{#1}}{\cusCpageref{#1}}%
+    {\begin{NoHyper}\cusCpageref{#1}\end{NoHyper}}{\cusCpageref{#1}}%
 }
 \newcounter{cpagerefrange}
    \renewcommand*{\thecpagerefrange}{cpagerefrange:\the\value{cpagerefrange}}
@@ -1298,7 +1300,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{cpagerefrange}%
    \label{\thecpagerefrange}%
    \ifnumequal{\getpagerefnumber{\thecpagerefrange}}{\getpagerefnumber{#1}}%
-    {\cuscpagerefrange*{#1}}{\cuscpagerefrange{#1}}%
+    {\begin{NoHyper}\cuscpagerefrange{#1}\end{NoHyper}}{\cuscpagerefrange{#1}}%
 }
 \newcounter{Cpagerefrange}
    \renewcommand*{\theCpagerefrange}{Cpagerefrange:\the\value{Cpagerefrange}}
@@ -1307,7 +1309,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
    \stepcounter{Cpagerefrange}%
    \label{\theCpagerefrange}%
    \ifnumequal{\getpagerefnumber{\theCpagerefrange}}{\getpagerefnumber{#1}}%
-    {\cusCpagerefrange*{#1}}{\cusCpagerefrange{#1}}%
+    {\begin{NoHyper}\cusCpagerefrange{#1}\end{NoHyper}}{\cusCpagerefrange{#1}}%
 }
 \newcommand{\footnote}[1]{\begin{NoHyper}\cusfootnote{#1}\end{NoHyper}}
 
