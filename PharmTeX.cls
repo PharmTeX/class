@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/04/19}
-\def\pharmtexversion{1.6}
+\def\pharmtexdate{2018/07/13}
+\def\pharmtexversion{1.7}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -54,31 +54,25 @@
 \DeclareOption{noglossary}{\glossaryfalse\cglossarytrue}
 \DeclareOption{glossary}{\glossarytrue\cglossarytrue}
 
-%%% Option to not show synopsis
+%%% Option to synopsis
 \newif\ifsynopsis\synopsistrue
 \newif\ifcsynopsis\csynopsisfalse
 \DeclareOption{nosynopsis}{\synopsisfalse\csynopsistrue}
 \DeclareOption{synopsis}{\synopsistrue\csynopsistrue}
 
-%%% Option to not show signature page
+%%% Option to signature page
 \newif\ifsigpage\sigpagetrue
 \newif\ifcsigpage\csigpagefalse
 \DeclareOption{nosigpage}{\sigpagefalse\csigpagetrue}
 \DeclareOption{sigpage}{\sigpagetrue\csigpagetrue}
 
-%%% Option to not show artifact list appendix
-\newif\ifitemlist\itemlisttrue
-\newif\ifcitemlist\citemlistfalse
-\DeclareOption{noitemlist}{\itemlistfalse\citemlisttrue}
-\DeclareOption{itemlist}{\itemlisttrue\citemlisttrue}
-
-%%% Option to not allow same page hyperlinks
+%%% Option allow same page hyperlinks
 \newif\ifsamepagelinks\samepagelinksfalse
 \newif\ifcsamepagelinks\csamepagelinksfalse
 \DeclareOption{nosamepagelinks}{\samepagelinksfalse\csamepagelinkstrue}
 \DeclareOption{samepagelinks}{\samepagelinkstrue\csamepagelinkstrue}
 
-%%% Option to not show glossary hyperlinks
+%%% Option to show glossary hyperlinks
 \newif\ifglosshyper\glosshyperfalse
 \newif\ifcglosshyper\cglosshyperfalse
 \DeclareOption{noglosshyper}{\glosshyperfalse\cglosshypertrue}
@@ -90,17 +84,29 @@
 \DeclareOption{nowebhyper}{\webhyperfalse\cwebhypertrue}
 \DeclareOption{webhyper}{\webhypertrue\cwebhypertrue}
 
+%%% Option to show item IDs
+\newif\ifitemid\itemidtrue
+\newif\ifcitemid\citemidfalse
+\DeclareOption{noitemid}{\itemidfalse\citemidtrue}
+\DeclareOption{itemid}{\itemidtrue\citemidtrue}
+
+%%% Option to item number hyperlinks
+\newif\ifitemhyper\itemhypertrue
+\newif\ifcitemhyper\citemhyperfalse
+\DeclareOption{noitemhyper}{\itemhyperfalse\citemhypertrue}
+\DeclareOption{itemhyper}{\itemhypertrue\citemhypertrue}
+
+%%% Option to show artifact IDs
+\newif\ifartifactid\artifactidtrue
+\newif\ifcartifactid\cartifactidfalse
+\DeclareOption{noartifactid}{\artifactidfalse\cartifactidtrue}
+\DeclareOption{artifactid}{\artifactidtrue\cartifactidtrue}
+
 %%% Option to show artifact ID hyperlinks
 \newif\ifartihyper\artihyperfalse
 \newif\ifcartihyper\cartihyperfalse
 \DeclareOption{noartihyper}{\artihyperfalse\cartihypertrue}
 \DeclareOption{artihyper}{\artihypertrue\cartihypertrue}
-
-%%% Option to hide all artifact IDs in final version. Final is default
-\newif\ifitemid\itemidtrue
-\newif\ifcitemid\citemidfalse
-\DeclareOption{noitemid}{\itemidfalse\citemidtrue}
-\DeclareOption{itemid}{\itemidtrue\citemidtrue}
 
 %%% Option for draftmode
 \newif\ifdraftmode\IfFileExists{batch.txt}{\draftmodefalse}{\draftmodetrue}
@@ -137,6 +143,12 @@
 \newif\ifcexpdf\cexpdffalse
 \DeclareOption{noexpdf}{\expdffalse\cexpdftrue}
 \DeclareOption{expdf}{\expdftrue\cexpdftrue}
+
+%%% Option to put figure captions below the figure
+\newif\iffigcapbelow\figcapbelowfalse
+\newif\ifcfigcapbelow\cfigcapbelowfalse
+\DeclareOption{nofigcapbelow}{\figcapbelowfalse\cfigcapbelowtrue}
+\DeclareOption{figcapbelow}{\figcapbelowtrue\cfigcapbelowtrue}
 
 %%% Option to select paper size.
 \newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.54 cm}
@@ -203,13 +215,10 @@
 
 %%% Settings for synopsis only mode
 \ifsynonly
-	% \ifccoverpage\else\coverpagefalse\fi
 	\ifcsigpage\else\sigpagefalse\fi
 	\ifctoc\else\tocfalse\fi
 	\ifclot\else\lotfalse\fi
 	\ifclof\else\loffalse\fi
-	% \ifcglossary\else\glossaryfalse\fi
-	% \ifcglosshyper\else\glosshyperfalse\fi
 \fi
 
 %%% Settings for draftmode
@@ -218,6 +227,7 @@
 	\ifcwatermark\else\watermarktrue\fi
 	\ifcglosshyper\else\glosshypertrue\fi
 	\ifcwebhyper\else\webhypertrue\fi
+	\ifcitemhyper\else\itemhypertrue\fi
 	\ifcartihyper\else\artihypertrue\fi
 	\ifcsamepagelinks\else\samepagelinkstrue\fi
 \fi
@@ -281,26 +291,41 @@
 %%% Set date format
 \def\today{\two@digits{\the\day}~\ifcase\month\or JAN\or FEB\or MAR\or APR\or MAY\or JUN\or JUL\or AUG\or SEP\or OCT\or NOV\or DEC\fi~\number\year}
 
-%%% Settings for artihyper
+%%% Settings for artifactid
 \newcommand{\aid}{}
 \newcommand{\afid}{}
+\ifartihyper
+\newcommand{\artiref}[1]{#1\xspace} % change this line to add a hyperlink using \href
+\newcommand{\folderref}[1]{#1\xspace} % change this line to add a hyperlink using \href
+\else
 \newcommand{\artiref}[1]{#1\xspace}
 \newcommand{\folderref}[1]{#1\xspace}
-\ifartihyper
-%\renewcommand{\artiref}[1]{\renewcommand{\aid}{#1}\StrGobbleLeft{\aid}{2}[\aid]\href{http://\aid}{#1}\xspace}
-%\renewcommand{\folderref}[1]{\renewcommand{\afid}{#1}\StrGobbleLeft{\afid}{2}[\afid]\href{http://\afid}{#1}\xspace}
+\fi
+\ifartifactid
+\newcommand{\artifactid}[1]{Artifact ID \artiref{#1}\xspace}
+\else
+\newcommand{\artifactid}[1]{Artifact ID (omitted)\xspace}
+\renewcommand{\artiref}[1]{(omitted)\xspace}
+\renewcommand{\folderref}[1]{(omitted)\xspace}
+\artifactlistfalse
 \fi
 
 %%% Settings for itemid
+\ifitemhyper
+\newcommand{\itemref}{\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}}
+\newcommand{\itemreref}[1]{\hyperlink{itemnumber#1}{Item #1}}
+\else
+\newcommand{\itemref}{Item \theitemnumber}
+\newcommand{\itemreref}[1]{Item #1}
+\fi
 \newcommand{\ioutput}{0}
 \newcommand{\itemid}[1]{}
 \ifitemid
-\renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}, Artifact ID \artiref{#1}\fi}
+\renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, Artifact ID \artiref{#1}\fi}
 \else
 \renewcommand{\itemid}[1]{\ifnum\ioutput=1 Item ID omitted\xspace\else{}Item ID omitted, Artifact ID omitted\xspace\fi}
 \renewcommand{\artiref}[1]{(omitted)\xspace}
 \renewcommand{\folderref}[1]{(omitted)\xspace}
-\itemlistfalse
 \fi
 
 %%% Lengths
@@ -315,26 +340,34 @@
 \newcommand{\fname}{}
 \newcounter{itemnumber}
 \newcommand{\rfiles}{myveryuniqueseparator}
+\newcommand{\itemartifact}{}
+\newcommand{\itemrfile}{}
+\newcommand{\curitem}{}
 \newcommand{\artifacts}{}
-\newcommand{\artifactnames}{}
 \newcommand{\missingartifacts}{}
+\newcommand{\missingrfiles}{}
 % \perlnewcommand{\findartifact}[1]{
 %%% Note that the % symbols are required to be there, since otherwise a few of the commands using the \checkartifact command will have issues with line spacing
+\newcommand\additemrfile{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemrfile\expandafter{\expandafter;\exptmp}}
+\newcommand\additemartifact{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemartifact\expandafter{\expandafter;\exptmp}}
 \newcommand{\checkartifact}[1]{%
 \findartifact{#1}%
+\addtocounter{itemnumber}{1}%
 \ifnum\ioutput=1%
+\additemrfile%
 \iffast\let\fname\empty\fi%
 \filename@parse{\fname}%
 \edef\fbase{\filename@base}%
 \edef\fext{\filename@ext}%
 \g@addto@macro\rfiles{myveryuniqueseparator#1}%
+\ifx\fname\empty\g@addto@macro\missingrfiles{myveryuniqueseparator#1}\fi%
 \else%
+\additemartifact%
 \ifx\fname\empty%
 \edef\fbase{}%
 \edef\fext{}%
 \g@addto@macro\missingartifacts{#1,}%
 \g@addto@macro\artifacts{#1,}%
-\g@addto@macro\artifactnames{#1* }%
 \addtocounter{noartifacts}{1}%
 \else%
 \iffast\let\fname\empty\fi%
@@ -342,7 +375,6 @@
 \edef\fbase{\filename@base}%
 \edef\fext{\filename@ext}%
 \g@addto@macro\artifacts{#1,}%
-\g@addto@macro\artifactnames{#1* }%
 \addtocounter{noartifacts}{1}%
 \fi%
 \fi%
@@ -374,7 +406,6 @@
 \newcommand{\pmxtight}{\renewcommand{\dotight}{1}} % command for setting the \dotight flag
 \newcommand{\allowchangefont}{1} % change to 0 to disable font changing option (\tablefont) for main body - will then only work in appendices.
 \newcommand{\pmxfont}[1]{\ifnum\allowchangefont=1 \renewcommand{\tablefont}{#1} \renewcommand{\listingfont}{#1} \fi} % command for changing the tablefont and listingfont
-\newcommand{\describe}[1]{#1} % command that holds the description below \pmxXXXXX commands. Can be disabled if needed by replacing with \newcommand{\describe}[1]{}.
 \newcommand{\pmxtoprule}{\toprule} % default toprule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newcommand{\pmxmidrule}{\toprule} % default midrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newcommand{\pmxbottomrule}{\bottomrule} % default bottomrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
@@ -395,7 +426,6 @@ ITEM #1 NOT FOUND
 \else
 \hypertarget{itemnumber\theitemnumber}{}
 \includetex{\fname}
-\includetexdoc
 \fi
 }
 
@@ -457,6 +487,10 @@ ITEM #1 NOT FOUND%
 % open(FILE, ">debug.txt");
 % print FILE "$somevariable or @somearray";
 % close(FILE);
+\newcommand{\dodescription}{0}
+\newcommand{\isinlinetable}{}
+\newcommand{\mytabledescription}{}
+\newcommand{\mytableitemnumber}{}
 \newcommand{\syntab}{0}
 \newcommand{\csvtable}{}
 % \perlnewcommand{\includecsv}[8]{
@@ -464,6 +498,8 @@ ITEM #1 NOT FOUND%
 \newcommand{\tmpsubstnote}{}
 \newcommand{\pmxtable}[8][1]{
 
+\renewcommand{\dodescription}{0}
+\renewcommand{\isinlinetable}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tmpsubstnote}{}
@@ -481,13 +517,15 @@ ITEM #1 NOT FOUND%
 	\endfoot\bottomrule\endlastfoot
 \end{tabularx}
 \else
-% \catcode`\%=12 \catcode`\#=12
+\fixnewline{\detokenize{#7}}
+\renewcommand{\mytableitemnumber}{\itemid{#2}}
+\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{\fname}{#3}{#4}{#5}{#6}{\detokenize{#8}}{\dotight}{0}
 \csvtable
-\footnotesize
-% \catcode`\%=14 \catcode`\#=6
-\vspace{-1.8\baselineskip}
-\ifitemid{}\itemid{#2}\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\xspace\describe{#7}}
+\vspace{-1.3\baselineskip}
+% \footnotesize
+% \vspace{-1.8\baselineskip}
+% \ifitemid{}\itemid{#2}\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\xspace#7}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -501,6 +539,8 @@ ITEM #1 NOT FOUND%
 \newcounter{textable}\setcounter{textable}{0}
 \newcommand{\pmxtextable}[6][1]{
 
+\renewcommand{\dodescription}{0}
+\renewcommand{\isinlinetable}{1}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tmpsubstnote}{}
@@ -510,25 +550,19 @@ ITEM #1 NOT FOUND%
 \setcounter{tnote}{0}
 \addtocounter{textable}{1}
 
-%% Load directly without printing. Doesn't work with non-ascii chars, so printing to file instead.
-% \catcode`\%=12 \catcode`\#=12
-% \includecsv{#1}{}{tex}{#2}{#3}{#4}{\detokenize{#6}}{\dotight}
-% \tablefont
-% \csvtable
-% \footnotesize
-% \catcode`\%=14 \catcode`\#=6
-
 %% Load via printed file.
-\savefile{textable.tmp.txt}{\detokenize{#6}}
+\savefile{file.tmp.txt}{\detokenize{#6}}
 \tablefont
-% \catcode`\%=12 \catcode`\#=12
-\includecsv{#1}{textable.tmp.txt}{tex}{#2}{#3}{#4}{}{\dotight}{1}
+\fixnewline{\detokenize{#5}}
+\renewcommand{\mytableitemnumber}{\itemid{#2}}
+\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
+\includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{#4}{}{\dotight}{1}
 \csvtable
-\footnotesize
-% \catcode`\%=14 \catcode`\#=6
 
-\vspace{-1.8\baselineskip}
-\ifitemid{}Inline table\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace\describe{#5}}
+\vspace{-1.3\baselineskip}
+% \footnotesize
+% \vspace{-1.8\baselineskip}
+% \ifitemid{}Inline table\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -560,14 +594,16 @@ ITEM #1 NOT FOUND%
 
 % Clear last comma or separator in lists of items created by this template
 \StrGobbleRight{\artifacts}{1}[\artifacts]
-\StrGobbleRight{\artifactnames}{1}[\artifactnames]
 \StrGobbleRight{\missingartifacts}{1}[\missingartifacts]
 \StrGobbleLeft{\rfiles}{21}[\rfiles]
+\StrGobbleLeft{\missingrfiles}{21}[\missingrfiles]
+\StrGobbleLeft{\itemartifact}{1}[\itemartifact]
+\StrGobbleLeft{\itemrfile}{1}[\itemrfile]
 
 \newcommand{\docsvtable}{0}
 \ifx\rfiles\empty\ifx\artifacts\empty\else\renewcommand{\docsvtable}{1}\fi\else\renewcommand{\docsvtable}{1}\fi
 
-\ifitemlist\ifnum\docsvtable=0\else
+\ifitemid\ifnum\docsvtable=0\else
 \renewcommand{\csvtable}{}
 %\begin{landscape}
 \section*{\itemlistname}
@@ -580,10 +616,8 @@ ITEM #1 NOT FOUND%
 \setlength\LTcapwidth{\maxwidth} % default: 4in
 \setlength\LTleft{0pt}           % default: \parindent
 \setlength\LTright{0pt}          % default: \fill
-%\catcode`\%=12 \catcode`\#=12
-\includemetacsv{\artifacts}{\rfiles}{\theitemnumber}
+\includemetacsv{\artifacts}{\rfiles}{\theitemnumber}{\itemartifact}{\itemrfile}
 \csvtable
-%\catcode`\%=14 \catcode`\#=6
 %\end{landscape}
 \fi\fi
 \normalsize
@@ -634,6 +668,7 @@ ITEM \QAPage{} NOT FOUND
 % Perl function for plotting PDF files with one or several page
 \newcommand{\synfig}{0}
 \newcommand{\tmpstr}{}
+\newcommand{\figcapbelow}{0}
 % \perlnewcommand{\makesubfigopt}[1]{
 % \perlnewcommand{\makesubfig}[3]{
 \newcommand{\issubfigure}{0}
@@ -646,13 +681,14 @@ ITEM \QAPage{} NOT FOUND
 \IfSubStr{#1}{&}{\renewcommand{\issubfigure}{1}}{\IfSubStr{#1}{|}{\renewcommand{\issubfigure}{1}}{\renewcommand{\issubfigure}{0}}}
 \IfSubStr{\issubfigure}{1}{
 \makesubfigopt{#5}
+\iffigcapbelow\renewcommand{\figcapbelow}{1}\else\renewcommand{\figcapbelow}{0}\fi
 \begin{figure}[H]
-	\makesubfig{#1}{#2}{#3}
+	\makesubfig{#1}{#2}{#3}{\figcapbelow}
+	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
+	\iffigcapbelow\quad\\[-0.4\baselineskip]\fi % caption below
+	\footnotesize\ifthenelse{\equal{\detokenize{#4}}{}}{}{#4}
 \end{figure}
-\vspace{-1.2\baselineskip}
-\footnotesize
-\ifthenelse{\equal{\detokenize{#4}}{}}{}{\describe{#4}}
-\normalsize
+\vspace{-0.8\baselineskip}
 }{
 \checkartifact{#1}
 \ifx\fname\empty
@@ -662,34 +698,30 @@ ITEM \QAPage{} NOT FOUND
 \fi
 \ifnum\numberofpages>1\renewcommand{\tmpstr}{ (1 of \numberofpages)}\else\renewcommand{\tmpstr}{}\fi
 \begin{figure}[H]
-	\figlabel{#3\tmpstr}{#2}
-%	\centering
+	\iffigcapbelow\else\figlabel{#3\tmpstr}{#2}\fi % caption above
 	\ifx\fname\empty ITEM #1 NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
+	\iffigcapbelow\figlabel{#3\tmpstr}{#2}\fi % caption below
+	\ifnum\numberofpages=1
+	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
+	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
 \end{figure}
-\vspace{-1.2\baselineskip}
-\footnotesize
-\ifnum\numberofpages=1
-\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\describe{#4}~}
-\normalsize
-\fi
+\vspace{-0.8\baselineskip}
 \ifnum\numberofpages>1
 %\clearpage
 \foreach \x in {2,...,\numberofpages}{
 \addtocounter{figure}{-1}
 \begin{figure}[H]
-	\caption[]{#3 (\x{} of \numberofpages)}
-%	\centering
+	\iffigcapbelow\else\caption[]{#3 (\x{} of \numberofpages)}\fi % caption above
 	\includegraphics[page=\x,#5]{\fname}
+	\iffigcapbelow\caption[]{#3 (\x{} of \numberofpages)}\fi % caption below
+	\ifnum\x=\numberofpages
+	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
+	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
 \end{figure}
-\vspace{-1.2\baselineskip}
-\footnotesize
-\ifnum\x=\numberofpages
-\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\describe{#4}}
-\normalsize
-~
-\else
-\clearpage
-\fi}
+\vspace{-0.8\baselineskip}
+\ifnum\x=\numberofpages\else\clearpage\fi}
 \fi}
 \endgroup
 
@@ -701,15 +733,14 @@ ITEM \QAPage{} NOT FOUND
 \renewcommand{\synfig}{1}
 \begingroup
 \begin{figure}[H]
-	\figlabel{#2}{#1}
-%	\centering
+	\iffigcapbelow\else\figlabel{#2}{#1}\fi % caption above
 	#4
+	\iffigcapbelow\figlabel{#2}{#1}\fi % caption below
+	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption below
+	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\footnotesize\ifitemid{}Inline figure\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace#3}
 \end{figure}
-\vspace{-1.2\baselineskip}
-\footnotesize
-%\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\describe{#4}~}
-\ifitemid{}Inline figure\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace\describe{#3}}
-\normalsize
+\vspace{-0.8\baselineskip}
 \endgroup
 
 }
@@ -755,25 +786,25 @@ ITEM \QAPage{} NOT FOUND
 \listingfont
 \ifx\fname\empty
 \printtmplisting{#1}
-\lstinputlisting[numbers={none},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}
+\lstinputlisting[numbers={none},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}
 \else
 \printlstlisting{\fname}
 % RETAIN % symbols below, if not, line spacing will not behave properly
 \IfStrEqCase{#2}{%
-{nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{Nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{NONMEM}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{matlab}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{MATLAB}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{r}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{R}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
-{}{\lstinputlisting[language={Fortran},keywordstyle={\color[rgb]{0,0,0}},commentstyle={\color[rgb]{0,0,0}},stringstyle={\color[rgb]{0,0,0}},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}}%
+{nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{Nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{NONMEM}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{matlab}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{MATLAB}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{r}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{R}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{}{\lstinputlisting[language={Fortran},keywordstyle={\color[rgb]{0,0,0}},commentstyle={\color[rgb]{0,0,0}},stringstyle={\color[rgb]{0,0,0}},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
 }[\renewcommand{\dootherlang}{1}]%
-\ifnum\dootherlang=1 \lstinputlisting[language={#2},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{#1.tmp.txt}\fi
+\ifnum\dootherlang=1 \lstinputlisting[language={#2},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}\fi
 \fi
 \footnotesize
 \vspace{-1.2\baselineskip}
-\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace\describe{#5}}
+\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -1165,7 +1196,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \crefname{subsubsection}{Section}{Sections}
 \crefname{paragraph}{Section}{Sections}
 \crefname{subparagraph}{Section}{Sections}
-\crefname{figure}{Figure}{Figures} 
+\crefname{figure}{Figure}{Figures}
 \crefname{table}{Table}{Tables}
 \crefname{equation}{Equation}{Equations}
 \crefname{plequation}{Equations}{Equations}
@@ -1900,7 +1931,7 @@ ITEM \GlsFile.tex NOT FOUND.
 }
 
 % Create perl files>
-% getartifacts.txt - artifacts to download
+% missingartifacts.txt - artifacts to download
 % finalize.pl - deletes artifacts and temporary files in the LaTeX compilation sequence
 % clear.pl - executed with F4 in Texmaker, deletes temporary files and, if run is a server run, also all downloaded artifacts
 % \perlnewcommand{\createfiles}[5]{
@@ -1913,15 +1944,20 @@ ITEM \GlsFile.tex NOT FOUND.
 \end{appendices}
 \fi\fi
 
+% Clear last comma or separator in lists of items created by this template
+\StrGobbleRight{\artifacts}{1}[\artifacts]
+\StrGobbleRight{\missingartifacts}{1}[\missingartifacts]
+\StrGobbleLeft{\missingrfiles}{21}[\missingrfiles]
+
 % True false variables as well as perl script printing
 \ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{\jobname}\fi
 \newcommand{\doprintsig}{0}\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi
-\newcommand{\dogetartifacts}{0}\ifx\missingartifacts\empty\else\renewcommand{\dogetartifacts}{1}\fi
+\newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
 \ifdraftmode
-\createfiles{\jobname}{\DocPDF}{\missingartifacts}{\dogetartifacts}{\doprintsig} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
+\createfiles{\jobname}{\DocPDF}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
 %\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig} % DRAFT MODE: download ALL artifacts (possibly again) when at least 1 artifact is missing
 \else
-\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig} % BATCH MODE: download ALL artifacts
+\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % BATCH MODE: download ALL artifacts
 \fi
 
 }

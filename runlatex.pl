@@ -34,7 +34,7 @@ if ( grep $_ eq $mode, < batch full fast err syn fmt noperl clear jabref > ) {} 
 
 # Files to delete in cleanup
 unlink ('dodel.txt');
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "getartifacts.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "batch.txt", "dotwice", "rpath.txt", "PharmTeX.log", "PharmTeX.fmt", "useroptions.txt", "useroptionscomp.txt", "delauxitems.pl", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.tmp.txt>, <*.pax>, <*.pay>, <noperltex-*.tex>);
+my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "batch.txt", "dotwice", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "useroptions.txt", "useroptionscomp.txt", "delauxitems.pl", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>);
 
 # Start JabRef if requested
 if ( $mode eq 'jabref' ) {
@@ -196,13 +196,25 @@ if ( $mode eq 'noperl' ) {
 # Check for existence of noperl file
 if ( -e 'noperl.txt' ) { $perltex = "$pdflatex"; };
 
-# Check for and run fast/err mode
-if (( $mode eq 'fast' ) || ( $mode eq 'err' )) {
+# Check for and run fast mode
+if ( $mode eq 'fast' ) {
 	$txt = "\nFast compile started\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	$txt = "Compiling document using Perltex\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
 	unlink "fixfiles";
+	
+	# If artifacts and/or other input files are missing, print warning
+	if (( -e 'missingartifacts.txt' ) || ( -e 'missingfiles.txt' )) { print STDERR "\nWarning: There are missing input files. Rerun using F1 or F12 and check LIST OF ITEMS.\n\n"; } 
+}
+
+# Check for and run err mode (debugging in terminal)
+if ( $mode eq 'err' ) {
+	restore_streams();
+	open(FILE, '>', 'fixfiles'); close(FILE);
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
+	unlink "fixfiles";
+	redirect_streams();
 }
 
 # Check for and run full mode
@@ -220,7 +232,7 @@ if ( $mode eq 'full' ) {
 	# }
 	$txt = "\nCompiling glossaries (step 2/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	if ( -e "$name.glo" ) { system("makeglossaries -q \"$name\"");}
-	$txt = "Compiling citations (step 3/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
+	$txt = "\nCompiling citations (step 3/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("bibtex \"$name\"");
 	$txt = "\nCompiling document using Perltex (step 4/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
@@ -228,6 +240,9 @@ if ( $mode eq 'full' ) {
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
 	$txt = "\nCompiling document using Perltex (step 6/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -synctex=$synctex \"$nametex\"");
+	
+	# If artifacts and/or other input files are missing, print warning
+	if (( -e 'missingartifacts.txt' ) || ( -e 'missingfiles.txt' )) { print STDERR "\nWarning: There are missing input files. Check LIST OF ITEMS.\n\n"; } 
 }
 
 # Rename all files back to original name
@@ -245,7 +260,7 @@ if ( $finalize == 1 ) {
 		unlink "batch.txt";
 	}
 	do './delauxitems.pl';
-	unlink @delfiles, 'textable.tmp.txt';
+	unlink @delfiles;
 }
 
 # Move original file back if needed

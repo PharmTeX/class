@@ -76,8 +76,8 @@ if ($artid =~ /RA[0-9]+/) {
 	my @filelist = grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D)));
 	closedir D;
 	my $nl = scalar @filelist;
-	if ($nl > 0) {return "\\renewcommand{\\ioutput}{0}\\renewcommand{\\fname}{$filelist[0]}\\addtocounter{itemnumber}{1}";}
-	else {return "\\renewcommand{\\ioutput}{0}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";}
+	if ($nl > 0) {return "\\renewcommand{\\ioutput}{0}\\renewcommand{\\fname}{$filelist[0]}";}
+	else {return "\\renewcommand{\\ioutput}{0}\\let\\fname\\empty";}
 }
 else {
 	if (-f $artid) {
@@ -90,14 +90,14 @@ else {
 			$pages = 1;
 		}
 		if ($pages > 0) {
-			return "\\renewcommand{\\ioutput}{1}\\renewcommand{\\fname}{$artid}\\addtocounter{itemnumber}{1}";
+			return "\\renewcommand{\\ioutput}{1}\\renewcommand{\\fname}{$artid}";
 		}
 		else {
-			return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";
+			return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty";
 		}
 	}
 	else {
-		return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty\\addtocounter{itemnumber}{1}";
+		return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty";
 	}
 }}
 \perlnewcommand{\dotwice}{
@@ -138,12 +138,12 @@ eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
 if ( $mkfile == 1 ) {
-	open(FILE, '>:utf8', "$file.tmp.txt");
+	open(FILE, '>:utf8', 'file.tmp.txt');
 	print FILE "\n$str\n";
 	close(FILE);
-	return "\\renewcommand{\\includetexdoc}{\\input{$file.tmp.txt}}";
+	return "\\input{file.tmp.txt}";
 } else {
-	return "\\renewcommand{\\includetexdoc}{\n$str\n}";
+	return "\n$str\n";
 }}
 \perlnewcommand{\inputtext}[1]{
 use strict;
@@ -170,12 +170,12 @@ eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
 if ( $mkfile == 1 ) {
-	open(FILE, '>:utf8', "$file.tmp.txt");
-	print FILE "$str\\footnote{\\itemid{#1}}\\ignorespaces";
+	open(FILE, '>:utf8', 'file.tmp.txt');
+	print FILE "$str\\ifitemid\\fi\\footnote{\\itemid{#1}}\\ignorespaces";
 	close(FILE);
-	return "\\input{$file.tmp.txt}";
+	return "\\input{file.tmp.txt}";
 } else {
-	return "$str\\footnote{\\itemid{#1}}\\ignorespaces";
+	return "$str\\ifitemid\\fi\\footnote{\\itemid{#1}}\\ignorespaces";
 }}
 \perlnewcommand{\fixbib}[1]{
 use strict;
@@ -538,6 +538,18 @@ if ($dotight == 1) {
 	$colspec = "@cols"; $colspec =~ s/ //g;
 }
 
+# Make sure that at least two rows are moved to next page on automatic page break
+my $nrow = scalar @body - 1; my @endbody;
+if ($nrow==0) {
+	@endbody = <>;
+} elsif ($nrow==1) {
+	@endbody = @body[0]; @body = @body[1];
+} else {
+	@endbody = @body[$nrow];
+	@body = @body[0..$nrow-1];
+}
+my $ncoldesc = $ncol + 1;
+
 my $retstr = "
 \\renewcommand{\\tmpsubstnote}{$substnote}
 \\renewcommand{\\csvtable}{
@@ -545,7 +557,19 @@ my $retstr = "
 	\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endfirsthead\\caption[]{$label}\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endhead
-	\\endfoot\\pmxbottomrule\\endlastfoot
+	\\endfoot
+	 @endbody 
+	\\pmxbottomrule
+	\\ifnum\\dodescription=1
+	\\ifnum\\isinlinetable=0
+	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{}\\\\[-8pt]
+	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{\\footnotesize\\ifitemid{}\\mytableitemnumber\\tmpsubstnote\\xspace\\fi\\ifthenelse{\\equal{\\detokenize{\\mytabledescription}}{}}{}{\\mytabledescription}}
+	\\else
+	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{}\\\\[-8pt]
+	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{\\footnotesize\\ifitemid{}Inline table\\tmpsubstnote\\xspace\\fi\\ifthenelse{\\equal{\\detokenize{\\mytabledescription}}{}}{}{\\mytabledescription}}
+	\\fi
+	\\fi
+	\\endlastfoot
 	 @body 
 \\end{tabularx}
 }";
@@ -558,6 +582,7 @@ if ($dovert == 1) {
 	$retstr =~ s/\\bottomrule/\\hline/g;
 }
 
+$retstr =~ s/(\n *)\[/$1\{\[\}/g;
 $retstr =~ s/[\t,\n]//g;
 $retstr =~ s/myveryuniquecomma/,/g;
 $retstr =~ s/myveryuniquetab/\t/g;
@@ -577,14 +602,14 @@ eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
 if ( $mkfile == 1 ) {
-	open(FILE, '>:utf8', "$file.tmp.txt");
+	open(FILE, '>:utf8', 'file.tmp.txt');
 	print FILE "$str";
 	close(FILE);
-	return "\\input{$file.tmp.txt}";
+	return "\\input{file.tmp.txt}";
 } else {
 	return "$str";
 }}
-\perlnewcommand{\includemetacsv}[3]{
+\perlnewcommand{\includemetacsv}[5]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -595,25 +620,30 @@ use POSIX qw(strftime);
 my $afiles = $_[0];
 my $rfiles = $_[1];
 my $nitems = $_[2];
+my $itemartifact = $_[3];
+my $itemrfile = $_[4];
 my $nhead = 1;
 my $header = "ITEM & PATH & UPDATE (GMT)";
 my $ncoltot = 2;
 my $i;
 sub uniq { my %seen; grep !$seen{$_}++, @_; }
+my $itemnumbers = "$itemartifact;$itemrfile";
+$itemnumbers =~ s/ *//g;
+my @itemnum = split ";", $itemnumbers;
 
 # Artifacts
 my @af = split ",", $afiles; my $na = scalar @af;
-my $nl; my @aff; my @tmpfile; 
+my $nl; my @aff; my @tmpfile; my @isaf = ("1") x $na;
 for ($i=0; $i <= $na-1; $i++) { @tmpfile = glob $af[$i] . "_*"; $aff[$i] = @tmpfile[0]; }
-for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID $af[$i]"; }
-#{ $af[$i] = "Artifact ID \\artiref\{$af[$i]\}"; }
+for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID \\artiref\{$af[$i]\}"; }
 
 # Inline/R files
 my @rf = split "myveryuniqueseparator", $rfiles; @rf = @rf[1..$#rf]; my @rff;
 @rff = (@aff, @rf); @rf = (@af, @rf);
 #@rff = uniq(@rff); @rf = uniq(@rf);
 my @items = (1..$nitems);
-my $nr = scalar @rf; my $newlines = '';
+my $nr = scalar @rf; my @newlines; my @isrf = ("0") x $nr;
+@isaf = (@isaf, @isrf);
 
 my @delfiles; my $ext; my $name;
 open(FILE, '>:utf8', 'delauxitems.pl');
@@ -622,17 +652,26 @@ for ($i=0; $i <= $nr-1; $i++) {
 	($name) = $rff[$i] =~ /(^.+)\.[^.]+$/;
 	if ($ext eq "pdf") {
 		$delfiles[$i] = "\"$name.pax\", \"$name.pay\"";
-	} elsif ($ext eq "bib") {
-		$delfiles[$i] = "\"$name-tmpfixfile.$ext\"";
-	} else {
-		$delfiles[$i] = "\"$name.$ext.tmp.txt\"";
 	}
+	# elsif ($ext eq "bib") {
+		# $delfiles[$i] = "\"$name-tmpfixfile.$ext\"";
+	# } else {
+		# $delfiles[$i] = "\"$name.$ext.tmp.txt\"";
+	# }
 }
 my $allfile = join( ', ', @delfiles );
 print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");\nunlink ($allfile);";
 close(FILE);
 
-my $timestamp; my $epoch;
+# Sort items
+my @idx = sort { $itemnum[$a] <=> $itemnum[$b] } 0 .. $#itemnum;
+@itemnum = @itemnum[@idx];
+@rf = @rf[@idx];
+@rff = @rff[@idx];
+@isaf = @isaf[@idx];
+
+# Create table body
+my $timestamp; my $epoch; my $iid;
 my $sec; my $min; my $hour; my $mday; my $mon; my $year; my $wday; my $yday; my $isdst; my $tmpstr;
 if ($nr > 0) {
 	for ($i=0; $i <= $nr-1; $i++) {
@@ -642,13 +681,17 @@ if ($nr > 0) {
 			$timestamp = "MISSING FILE";
 		}
 		
+		if ($isaf[$i] eq "1") { $iid = "$rf[$i]"; }
+		else { $iid = "\\detokenize{$rf[$i]}"; }
+		
 		if ($i==0) {
-			$newlines = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\hyperlink{itemnumber$items[$i]}{Item $items[$i]} & \\detokenize{$rf[$i]} & $timestamp";
+			$newlines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\itemreref{$items[$i]} & $iid & $timestamp";
 		} else {
-			$newlines = "$newlines \\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\hyperlink{itemnumber$items[$i]}{Item $items[$i]} & \\detokenize{$rf[$i]} & $timestamp";
+			$newlines[$i] = "\\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\itemreref{$items[$i]} & $iid & $timestamp";
 		}
 	}
 }
+my $newline = join('', @newlines);
 
 # Use the lines below to have LIST OF ITEMS on the first page ONLY of the itemlist table
 # Use \@{} on left/right side of table specification to remove whitespace around table
@@ -659,17 +702,11 @@ my $retstr = "
 	\\toprule $header \\\\\\toprule\\endfirsthead
 	\\toprule $header \\\\\\toprule\\endhead
 	\\endfoot\\bottomrule\\endlastfoot
-	 $newlines
+	 $newline
 \\end{longtable*}
 \\catcode`\\%=14 \\catcode`\\#=6
 }";
 $retstr =~ s/[\t,\n]//g;
-
-#my $tmpstr = $retstr;
-#$tmpstr =~ s/\\\\/\\\\\n/g;
-#open(FILE, '>:utf8', 'test.txt');
-#print FILE "$tmpstr";
-#close(FILE);
 
 # Return table command
 return $retstr;
@@ -688,7 +725,7 @@ $str =~ s/\[/$i++ >= 28 ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
 $str =~ s/]/}/g;
 return "$str";
 }
-\perlnewcommand{\makesubfig}[3]{
+\perlnewcommand{\makesubfig}[4]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -697,6 +734,7 @@ binmode(STDOUT, ":utf8");
 my $str = $_[0];
 my $lbl = $_[1];
 my $cap = $_[2];
+my $figcapbelow = $_[3];
 
 $str =~ s/\.\./myveryuniquedoubledot/g;
 $str =~ s/[ \n]//g; $lbl =~ s/[ \n]//g;
@@ -704,16 +742,25 @@ my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; 
 if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	$lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
 	@lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\itemid{$1$2} \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
 	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
-	$str = "\\figlabelpl{$cap}{$lblmain} $str";
+	if ($figcapbelow == 1) {
+		$str = "$str \\figlabelpl{$cap}{$lblmain} \\quad"; # caption below
+	} else {
+		$str = "\\figlabelpl{$cap}{$lblmain} $str"; # caption above
+	}
 }
 else {
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\artifacid{$1$2} \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
 	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
-	$str = "\\figlabelpl{$cap}{$lbl} $str";
+	if ($figcapbelow == 1) {
+		$str = "$str \\figlabelpl{$cap}{$lbl} \\quad"; # caption below
+	} else {
+		$str = "\\figlabelpl{$cap}{$lbl} $str"; # caption above
+	}
+	
 }
 $str =~ s/myveryuniquedoubledot/\.\./g;
 
@@ -742,7 +789,7 @@ $str =~ s/([^$asciichar$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles'
 my $n = 65;
 $str =~ s/(.{1})(\1{$n})/$1$2 /g; # put in spaces every $1 character in long lines with repeated characters, e.g. * in NONMEM
 
-open(FILE, '>:utf8', "$file.tmp.txt");
+open(FILE, '>:utf8', 'file.tmp.txt');
 print FILE "$str";
 close(FILE);
 return
@@ -753,7 +800,7 @@ use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 my $artid = $_[0];
-open(FILE, '>:utf8', "$artid.tmp.txt");
+open(FILE, '>:utf8', 'file.tmp.txt');
 print FILE "ITEM $artid NOT FOUND";
 close(FILE);
 return
@@ -872,7 +919,7 @@ if ($mysyncnt eq "none") {$mysyncmd = "$mysyncmd"}
 else {$mysyncmd = "$mysyncmd\\bookmark[level=$mysynlev,dest=mysynhyper$mysyncnt]{$mysynstr}\n";}
 return "\\renewcommand{\\cussyncmd}{$mysyncmd}"
 }
-\perlnewcommand{\createfiles}[5]{
+\perlnewcommand{\createfiles}[6]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -884,14 +931,29 @@ my $docname = $_[1];
 my $artifacts = $_[2];
 my $dogetartifacts = $_[3];
 my $doprintsig = $_[4];
+my $missingrfiles = $_[5];
+
 my $narti = () = $artifacts =~ /,/gi; $narti = $narti + 1;
 $docname =~ s/\\xspace *//g;
 
+# Print list of missing files (non-artifacts)
+my @mrf = split "myveryuniqueseparator", $missingrfiles; #@mrf = @mrf[1..$#mrf];
+@mrf = uniq(@mrf); my $nmrf = scalar @mrf; unlink 'missingfiles.txt';
+if ( $nmrf > 0 ) {
+	open(FILE, '>:utf8', 'missingfiles.txt');
+	print FILE join( ",", @mrf );
+	close(FILE);
+}
+
 # Print list of artifacts to download
-open(FILE, '>:utf8', 'getartifacts.txt');
-if ($dogetartifacts == 1) { print FILE "$artifacts"; }
-else { print FILE ""; }
-close(FILE);
+my @arti = split ",", $artifacts;
+@arti = uniq(@arti);
+if ($dogetartifacts == 1) {
+	open(FILE, '>:utf8', 'missingartifacts.txt');
+	print FILE join( ",", @arti );
+	close(FILE);
+}
+else { unlink 'missingartifacts.txt'; }
 
 # Print finalize.pl for cleaning up after a run. Not used: \nunlink <RA*_*>;
 my $noerr;
@@ -908,6 +970,15 @@ if (-e "$name.pdf") {
 close(FILE);
 
 return
+}
+\perlnewcommand{\fixnewline}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $str = $_[0];
+$str =~ s/\\\\/\\newline/g;
+return "\\renewcommand{\\mytabledescription}{$str}";
 }
 
 \else
