@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/07/13}
-\def\pharmtexversion{1.7}
+\def\pharmtexdate{2018/10/02}
+\def\pharmtexversion{1.8}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -263,7 +263,7 @@
 \usepackage[nameinlink, capitalise, noabbrev]{cleveref}
 \usepackage{needspace, refcount}
 \usepackage{mathptmx, helvet, courier}
-\usepackage{threeparttablex, booktabs, longtable, tabularx, ltablex, multirow, nameref, pdflscape}
+\usepackage{threeparttable, threeparttablex, booktabs, longtable, tabularx, ltablex, multirow, nameref, pdflscape}
 \usepackage[originalparameters, document]{ragged2e}
 \usepackage{bigstrut, here, float, rotating, subcaption, appendix, upquote, chngcntr}
 \usepackage{printlen, upgreek, csvsimple, pbox, arrayjobx, xstring, pgf, ifthen, pax, filecontents, ifplatform}
@@ -331,6 +331,7 @@
 %%% Lengths
 \newlength\maxwidth\newlength\maxheight
 \setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}
+\newlength{\myspacer}\setlength{\myspacer}{14.5pt}
 
 %%% Create string to store artifact IDs.
 %%% The \findartifacts perl command determines in the first input from \pmxXXXXX is a filepath or an artifact.
@@ -466,11 +467,50 @@ ITEM #1 NOT FOUND%
 %%% Turn off badness 10000 warning
 \hbadness=10000
 \vbadness=10000
+\newcount\hbadness
+\newcount\vbadness
 
-%%% Set threshold for overfull hbox
-%\hfuzz=5pt
-%\newcount\hbadness
-%\newdimen\hfuzz
+%%% Set threshold for overfull hbox/vbox
+\hfuzz=10pt
+\vfuzz=20pt
+\newdimen\hfuzz
+\newdimen\vfuzz
+
+%%%% Modify Command for inserting descriptions under tables from threeparttablex package
+%\renewcommand\insertTableNotes{%
+%  % first we need to know the width of the longtable, remember that it
+%  % will only settle after a few compilations
+%  \noalign{\begingroup
+%  \setlength\TPTL@width{0pt}
+%  \renewcommand\LT@entry[2]{\global\advance\TPTL@width by ##2}
+%  \@nameuse{LT@\romannumeral\c@LT@tables}
+%  \ifdim\TPTL@width<\TPTminimum\relax\global\TPTL@width=\TPTminimum\fi
+%  \endgroup}
+%  % then add the table notes inside a \parbox of the required width
+%  \multicolumn{\LT@cols}{c}{%
+%    \makebox[0pt][c]{%
+%      \parbox{\TPTL@width}{%
+%        \let\TPT@hsize\@empty% otherwise the width is not reset
+%                             % correctly as \TPT@hsize messes with 
+%                             % \@parboxrestore
+%        \let\TPToverlap\relax%
+%        \begin{tablenotes}[\TPTL@optarg]%
+%          \TPTL@font%
+%          \TPTL@body
+%        \end{tablenotes}
+%      }%
+%    }%
+%  }%
+%}
+
+%%% Remove item label for TableNotes in ThreePartTable (threeparttablex package), as it is used for the table descriptions.
+\def\TPTdoTablenotes{%
+ \par \prevdepth\z@ \TPT@hsize 
+ \list{}{\topsep\z@skip \partopsep\z@skip 
+  \itemsep\z@ \parsep\z@ \itemindent\z@
+  \TPTnoteSettings
+  \let\makelabel\empty
+}}
 
 %%% Tablenotes. These are local notes within a given table that reset their alpha counter (a, b, c, etc.) for each new table.
 \newcounter{tnote}
@@ -483,10 +523,6 @@ ITEM #1 NOT FOUND%
 \newcommand{\tablenote}{} % compatibility with earlier versions of the template
 
 %%% Function for making tables from csv file
-%%% This is the most complex perl code in this file. When debugging or just working to understand it, it is recommended to print out various variables into a text file at critical stages using the following code:
-% open(FILE, ">debug.txt");
-% print FILE "$somevariable or @somearray";
-% close(FILE);
 \newcommand{\dodescription}{0}
 \newcommand{\isinlinetable}{}
 \newcommand{\mytabledescription}{}
@@ -522,10 +558,10 @@ ITEM #1 NOT FOUND%
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{\fname}{#3}{#4}{#5}{#6}{\detokenize{#8}}{\dotight}{0}
 \csvtable
-\vspace{-1.3\baselineskip}
-% \footnotesize
-% \vspace{-1.8\baselineskip}
-% \ifitemid{}\itemid{#2}\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\xspace#7}
+\vspace{-2.75\baselineskip}
+%\footnotesize
+%\vspace{-1.8\baselineskip}
+%\ifitemid{}\itemid{#2}\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\xspace#7}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -558,11 +594,10 @@ ITEM #1 NOT FOUND%
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{#4}{}{\dotight}{1}
 \csvtable
-
-\vspace{-1.3\baselineskip}
-% \footnotesize
-% \vspace{-1.8\baselineskip}
-% \ifitemid{}Inline table\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
+\vspace{-2.75\baselineskip}
+%\footnotesize
+%\vspace{-1.8\baselineskip}
+%\ifitemid{}Inline table\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -684,8 +719,8 @@ ITEM \QAPage{} NOT FOUND
 \iffigcapbelow\renewcommand{\figcapbelow}{1}\else\renewcommand{\figcapbelow}{0}\fi
 \begin{figure}[H]
 	\makesubfig{#1}{#2}{#3}{\figcapbelow}
-	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
-	\iffigcapbelow\quad\\[-0.4\baselineskip]\fi % caption below
+	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
+	\iffigcapbelow\quad\\[-0.4\myspacer]\fi % caption below
 	\footnotesize\ifthenelse{\equal{\detokenize{#4}}{}}{}{#4}
 \end{figure}
 \vspace{-0.8\baselineskip}
@@ -702,8 +737,8 @@ ITEM \QAPage{} NOT FOUND
 	\ifx\fname\empty ITEM #1 NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
 	\iffigcapbelow\figlabel{#3\tmpstr}{#2}\fi % caption below
 	\ifnum\numberofpages=1
-	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
-	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
+	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
@@ -716,8 +751,8 @@ ITEM \QAPage{} NOT FOUND
 	\includegraphics[page=\x,#5]{\fname}
 	\iffigcapbelow\caption[]{#3 (\x{} of \numberofpages)}\fi % caption below
 	\ifnum\x=\numberofpages
-	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption above
-	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
+	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
@@ -736,8 +771,8 @@ ITEM \QAPage{} NOT FOUND
 	\iffigcapbelow\else\figlabel{#2}{#1}\fi % caption above
 	#4
 	\iffigcapbelow\figlabel{#2}{#1}\fi % caption below
-	\iffigcapbelow\else\\[0.4\baselineskip]\fi % caption below
-	\iffigcapbelow\quad\\[-0.5\baselineskip]\fi % caption below
+	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption below
+	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}Inline figure\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace#3}
 \end{figure}
 \vspace{-0.8\baselineskip}
@@ -1179,8 +1214,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 	pdfauthor={},
 	pdfsubject={},
 	pdfkeywords={},
-	pdfcreator={PharmTeX-\pharmtexversion},
-%	pdfproducer={PharmTeX-\pharmtexversion}
+	pdfcreator={PharmTeX-Class-\pharmtexversion}
 }
 %\pdfminorversion=7 % PDF version 1.X, currently 1.5
 %\pdfcompresslevel=9 % PDF compression
@@ -1448,7 +1482,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \iflogo\else\renewcommand{\Logo}{}\fi
 \newcommand{\insertcoverpage}{
 
-\quad\vspace{-1.5\baselineskip}
+\quad\vspace{-1.5\myspacer}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\maxwidth}{|L{0.25}|L{0.25}L{0.25}L{0.25}|} \hline
 \multicolumn{1}{|>{\centering\arraybackslash}p{0.24\maxwidth}|}{\multirow{4}{*}{\ifdefined\Logo\Logo\fi}} & \multicolumn{3}{>{\centering\arraybackslash}p{0.69\maxwidth}|}{\multirow{4}{*}{\ifdefined\doctype\textbf{\DocType\ifsynonly~(SYNOPSIS)\fi}\fi}} \\
@@ -1507,7 +1541,7 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 \newcommand{\insertsigpage}{
 
 \ifdefined\DocApprovera
-\quad\vspace{-1.5\baselineskip}
+\quad\vspace{-1.5\myspacer}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\maxwidth}{|l|L{1}|} \hline
 \multicolumn{2}{|c|}{\textbf{APPROVAL PAGE}} \\

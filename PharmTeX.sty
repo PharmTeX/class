@@ -550,9 +550,15 @@ if ($nrow==0) {
 }
 my $ncoldesc = $ncol + 1;
 
+# https://tex.stackexchange.com/questions/196303/converting-threeparttable-tabular-to-threeparttablex-and-longtable
+
 my $retstr = "
 \\renewcommand{\\tmpsubstnote}{$substnote}
 \\renewcommand{\\csvtable}{
+\\begin{ThreePartTable}
+\\begin{TableNotes}[flushleft]
+\\item \\quad\\\\[-0.6\\myspacer]\\mytableitemnumber\\tmpsubstnote\\xspace\\mytabledescription\\\\[0.75\\baselineskip]\\quad
+\\end{TableNotes}
 \\begin{tabularx}{\\maxwidth}{$colspec} \\tablabel{$label}{$key}
 	\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endfirsthead\\caption[]{$label}\\\\\\pmxtoprule
@@ -560,18 +566,11 @@ my $retstr = "
 	\\endfoot
 	 @endbody 
 	\\pmxbottomrule
-	\\ifnum\\dodescription=1
-	\\ifnum\\isinlinetable=0
-	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{}\\\\[-8pt]
-	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{\\footnotesize\\ifitemid{}\\mytableitemnumber\\tmpsubstnote\\xspace\\fi\\ifthenelse{\\equal{\\detokenize{\\mytabledescription}}{}}{}{\\mytabledescription}}
-	\\else
-	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{}\\\\[-8pt]
-	\\multicolumn{$ncoldesc}{\@{}p{\\maxwidth}\@{}}{\\footnotesize\\ifitemid{}Inline table\\tmpsubstnote\\xspace\\fi\\ifthenelse{\\equal{\\detokenize{\\mytabledescription}}{}}{}{\\mytabledescription}}
-	\\fi
-	\\fi
+	\\insertTableNotes
 	\\endlastfoot
 	 @body 
 \\end{tabularx}
+\\end{ThreePartTable}
 }";
 $retstr =~ s/ +/ /g;
 
@@ -586,12 +585,6 @@ $retstr =~ s/(\n *)\[/$1\{\[\}/g;
 $retstr =~ s/[\t,\n]//g;
 $retstr =~ s/myveryuniquecomma/,/g;
 $retstr =~ s/myveryuniquetab/\t/g;
-
-## Debugging the final table if needed, look for debug.txt after running. Remember to comment this out again using # when finished.
-#$retstr =~ s/\\\\/\\\\\n/g; # add newlines for easy viewing
-#open(FILE, '>:utf8', 'test.txt');
-#print FILE "$retstr";
-#close(FILE);
 
 my $mkfile = 0; $str = $retstr;
 $str = "\\catcode`\\%=12 \\catcode`\\#=12 $str \\catcode`\\%=14 \\catcode`\\#=6";
@@ -744,7 +737,7 @@ if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	@lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
 	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
-	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
+	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
 		$str = "$str \\figlabelpl{$cap}{$lblmain} \\quad"; # caption below
 	} else {
@@ -754,7 +747,7 @@ if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 else {
 	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
-	$str =~ s/\|/\\\\\\vspace{0.4\\baselineskip}/g;
+	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
 		$str = "$str \\figlabelpl{$cap}{$lbl} \\quad"; # caption below
 	} else {
@@ -979,6 +972,93 @@ binmode(STDOUT, ":utf8");
 my $str = $_[0];
 $str =~ s/\\\\/\\newline/g;
 return "\\renewcommand{\\mytabledescription}{$str}";
+}
+\perlnewcommand{\getbundleversion}{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $file; my $bver; my $os;
+if ( "$^O" eq 'MSWin32' ) {
+	$file = "$ENV{'USERPROFILE'}\\pharmtex\\version.txt";
+	$os = 'Win';
+} else {
+	$file = "$ENV{'HOME'}/pharmtex/version.txt";
+	$os = 'Lin';
+}
+if ( -e "$file" ) {
+	open my $fh, '<:raw', "$file"; my $str = do { local $/; <$fh> }; close $fh;
+	($bver) = $str =~ /PharmTeX software collection v\. ([0-9]+\.[0-9]+) created/;
+	return "\\newcommand{\\bundleversion}{$os-$bver}";
+} else {
+	return
+}
+}
+\getbundleversion
+\ifdefined\bundleversion\hypersetup{pdfproducer={PharmTeX-Bundle-\bundleversion}}\fi
+\perlnewcommand{\nlmixr}[1]{
+use strict;
+use warnings;
+use File::Path;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $dir = $_[0];
+(my $run) = $dir =~ /\/*([^\/]+)$/;
+my $Run = ucfirst($run);
+
+my $file; my $str; my $tab; my $hbod; my $cap; my $align; my $head; my $body; my $key; my $i; my $j; my $k; my $l; my $n; my $output;
+my @files; my @fig; my @path; my @ext; my @output;
+
+@files = glob "$dir/*.tex.rawtex";
+
+$l = 0;
+for ($k = 0; $k < @files; $k++) {
+	$file = $files[$k];
+	$str = path($file)->slurp;
+	($key) = $file =~ /\/*([^\/]+)\.tex\.rawtex/;
+	if (index($str, '\begin{longtable}') != -1) {
+		($cap) = $str =~ /\\caption\{(.+)\}\\\\/; $cap = ucfirst($cap);
+		($align) = $str =~ /\\begin\{longtable\}\{(.+)\}/;
+		($head) = $str =~ /\\toprule\n(.+)\\\\/;
+		($body) = $str =~ /\n\\endhead\n((.+\n)+)\\bottomrule/; $body = substr($body, 0, -4);
+		$tab = "$dir/tables/$key.tex";
+		$hbod = "$head \\\\\n$body";
+		if ( -e "$dir/tables" ) { rmtree("$dir/tables"); }
+		mkdir("$dir/tables");
+		open(FILE, '>:utf8', "$dir/tables/$key.tex");
+		print FILE "$hbod";
+		close(FILE);
+		$output[$l] = "\\pmxtable\n{$dir/tables/$key.tex}\n{tex}\n{$align}\n{tab:$run-$key}\n{$Run: $cap}\n{Table output from nlmixr.}\n{}\n\n";
+		$l++;
+	} elsif (index($str, '\begin{figure}') != -1) {
+		($cap) = $str =~ /\\caption\{(.+)\}/; $cap = ucfirst($cap);
+		@path = ($str =~ /\\includegraphics\{\{\"(.+)\"\}\..+\}\\\\/g);
+		@ext = ($str =~ /\\includegraphics\{\{\".+\"\}\.(.+)\}\\\\/g);
+		@fig = < >;
+		for ($i = 0; $i < @path; $i++) { $fig[$i] = "$dir/$path[$i].$ext[$i]"; }
+		$n = scalar(@fig);
+		if ( $n > 1 ) {
+			for ($i = 0; $i < @fig; $i++) {
+				$j = $i + 1;
+				$output[$l] =  "\\pmxfigure\n{$fig[$i]}\n{fig:$run-$key$j}\n{$Run: $cap ($j of $n)}\n{Figure output from nlmixr.}\n{width=\\maxwidth}\n\n";
+				$l++;
+			}
+		} else {
+			$output[$l] =  "\\pmxfigure\n{$fig[0]}\n{fig:$run-$key}\n{$Run: $cap}\n{Figure output from nlmixr.}\n{width=\\maxwidth}\n\n";
+			$l++;
+		}
+	} else {
+		
+	}
+}
+
+$dir =~ s/\//-/g; $dir =~ s/\.//g; $dir =~ s/[a-zA-Z]+://g; $dir =~ s/^-//g;
+$output = "@output"; $output =~ s/\n /\n/g; $output =~ s/\n\n$//g;
+open(FILE, '>:utf8', "nlmixr-$dir.tex");
+print FILE $output;
+close(FILE);
+
+return;
 }
 
 \else
