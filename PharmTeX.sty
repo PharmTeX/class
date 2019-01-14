@@ -51,10 +51,68 @@
     \endhead
     \endfoot}%
 }
-\newcommand{\glsfile}[1]{\checkfile{#1}{GlsFile}\IfFileExists{\GlsFile.tex}{\fixgls{\GlsFile}}{}}
+\newcommand{\glsfile}[1]{\checkfile{#1}{GlsFile}\IfFileExists{\GlsFile.tex}{\ifmathimg\fixgls{\GlsFile}{1}\else\fixgls{\GlsFile}{0}\fi}{}}
 \ifglosshyper
 \else
 \glsdisablehyper
+\fi
+
+%%% Settings for eqnimg option
+\ifeqnimg
+\newcounter{subjob}
+\newcommand{\myalignatnum}{}
+\IfFileExists{eqnimg.txt}{
+\RenewEnviron{align}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{align*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{alignat}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{alignat*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{equation}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{equation*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{eqnarray}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{eqnarray*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{gather}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{gather*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{multline}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{multline*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{flalign}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{flalign*}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\RenewEnviron{subequations}{\stepcounter{subjob}\input{\jobname-eqn-\thesubjob.tex}}
+\AfterEndEnvironment{subequations}{\nlalign}
+\renewcommand{\nlalign}{\vspace{-\baselineskip}}
+}{
+\renewenvironment{align}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align}{}{\jobname}}
+\renewenvironment{align*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align*}{}{\jobname}}
+\renewenvironment{alignat}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat}{\myalignatnum}{\jobname}}
+\renewenvironment{alignat*}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat*}{\myalignatnum}{\jobname}}
+\renewenvironment{equation}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation}{}{\jobname}}
+\renewenvironment{equation*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation*}{}{\jobname}}
+\renewenvironment{eqnarray}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray}{}{\jobname}}
+\renewenvironment{eqnarray*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray*}{}{\jobname}}
+\renewenvironment{gather}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather}{}{\jobname}}
+\renewenvironment{gather*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather*}{}{\jobname}}
+\renewenvironment{multline}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline}{}{\jobname}}
+\renewenvironment{multline*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline*}{}{\jobname}}
+\renewenvironment{flalign}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign}{}{\jobname}}
+\renewenvironment{flalign*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign*}{}{\jobname}}
+\renewenvironment{subequations}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{subequations}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{subequations}{}{\jobname}}
+}
+\fi
+
+\ifmathimg
+\newwrite\myout
+\newcounter{isubjob}
+\newcommand{\domathimgload}{0}\IfFileExists{mathimg.txt}{\renewcommand{\domathimgload}{1}}{}
+\newcommand{\domathimgmake}{0}\IfFileExists{\jobname.bbl}{\IfFileExists{mathimg.txt}{}{\renewcommand{\domathimgmake}{1}}}{}
+\ifnum\domathimgmake=1
+\catcode`\$=13%`
+\def$#1${\protect\stepcounter{isubjob}\immediate\openout\myout=\jobname-math-\arabic{isubjob}.tex\immediate\write\myout{\detokenize{#1}}\immediate\closeout\myout}
+\global\let\tikz@ensure@dollar@catcode=\relax
+\fi
+\ifnum\domathimgload=1
+\catcode`\$=13%`
+\def$#1${\protect\stepcounter{isubjob}\ensuremath{\input{\jobname-math-\arabic{isubjob}.tex}}}
+\global\let\tikz@ensure@dollar@catcode=\relax
+\fi
 \fi
 
 %%% Perl custom commands
@@ -133,7 +191,7 @@ $str =~ s/\n*\\itemlist.*//s;
 $str =~ s/\n*\\end\{document\}.*//s;
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
@@ -165,7 +223,7 @@ open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $line
 $str =~ s/\n$//s;
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
@@ -199,7 +257,7 @@ $str =~ s/abstract *=[^\n]+\n\t* *//g;
 $str =~ s/akeywords *=[^\n]+\n\t* *//g;
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file.bib. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file.bib. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 
 if ( $mkfile == 1 ) {
@@ -220,13 +278,14 @@ if ( -e "$file-tmpfixfile.bib" ) {
 }
 
 }}
-\perlnewcommand{\fixgls}[1]{
+\perlnewcommand{\fixgls}[2]{
 use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 use Encoding::FixLatin qw(fix_latin);
 my $file = $_[0];
+my $dodollar = $_[1];
 
 if ( -e 'fixfiles' ) {
 
@@ -239,8 +298,15 @@ my $mkfile = 0;
 open my $lines, '<:raw', "$file.tex"; my $str = do { local $/; <$lines> }; close $lines;
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file.tex. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file.tex. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+
+if ( $dodollar == 1 ) {
+	$tmpstr = $str; $tmpstr =~ s/\\\$/myveryuniquedollar/g;
+	$tmpstr =~ s/\$([^\$]*)\$/\\ensuremath\{$1\}/g;
+	if ( defined $1 ) { $mkfile = 1; $str = $tmpstr; }
+	$str =~ s/myveryuniquedollar/\\\$/g;
+}
 
 if ( $mkfile == 1 ) {
 	open(FILE, '>:utf8', "$file-tmpfixfile.tex");
@@ -590,7 +656,7 @@ my $mkfile = 0; $str = $retstr;
 $str = "\\catcode`\\%=12 \\catcode`\\#=12 $str \\catcode`\\%=14 \\catcode`\\#=6";
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
@@ -633,7 +699,6 @@ for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID \\artiref\{$af[$i]\}"; }
 # Inline/R files
 my @rf = split "myveryuniqueseparator", $rfiles; @rf = @rf[1..$#rf]; my @rff;
 @rff = (@aff, @rf); @rf = (@af, @rf);
-#@rff = uniq(@rff); @rf = uniq(@rf);
 my @items = (1..$nitems);
 my $nr = scalar @rf; my @newlines; my @isrf = ("0") x $nr;
 @isaf = (@isaf, @isrf);
@@ -646,14 +711,9 @@ for ($i=0; $i <= $nr-1; $i++) {
 	if ($ext eq "pdf") {
 		$delfiles[$i] = "\"$name.pax\", \"$name.pay\"";
 	}
-	# elsif ($ext eq "bib") {
-		# $delfiles[$i] = "\"$name-tmpfixfile.$ext\"";
-	# } else {
-		# $delfiles[$i] = "\"$name.$ext.tmp.txt\"";
-	# }
 }
 my $allfile = join( ', ', @delfiles );
-print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");\nunlink ($allfile);";
+print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");$allfile";
 close(FILE);
 
 # Sort items
@@ -777,7 +837,7 @@ open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $line
 
 # Supports $lstchar as well with listingsutf8, but there seems to be a few bugs in the package
 $str = fix_latin($str);
-$str =~ s/([^$asciichar$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} }
+$str =~ s/([^$asciichar$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} }
 
 my $n = 65;
 $str =~ s/(.{1})(\1{$n})/$1$2 /g; # put in spaces every $1 character in long lines with repeated characters, e.g. * in NONMEM
@@ -877,7 +937,7 @@ my $mkfile = 0; my $file = "$fbase.pay";
 my $str = "\\renewcommand{\\pdfmakeinclude}{$pdfmakeinclude}\\renewcommand{\\pdfmakebookmark}{$pdfmakebookmark}\\renewcommand{\\pdfmakecontents}{$pdfmakecontents}";
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
-$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
@@ -955,7 +1015,7 @@ open(FILE, '>:utf8', 'finalize.pl');
 print FILE "use strict;\nuse warnings;\nuse File::Copy qw(copy);\n";
 if ($doprintsig == 1) {print FILE "system('pdftk A=\"$name.pdf\" cat A2 output sigpage.pdf');\n";}
 if (-e "$name.pdf") {
-	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"tmp$name.pdf\" $noerr') ) \{ print STDERR \"Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" \}\n";
+	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"tmp$name.pdf\" $noerr') ) \{ print STDERR \"LaTeX Warning: Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" \}\n";
 	print FILE "if ( -e \"tmp$name.pdf\") \{ copy \"tmp$name.pdf\", \"$name.pdf\"; copy \"tmp$name.pdf\", \"$docname.pdf\"; unlink \"tmp$name.pdf\"; \}\n";
 	print FILE "if (\! -e \"$docname.pdf\") \{ copy \"$name.pdf\", \"$docname.pdf\"; \}\n";
 	print FILE "if ( \"$docname.pdf\" ne \"$name.pdf\" ) \{ open(FILENEW, '\>\:utf8', 'dodel.txt'); close(FILENEW); \}";
@@ -973,33 +1033,11 @@ my $str = $_[0];
 $str =~ s/\\\\/\\newline/g;
 return "\\renewcommand{\\mytabledescription}{$str}";
 }
-\perlnewcommand{\getbundleversion}{
-use strict;
-use warnings;
-use open OUT => ':raw';
-binmode(STDOUT, ":utf8");
-my $file; my $bver; my $os;
-if ( "$^O" eq 'MSWin32' ) {
-	$file = "$ENV{'USERPROFILE'}\\pharmtex\\version.txt";
-	$os = 'Win';
-} else {
-	$file = "$ENV{'HOME'}/pharmtex/version.txt";
-	$os = 'Lin';
-}
-if ( -e "$file" ) {
-	open my $fh, '<:raw', "$file"; my $str = do { local $/; <$fh> }; close $fh;
-	($bver) = $str =~ /PharmTeX software collection v\. ([0-9]+\.[0-9]+) created/;
-	return "\\newcommand{\\bundleversion}{$os-$bver}";
-} else {
-	return
-}
-}
-\getbundleversion
-\ifdefined\bundleversion\hypersetup{pdfproducer={PharmTeX-Bundle-\bundleversion}}\fi
 \perlnewcommand{\nlmixr}[1]{
 use strict;
 use warnings;
 use File::Path;
+use Path::Tiny;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 my $dir = $_[0];
@@ -1060,28 +1098,219 @@ close(FILE);
 
 return;
 }
+\perlnewcommand{\saveeqnfile}[4]{
+use strict;
+use warnings;
+use File::Path;
+use File::Copy qw(copy);
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $file = $_[0];
+my $env = $_[1];
+my $num = $_[2];
+my $job = $_[3];
+my $OS = "$^O";
+
+my $scale;
+if ( $OS eq 'MSWin32' ) { $scale = 72/600;  } else { $scale = 1; } # original: 72/288;
+
+open my $fh, '<:raw', "$file"; my $str = do { local $/; <$fh> }; close $fh;
+$str =~ s/\r//g;
+$str =~ s/\%[^\n]+\n//g;
+$str =~ s/\n/myveryuniquenewline/g;
+
+open $fh, '<:raw', "$job.tex"; my $jobstr = do { local $/; <$fh> }; close $fh;
+$jobstr =~ s/\\%/myveryuniquepercent/g;
+$jobstr =~ s/%[^\n]+//g;
+$jobstr =~ s/(\n)+/\n/g;
+$jobstr =~ s/\n/ /g;
+$jobstr =~ s/myveryuniquepercent/\\%/g;
+$jobstr =~ s/\\\{/myveryuniqueleftcurlybracket/g;
+$jobstr =~ s/\\\}/myveryuniquerightcurlybracket/g;
+my @newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
+my $newcmd = join( "\n", @newcmd );
+$newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
+$newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
+if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+
+if ( $num eq '' ){
+	$num = "";
+} else {
+	$num = "{$num}";
+}
+
+my $subb = ''; my $sube = ''; my $lab = ''; my $envv = ''; my $name = ''; my $star = ''; my $labsp = '';
+if ( $env eq 'subequations' ) {
+	($env) = $str =~ /\\end\{(align|align\*|alignat|alignat\*|equation|equation\*|eqnarray|eqnarray\*|gather|gather\*|multline|multline\*|flalign|flalign\*)\}/;
+	($num) = $str =~ /\\begin\{$env\}(\{[0-9]*\})/;
+	($lab) = $str =~ /^.*(\\label\[*[^\[\]\{\}]*\]*\{[^\{\}]+\}).*\\begin\{\Q$env\E\}/;
+	$str =~ s/\Q$lab\E//g;
+	if ( "$lab" ne "" ) { $labsp = "\n"; }
+	$subb = "\\begin{oldsubequations}\n";
+	$sube = "\n\\end{oldsubequations}";
+}
+($envv) = $env =~ /([^\*]+)\**/;
+($star) = $env =~ /[^\*]+(\**)/;
+$star =~ s/\*/\\nonumber/g;
+($name) = $file =~ /(.+)\.[^.]+$/;
+$str =~ s/\\begin\{\Q$env\E\}(\{[0-9]*\})*//g;
+$str =~ s/\\end\{\Q$env\E\}(\{[0-9]*\})*//g;
+
+$str =~ s/\\\\(?=(?:(?!\\begin\{([^\{\}]+)\}|\\end\{([^\{\}]+)\}).)*\\end\{([^\{\}]+)\})/myveryuniquedoublebackslash/g;
+$str = "\\\\$str";
+my @lst = ( $str =~ /\\\\((?:(?!\\\\).)*)/g );
+my $i; my $j; my $nlin = scalar @lst; my $nline = $nlin - 1; my $nl; my $namei; my $ref = '';
+copy 'PharmTeX.fmt', 'PharmTeX-eqnbackup.fmt';
+copy 'PharmTeX.log', 'PharmTeX-eqnbackup.log';
+copy 'useroptions.txt', 'useroptions-eqnbackup.txt';
+copy 'useroptionscomp.txt', 'useroptionscomp-eqnbackup.txt';
+open(FILE, '>:utf8', "$file");
+print FILE "$subb$lab$labsp\\begin{oldalign}\n";
+for ($i=0; $i <= $nline; $i++) {
+	$j = $i + 1;
+	$namei = "$name-$j";
+	$lst[$i] =~ s/myveryuniquenewline/\n/g;
+	$lst[$i] =~ s/myveryuniquedoublebackslash/\\\\/g;
+	$lst[$i] =~ s/\n+/\n/g;
+	$lst[$i] =~ s/^\n//g;
+	$lst[$i] =~ s/\n$//g;
+	($ref) = $lst[$i] =~ /(\\label\{[^\{\}]+\})/;
+	open(FILEI, '>:utf8', "$namei.tex");
+	print FILEI "\\documentclass[nocoverpage,nosigpage,nosynopsis,notoc,nolot,nolof,noglossary,noitemlist]{PharmTeX}\n\\usepackage{PharmTeX}\n\\fancyhf{}$newcmd\n\\begin{document}\n\\begin{$envv*}$num\n$lst[$i]\n\\end{$envv*}\n\\references\n\\appendix\n\\itemlist\n\\end{document}";
+	close(FILEI);
+	if ( $i < $nline ) { $nl = "\\\\"; } else { $nl = ''; }
+	print FILE "&\\vcenter{\\hbox{\\raisebox{-1.5\\ht\\strutbox}{\\includegraphics[scale=$scale]{$namei.png}}}}$star$ref$nl\n";
+	if ( $OS eq 'MSWin32' ) { system("executex \"$namei\" eqn"); } else { system("bash executex \"$namei\" eqn"); }
+	system("pdfcrop \"$namei.pdf\"");
+	system("pdftopng -r 600 \"$namei-crop.pdf\" \"$namei.png\"");
+	copy "$namei.png-000001.png", "$namei.png";
+	unlink "$namei.png-000001.png", "$namei-crop.pdf", "$namei.pdf", "$namei.tex", "$namei.aux", "$namei.log", "$namei.topl", "$namei.frpl", "$namei.tfpl", "$namei.ffpl", "$namei.dfpl", "$namei.lgpl", "$namei.pipe", "$namei.xtr", "$namei.glo", "$namei.ist", "$namei.synctex.gz", "texput.log";
+}
+print FILE "\\end{oldalign}$sube";
+close(FILE);
+copy 'PharmTeX-eqnbackup.fmt', 'PharmTeX.fmt';
+copy 'PharmTeX-eqnbackup.log', 'PharmTeX.log';
+copy 'useroptions-eqnbackup.txt', 'useroptions.txt';
+copy 'useroptionscomp-eqnbackup.txt', 'useroptionscomp.txt';
+unlink ('PharmTeX-eqnbackup.fmt', 'PharmTeX-eqnbackup.log', 'useroptions-eqnbackup.txt', 'useroptionscomp-eqnbackup.txt');
+
+open(FILEII, '>:utf8', "eqnimg.txt");
+close(FILEII);
+
+return;
+}
+\perlnewcommand{\savemathfiles}[1]{
+use strict;
+use warnings;
+use File::Path;
+use File::Copy qw(copy);
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $job = $_[0];
+my $OS = "$^O";
+
+my $scale; my $name; my $fh; my $str; my $jobstr; my @newcmd; my $newcmd; my @files; my $file; my $donum; my $raise;
+if ( $OS eq 'MSWin32' ) { $scale = 0.94*72/600;  } else { $scale = 0.94*1; } # original: 72/288;
+
+if (( -e "$job-math-1.tex" ) && ( -e "$job.bbl" ) && ( ! -e "$job-math-1.png" )) {
+
+open $fh, '<:raw', "$job.tex"; $jobstr = do { local $/; <$fh> }; close $fh;
+$jobstr =~ s/\\%/myveryuniquepercent/g;
+$jobstr =~ s/%[^\n]+//g;
+$jobstr =~ s/(\n)+/\n/g;
+$jobstr =~ s/\n/ /g;
+$jobstr =~ s/myveryuniquepercent/\\%/g;
+$jobstr =~ s/\\\{/myveryuniqueleftcurlybracket/g;
+$jobstr =~ s/\\\}/myveryuniquerightcurlybracket/g;
+@newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
+$newcmd = join( "\n", @newcmd );
+$newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
+$newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
+if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+
+copy 'PharmTeX.fmt', 'PharmTeX-eqnbackup.fmt';
+copy 'PharmTeX.log', 'PharmTeX-eqnbackup.log';
+copy 'useroptions.txt', 'useroptions-eqnbackup.txt';
+copy 'useroptionscomp.txt', 'useroptionscomp-eqnbackup.txt';
+
+@files = <"$job-math*.tex">;
+foreach $file (@files) {
+	($name) = $file =~ /(.+)\.[^.]+$/;
+	open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
+	open(FILE, '>:utf8', "$name.tex");
+	$raise = '-0.1';
+	if ( $str =~ /^\^/ ) {
+		$str =~ s/^(\^)/\{\\color{white\}.}\\hspace\{-3pt\}$1/g;
+		$raise = '-0.08';
+	}
+	if ( $str =~ /^\_|\\s/ ) {
+		$str =~ s/^(\_|\\s)/\{\\color{white\}.}\\hspace\{-3pt\}$1/g;
+		$raise = '-0.16';
+	}
+	print FILE "\\documentclass[nocoverpage,nosigpage,nosynopsis,notoc,nolot,nolof,noglossary,noitemlist]{PharmTeX}\n\\usepackage{PharmTeX}\n\\fancyhf{}$newcmd\n\\begin{document}\n\\ensuremath{$str}\n\\references\n\\appendix\n\\itemlist\n\\end{document}";
+	close(FILE);
+	if ( $OS eq 'MSWin32' ) { system("executex \"$name.tex\" eqn"); } else { system("bash executex \"$name.tex\" eqn"); }
+	system("pdfcrop \"$name.pdf\"");
+	system("pdftopng -r 600 \"$name-crop.pdf\" \"$name.png\"");
+	copy "$name.png-000001.png", "$name.png";
+	unlink "$name.png-000001.png", "$name-crop.pdf", "$name.pdf", "$name.tex", "$name.aux", "$name.log", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "$name.glo", "$name.ist", "$name.synctex.gz", "texput.log";
+
+	open(FILE, '>:utf8', "$name.tex");
+	print FILE "\\raisebox{$raise\\ht\\strutbox}{\\includegraphics[scale=$scale]{$name.png}}";
+	close(FILE);
+}
+
+copy 'PharmTeX-eqnbackup.fmt', 'PharmTeX.fmt';
+copy 'PharmTeX-eqnbackup.log', 'PharmTeX.log';
+copy 'useroptions-eqnbackup.txt', 'useroptions.txt';
+copy 'useroptionscomp-eqnbackup.txt', 'useroptionscomp.txt';
+unlink ('PharmTeX-eqnbackup.fmt', 'PharmTeX-eqnbackup.log', 'useroptions-eqnbackup.txt', 'useroptionscomp-eqnbackup.txt');
+
+open(FILE, '>:utf8', "mathimg.txt");
+close(FILE);
+
+}
+
+return;
+}
+\perlnewcommand{\nonemptyglossary}{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+open(FILE, '>:utf8', "nonemptyglossary.txt");
+print FILE "";
+close(FILE);
+return;
+}
 
 \else
 
 \IfFileExists{noperlfirst.txt}{\RequirePackage{noperltex}}{}
 \newcounter{perlcount}\setcounter{perlcount}{0}
+
 \newcommand{\findartifact}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\dotwice}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\includetex}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\inputtext}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\fixbib}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
-\newcommand{\fixgls}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixgls}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\checkfile}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\includecsv}[9]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
-\newcommand{\includemetacsv}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includemetacsv}[5]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\makesubfigopt}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
-\newcommand{\makesubfig}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\makesubfig}[4]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\printlstlisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\printtmplisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\pdfloadfile}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\fixpax}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\addsynsec}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
-\newcommand{\createfiles}[5]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\createfiles}[6]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixnewline}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\nlmixr}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\saveeqnfile}[4]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\savemathfiles}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 
 \fi
 

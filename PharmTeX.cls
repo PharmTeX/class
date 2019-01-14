@@ -1,12 +1,20 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2018/10/02}
-\def\pharmtexversion{1.8}
+\def\pharmtexdate{2019/01/10}
+\def\pharmtexversion{1.9}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{PharmTeX}[\pharmtexdate\space v\pharmtexversion\space PharmTeX Class]
+
+%%%% Load bundle version if possible
+\newread\pharmtexread
+\IfFileExists{bundleversion.txt}{
+\openin\pharmtexread=bundleversion.txt
+\read\pharmtexread to \bundleversion
+\closein\pharmtexread
+}{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Apply user options (for \documentclass[options]{PharmTeX})
@@ -150,6 +158,24 @@
 \DeclareOption{nofigcapbelow}{\figcapbelowfalse\cfigcapbelowtrue}
 \DeclareOption{figcapbelow}{\figcapbelowtrue\cfigcapbelowtrue}
 
+%%% Option to print and include equations as images
+\newif\ifeqnimg\eqnimgfalse
+\newif\ifceqnimg\ceqnimgfalse
+\DeclareOption{noeqnimg}{\eqnimgfalse\ceqnimgtrue}
+\DeclareOption{eqnimg}{\eqnimgtrue\ceqnimgtrue}
+
+%%% Option to print and include inline math as images
+\newif\ifmathimg\mathimgfalse
+\newif\ifcmathimg\cmathimgfalse
+\DeclareOption{nomathimg}{\mathimgfalse\cmathimgtrue}
+\DeclareOption{mathimg}{\mathimgtrue\cmathimgtrue}
+
+%%% Option to make PDF Word compatible
+\newif\ifword\wordfalse
+\newif\ifcword\cwordfalse
+\DeclareOption{noword}{\wordfalse\cwordtrue}
+\DeclareOption{word}{\wordtrue\cwordtrue}
+
 %%% Option to select paper size.
 \newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.54 cm}
 \newlength{\PmxBottomBase}\setlength{\PmxBottomBase}{2.54 cm}
@@ -190,10 +216,9 @@
 \PassOptionsToPackage{warn}{textcomp}
 
 %%% Load user options
-\newread\useroptionsfile
-\openin\useroptionsfile=useroptions.txt
-\read\useroptionsfile to \useroptions
-\closein\useroptionsfile
+\openin\pharmtexread=useroptions.txt
+\read\pharmtexread to \useroptions
+\closein\pharmtexread
 \useroptions
 
 %%% Transfer options to main class
@@ -232,6 +257,21 @@
 	\ifcsamepagelinks\else\samepagelinkstrue\fi
 \fi
 
+%%% Settings for Word compatible PDF mode
+\newcommand{\DocPDFWord}{}
+\newcommand{\doDocPDFWord}{0}
+\ifword
+	\ifceqnimg\else\eqnimgtrue\fi
+	\ifcmathimg\else\mathimgtrue\fi
+\fi
+\ifeqnimg\renewcommand{\doDocPDFWord}{1}\fi
+\ifmathimg\renewcommand{\doDocPDFWord}{1}\fi
+\ifnum\doDocPDFWord=1\renewcommand{\DocPDFWord}{-word}\fi
+
+%%% Fix error thrown by chngcntr package. Should be fixed in a later release of MiKTeX
+\let\counterwithout\relax
+\let\counterwithin\relax
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Include packages
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -242,7 +282,7 @@
 \usepackage[table]{xcolor}
 \usepackage{geometry, afterpage, etoolbox}
 \usepackage[nomessages]{fp}
-\usepackage{changepage, amsmath, parskip, sectsty, color, setspace, pdfpages}
+\usepackage{changepage, amsmath, amssymb, parskip, sectsty, color, setspace, pdfpages}
 \usepackage[nooneline, font={small,bf}]{caption}
 \usepackage{listings} % or listingsutf8, but it seems to be buggy
 \usepackage[figure,table,lstlisting]{totalcount}
@@ -267,7 +307,7 @@
 \usepackage[originalparameters, document]{ragged2e}
 \usepackage{bigstrut, here, float, rotating, subcaption, appendix, upquote, chngcntr}
 \usepackage{printlen, upgreek, csvsimple, pbox, arrayjobx, xstring, pgf, ifthen, pax, filecontents, ifplatform}
-\usepackage{verbatim, newfile, totcount, framed, alltt}
+\usepackage{verbatim, newfile, totcount, framed, alltt, environ}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes.misc}
@@ -283,10 +323,70 @@
 %%% Custom commands
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%% PharmTeX and bundle versions as numbers
+\newcommand{\intpart}[1]{\expandafter\int@part#1..\@nil}
+\def\int@part#1.#2.#3\@nil{\if\relax#1\relax0\else#1\fi}
+\newcommand{\fracpart}[1]{\expandafter\frac@part#1..\@nil}
+\def\frac@part#1.#2.#3\@nil{\if\relax#2\relax0\else#2\fi}
+\ifdefined\bundleversion
+\pgfmathsetmacro{\bundlenumber}{int(\intpart{\bundleversion}*100 + \fracpart{\bundleversion})}
+\else
+\newcommand{\bundlenumber}{99999}
+\fi
+\pgfmathsetmacro{\pharmtexnumber}{int(\intpart{\pharmtexversion}*100 + \fracpart{\pharmtexversion})}
+
 %%% Settings for webhyper
 % see bottom of this document
 
-\AtBeginEnvironment{align}{\nl}
+%%% Allow page breaks in multiline equations
+\allowdisplaybreaks
+
+%%% Remove extra blank line before equations
+\newif\ifsubequations\subequationsfalse
+\BeforeBeginEnvironment{subequations}{\nlalign\subequationstrue}
+\AfterEndEnvironment{subequations}{\subequationsfalse}
+\AtBeginEnvironment{equation}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{equation*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{eqnarray}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{eqnarray*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{align}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{align*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{alignat}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{alignat*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{gather}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{gather*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{multline}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{multline*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{flalign}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+\AtBeginEnvironment{flalign*}{\ifsubequations\nopagebreak[4]\else\nlalign\fi}
+
+%%% Settings for eqnimg option
+\newenvironment{oldsubequations}{%
+  \refstepcounter{equation}%
+  \protected@edef\theparentequation{\theequation}%
+  \setcounter{parentequation}{\value{equation}}%
+  \setcounter{equation}{0}%
+  \def\theequation{\theparentequation\alph{equation}}%
+  \ignorespaces
+}{%
+  \setcounter{equation}{\value{parentequation}}%
+  \ignorespacesafterend
+}
+\newenvironment{oldalign}{%
+  \start@align\@ne\st@rredfalse\m@ne
+}{%
+  \math@cr \black@\totwidth@
+  \egroup
+  \ifingather@
+    \restorealignstate@
+    \egroup
+    \nonumber
+    \ifnum0=`{\fi\iffalse}\fi
+  \else
+    $$%
+  \fi
+  \ignorespacesafterend
+}
 
 %%% Set date format
 \def\today{\two@digits{\the\day}~\ifcase\month\or JAN\or FEB\or MAR\or APR\or MAY\or JUN\or JUL\or AUG\or SEP\or OCT\or NOV\or DEC\fi~\number\year}
@@ -387,6 +487,7 @@
 \newcommand{\regtm}{\textsuperscript{\textregistered}\xspace} % registered trademark
 \newcommand{\nt}{\noindent} % do not indent the first line after an empty line in the .tex file
 \newcommand{\nl}{\vspace{-0.9\baselineskip}} % skip back approximately one line, used just before a new equation
+\newcommand{\nlalign}{\vspace{-0.9\baselineskip}} % same command, just for use with eqnimg
 \newcommand{\nn}{\nonumber} % skip the equation number for a given equation.
 \newcommand{\ee}[1]{\cdot 10^{#1}} % *10^ scientific format in pretty print
 \newcommand{\degree}{^\circ} % degree symbyl
@@ -412,6 +513,7 @@
 \newcommand{\pmxbottomrule}{\bottomrule} % default bottomrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newoutputstream{tmp}\newcommand{\savefile}[2]{\openoutputfile{#1}{tmp}\addtostream{tmp}{#2}\closeoutputstream{tmp}}
 \newcommand{\hyperoff}[1]{\begin{NoHyper}#1\end{NoHyper}} % command for turning off a specific hyperlink for a \cref command
+\newcommand{\bundleos}{\ifwindows{}Win\else{}Lin\fi}
 
 %%% Spacing in enumerate and itemize. Can also be changed in each list using [noitemsep] etc.
 \setlist{noitemsep}
@@ -516,7 +618,8 @@ ITEM #1 NOT FOUND%
 \newcounter{tnote}
 \newcounter{tnoteglobal}
 \crefname{tnote}{Tablenote}{Tablenotes}
-\renewcommand{\thetnote}{$^\text{\alph{tnote}}$}
+%\renewcommand{\thetnote}{$^\text{\alph{tnote}}$}
+\renewcommand{\thetnote}{\textsuperscript{\alph{tnote}}}
 \renewcommand{\tnote}[2]{\raisebox{\ht\strutbox}{\hypertarget{#1}{}}\refstepcounter{tnote}\thetnote#2\label{#1}}
 \newcommand{\tref}[1]{\ref*{#1}} % Disables hyperlinks within tables
 %\newcommand{\tref}[1]{\nref{#1}} % Enables hyperlinks within tables. But the hyperlinks in header doesn't always respect nosamepagelinks due to the setup of package longtable/tabularx (firsthead and lasthead are compiled on first and second page only, respectively, not on every page). Thus, hyperlinks are disabled for \tnote. They still work for a \cref to a \tnote.
@@ -939,11 +1042,21 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 %%% Fonts and other settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\ifnum\bundlenumber>101
+\newcommand{\bfac}{0.81}
+\newcommand{\efac}{0.45}
+\titlespacing{\section}{0pt}{\bfac\baselineskip}{\efac\baselineskip}
+\titlespacing{\subsection}{0pt}{\bfac\baselineskip}{\efac\baselineskip}
+\titlespacing{\subsubsection}{0pt}{\bfac\baselineskip}{\efac\baselineskip}
+\titlespacing{\paragraph}{\parindent}{\bfac\baselineskip}{\efac\baselineskip}
+\titlespacing{\subparagraph}{0pt}{\bfac\baselineskip}{\efac\baselineskip}
+\else
 \titlespacing{\section}{0pt}{*0}{*-1}
 \titlespacing{\subsection}{0pt}{*0}{*-1}
 \titlespacing{\subsubsection}{0pt}{*0}{*-1}
 \titlespacing{\paragraph}{\parindent}{*0}{*-1}
 \titlespacing{\subparagraph}{0pt}{*0}{*-1}
+\fi
 \titleformat{\section}{\normalsize\bfseries}{\thesection.}{4pt}{#1}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{4pt}{#1}
 \titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{4pt}{#1}
@@ -1216,6 +1329,7 @@ ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 	pdfkeywords={},
 	pdfcreator={PharmTeX-Class-\pharmtexversion}
 }
+\ifdefined\bundleversion\hypersetup{pdfproducer={PharmTeX-Bundle-\bundleos-\bundleversion}}\fi
 %\pdfminorversion=7 % PDF version 1.X, currently 1.5
 %\pdfcompresslevel=9 % PDF compression
 %\pdfobjcompresslevel=0 % Figure compression
@@ -1669,9 +1783,10 @@ Date Issued: & \DocDate \\ \hline
 \fi
 
 \ifdefined\RefFile
-
+\ifnum\thecitenum>0
 \checkartifact{\RefFileOrig}
 \hypertarget{itemnumber\theitemnumber}{}
+\fi
 \ifx\fname\empty
 ITEM \RefFile.bib NOT FOUND.
 \savefile{pmxref-tmpfixfile.bib}{}\bibliography{pmxref-tmpfixfile.bib}
@@ -1843,19 +1958,27 @@ ITEM \SignaturePage{} NOT FOUND
 \renewcommand*{\glsclearpage}{}
 \renewcommand{\glossaryname}{ABBREVIATION AND DEFINITION OF TERMS}
 \hypertarget{gls}{}
+\label{glossary}
+\addtocontents{toc}{\protect\contentsline {section}{\glossaryname}{\protect\pageref{glossary}}{gls}}
 \renewcommand{\glsbookmark}{\bookmark[level=1,dest=gls]{\glossaryname}}
 \glstocfalse
 
 \ifdefined\GlsFile
+
+\IfFileExists{nonemptyglossary.txt}{
 \checkartifact{\GlsFile.tex}
 \hypertarget{itemnumber\theitemnumber}{}
+}{}
+
 \ifx\fname\empty
 ITEM \GlsFile.tex NOT FOUND.
 \fi
 \fi
 
 \printglossary[title=\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist]
-\ifnum\themycnt>0\else
+\ifnum\themycnt>0
+\nonemptyglossary
+\else
 % \phantomsection
 % \addcontentsline{toc}{section}{\glossaryname}
 \vspace{-1.7\baselineskip}
@@ -1988,10 +2111,13 @@ ITEM \GlsFile.tex NOT FOUND.
 \newcommand{\doprintsig}{0}\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
 \ifdraftmode
-\createfiles{\jobname}{\DocPDF}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
 %\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig} % DRAFT MODE: download ALL artifacts (possibly again) when at least 1 artifact is missing
 \else
-\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % BATCH MODE: download ALL artifacts
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % BATCH MODE: download ALL artifacts
 \fi
+
+% Compile mathimg
+\savemathfiles{\jobname}
 
 }
