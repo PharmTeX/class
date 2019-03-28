@@ -451,6 +451,7 @@ if ($sepstr eq 'tex') {
 	$str =~ s/([^\\])\&/$1 myveryuniquetexseparator/g;
 }
 $str =~ s/\n?\z//;
+$str = "$str\n\\ifnum\\dodescription=1\\multicolumn{\\LT\@cols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\TPTL\@width}{\\rule[2mm]{\\TPTL\@widthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\fi"; # Add description to table
 my @lines = split "\n", $str; my $nline = scalar @lines - 1;
 
 my @ishline; my $tmpstr;
@@ -461,7 +462,9 @@ for ($i=0; $i <= $nline; $i++) {
 }
 
 # Check for multicolumn and column swapping
-if ((index($str, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
+my $multstr = $str;
+$multstr =~ s/\n.+$//g;
+if ((index($multstr, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
 
 # Get rid of spaces in $colspec
 $colspec =~ s/ //g;
@@ -511,7 +514,7 @@ $ncoltot = max(@ncoltots);
 my $nsep = length($sepp); my $colorder = '';
 if ($nhead < 1) { $nhead = 1; }
 if (($sepstr eq 'comma') || ($sepstr eq 'semicolon') || ($sepstr eq 'pipe') || ($sepstr eq 'tab')) {
-	for ($i=0; $i <= $nline; $i++) { $lines[$i] =~ s/([^$sep\n]{1,})/\\detokenize{$1}/g;}
+	for ($i=0; $i <= $nline-1; $i++) { $lines[$i] =~ s/([^$sep\n]{1,})/\\detokenize{$1}/g;} # the "-1" accounts for the description line
 }
 if (($sepstr ne 'comma') && ($sepstr ne 'texcomma')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/,/myveryuniquecomma/g;}}
 if (($sepstr ne 'tab') && ($sepstr ne 'textab')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/\t/myveryuniquetab/g;}}
@@ -566,7 +569,7 @@ for ($i=0; $i <= $nline-$nhead; $i++) {
 for ($i=0; $i <= $nhead-1; $i++) { $header[$i] =~ s/myveryuniquenewline//g; }
 for ($i=0; $i <= $nline-$nhead; $i++) { $body[$i] =~ s/myveryuniquenewline//g; }
 
-my $substnote = '.'; my $headnote; my $colnote;
+my $substnote = ''; my $headnote; my $colnote;
 if ($nhead == 1) {$headnote = "Line 1 substituted";};
 if ($nhead > 1) {$headnote = "Lines 1--$nhead substituted";}
 if ($newhead ne '') {@header = $newhead; $substnote = "$substnote $headnote.";}
@@ -604,39 +607,19 @@ if ($dotight == 1) {
 	$colspec = "@cols"; $colspec =~ s/ //g;
 }
 
-# Make sure that at least two rows are moved to next page on automatic page break
-my $nrow = scalar @body - 1; my @endbody;
-if ($nrow==0) {
-	@endbody = <>;
-} elsif ($nrow==1) {
-	@endbody = @body[0]; @body = @body[1];
-} else {
-	@endbody = @body[$nrow];
-	@body = @body[0..$nrow-1];
-}
-my $ncoldesc = $ncol + 1;
-
-# https://tex.stackexchange.com/questions/196303/converting-threeparttable-tabular-to-threeparttablex-and-longtable
-
 my $retstr = "
 \\renewcommand{\\tmpsubstnote}{$substnote}
 \\renewcommand{\\csvtable}{
-\\begin{ThreePartTable}
-\\begin{TableNotes}[flushleft]
-\\item \\quad\\\\[-0.6\\myspacer]\\mytableitemnumber\\tmpsubstnote\\xspace\\mytabledescription\\\\[0.75\\baselineskip]\\quad
-\\end{TableNotes}
 \\begin{tabularx}{\\maxwidth}{$colspec} \\tablabel{$label}{$key}
 	\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endfirsthead\\caption[]{$label}\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endhead
 	\\endfoot
-	 @endbody 
-	\\pmxbottomrule
-	\\insertTableNotes
+	\\gettablewidth\\gettablemaxwidth
 	\\endlastfoot
-	 @body 
+	 @body
 \\end{tabularx}
-\\end{ThreePartTable}
+\\vspace{-1.2\\baselineskip}
 }";
 $retstr =~ s/ +/ /g;
 
@@ -659,6 +642,10 @@ my $tmpstr = fix_latin($str); my $teststr = $str;
 $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
+
+$str =~ s/\\\\ \\ifnum/\\\\* \\ifnum/g;
+$str =~ s/\\\\ \\end{tabularx}/ \\end{tabularx}/g;
+$str =~ s/\\fi( &)* *\\end\{tabularx\}/\\fi\\end\{tabularx\}/g;
 
 if ( $mkfile == 1 ) {
 	open(FILE, '>:utf8', 'file.tmp.txt');

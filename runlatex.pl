@@ -76,7 +76,8 @@ if ( $mode eq 'eqn' ) { $sub = 1; }
 
 # Determine document PDF name
 $file = "$name.tex"; open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
-my $docname = "$name.pdf"; ($docname) = $str =~ /\\docpdfname\{([^\}]+)\}/;
+my $docname; ($docname) = $str =~ /\\docpdfname\{([^\}]+)\}/;
+if ( not defined $docname ) { $docname = "$name.pdf" }
 "a" =~ /a/; # unset $1 for fix_latin lines further down
 
 # Files to delete in cleanup

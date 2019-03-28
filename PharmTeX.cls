@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2019/01/10}
-\def\pharmtexversion{1.9}
+\def\pharmtexdate{2019/03/28}
+\def\pharmtexversion{1.10}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -423,7 +423,7 @@
 \ifitemid
 \renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, Artifact ID \artiref{#1}\fi}
 \else
-\renewcommand{\itemid}[1]{\ifnum\ioutput=1 Item ID omitted\xspace\else{}Item ID omitted, Artifact ID omitted\xspace\fi}
+\renewcommand{\itemid}[1]{}
 \renewcommand{\artiref}[1]{(omitted)\xspace}
 \renewcommand{\folderref}[1]{(omitted)\xspace}
 \fi
@@ -566,6 +566,25 @@ ITEM #1 NOT FOUND%
 \setlength{\LTleft}{0pt} % fills out longtables (used for glossary and List of Items) to fill the full page width
 \setlength{\LTright}{0pt} % fills out longtables to fill the full page width
 
+% Tools for keeping the description of a table on the same page as the table itself
+\renewcommand\TPTminimum{\maxwidth}
+\newcommand\gettablemaxwidth{%
+  \noalign{\begingroup
+  \setlength\TPTL@width{0pt}
+  \renewcommand\LT@entry[2]{\global\advance\TPTL@width by ##2}
+  \@nameuse{LT@\romannumeral\c@LT@tables}
+  \ifdim\TPTL@width<\TPTminimum\relax\global\TPTL@width=\TPTminimum\fi
+  \endgroup}
+}
+\newlength\TPTL@widthh
+\newcommand\gettablewidth{%
+  \noalign{\begingroup
+  \setlength\TPTL@widthh{0pt}
+  \renewcommand\LT@entry[2]{\global\advance\TPTL@widthh by ##2}
+  \@nameuse{LT@\romannumeral\c@LT@tables}
+  \endgroup}
+}
+
 %%% Turn off badness 10000 warning
 \hbadness=10000
 \vbadness=10000
@@ -577,42 +596,6 @@ ITEM #1 NOT FOUND%
 \vfuzz=20pt
 \newdimen\hfuzz
 \newdimen\vfuzz
-
-%%%% Modify Command for inserting descriptions under tables from threeparttablex package
-%\renewcommand\insertTableNotes{%
-%  % first we need to know the width of the longtable, remember that it
-%  % will only settle after a few compilations
-%  \noalign{\begingroup
-%  \setlength\TPTL@width{0pt}
-%  \renewcommand\LT@entry[2]{\global\advance\TPTL@width by ##2}
-%  \@nameuse{LT@\romannumeral\c@LT@tables}
-%  \ifdim\TPTL@width<\TPTminimum\relax\global\TPTL@width=\TPTminimum\fi
-%  \endgroup}
-%  % then add the table notes inside a \parbox of the required width
-%  \multicolumn{\LT@cols}{c}{%
-%    \makebox[0pt][c]{%
-%      \parbox{\TPTL@width}{%
-%        \let\TPT@hsize\@empty% otherwise the width is not reset
-%                             % correctly as \TPT@hsize messes with 
-%                             % \@parboxrestore
-%        \let\TPToverlap\relax%
-%        \begin{tablenotes}[\TPTL@optarg]%
-%          \TPTL@font%
-%          \TPTL@body
-%        \end{tablenotes}
-%      }%
-%    }%
-%  }%
-%}
-
-%%% Remove item label for TableNotes in ThreePartTable (threeparttablex package), as it is used for the table descriptions.
-\def\TPTdoTablenotes{%
- \par \prevdepth\z@ \TPT@hsize 
- \list{}{\topsep\z@skip \partopsep\z@skip 
-  \itemsep\z@ \parsep\z@ \itemindent\z@
-  \TPTnoteSettings
-  \let\makelabel\empty
-}}
 
 %%% Tablenotes. These are local notes within a given table that reset their alpha counter (a, b, c, etc.) for each new table.
 \newcounter{tnote}
@@ -627,7 +610,6 @@ ITEM #1 NOT FOUND%
 
 %%% Function for making tables from csv file
 \newcommand{\dodescription}{0}
-\newcommand{\isinlinetable}{}
 \newcommand{\mytabledescription}{}
 \newcommand{\mytableitemnumber}{}
 \newcommand{\syntab}{0}
@@ -638,7 +620,6 @@ ITEM #1 NOT FOUND%
 \newcommand{\pmxtable}[8][1]{
 
 \renewcommand{\dodescription}{0}
-\renewcommand{\isinlinetable}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tmpsubstnote}{}
@@ -658,13 +639,10 @@ ITEM #1 NOT FOUND%
 \else
 \fixnewline{\detokenize{#7}}
 \renewcommand{\mytableitemnumber}{\itemid{#2}}
+\renewcommand{\mytabledescription}{#7}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{\fname}{#3}{#4}{#5}{#6}{\detokenize{#8}}{\dotight}{0}
 \csvtable
-\vspace{-2.75\baselineskip}
-%\footnotesize
-%\vspace{-1.8\baselineskip}
-%\ifitemid{}\itemid{#2}\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\xspace#7}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
@@ -679,7 +657,6 @@ ITEM #1 NOT FOUND%
 \newcommand{\pmxtextable}[6][1]{
 
 \renewcommand{\dodescription}{0}
-\renewcommand{\isinlinetable}{1}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tmpsubstnote}{}
@@ -693,19 +670,50 @@ ITEM #1 NOT FOUND%
 \savefile{file.tmp.txt}{\detokenize{#6}}
 \tablefont
 \fixnewline{\detokenize{#5}}
-\renewcommand{\mytableitemnumber}{\itemid{#2}}
+\renewcommand{\mytableitemnumber}{Inline table}
+\renewcommand{\mytabledescription}{#5}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{#4}{}{\dotight}{1}
 \csvtable
-\vspace{-2.75\baselineskip}
-%\footnotesize
-%\vspace{-1.8\baselineskip}
-%\ifitemid{}Inline table\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
 \renewcommand{\dotight}{0}
 
+}
+
+%%% Function for inserting tables from image files
+\newcommand{\pmxfigtable}[5]{
+	\checkartifact{#1}
+	\ifx\fname\empty
+	\edef\numberofpages{1}
+	\else
+	\ifthenelse{\equal{\fext}{pdf}}{\pdfpages{\fname}}{\edef\numberofpages{1}}
+	\fi
+	\begin{table}[H]
+		\hypertarget{#2}{}\caption{#3}\label{#2}
+		\addtocontents{lot}{\protect{\bookmark[rellevel=1,keeplevel,dest=#2]{\tablename~\thetable. #3}}}
+		\ifx\fname\empty ITEM #1 NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
+		\ifnum\numberofpages=1
+		\\\vspace{0.2\baselineskip}
+		\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}
+		\fi
+	\end{table}
+	\ifnum\numberofpages>1
+	\foreach \x in {2,...,\numberofpages}{
+		\addtocounter{table}{-1}
+		\begin{table}[H]
+			\caption[]{#3}
+			\includegraphics[page=\x,#5]{\fname}
+			\ifnum\x=\numberofpages
+			\\\vspace{0.2\baselineskip}
+			\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}
+			\fi
+		\end{table}
+		\ifnum\x<\numberofpages
+		\clearpage
+		\fi}
+	\fi
 }
 
 %%% List of Items. This code below, including the perl code, creates the latex code for the list of items table. It is a longtable instead of a tabularx.
@@ -842,7 +850,7 @@ ITEM \QAPage{} NOT FOUND
 	\ifnum\numberofpages=1
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\numberofpages>1
@@ -856,7 +864,7 @@ ITEM \QAPage{} NOT FOUND
 	\ifnum\x=\numberofpages
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\x=\numberofpages\else\clearpage\fi}
@@ -1705,10 +1713,10 @@ Date Issued: & \DocDate \\ \hline
   \fancyheadoffset[L]{0cm}
   \fancyheadoffset[R]{0cm}                 
   \fancyfootoffset[L,R]{0cm}
-  \fancyhead[L]{\footnotesize{\HeaderText}  
+  \fancyhead[L]{\ifdefined\HeaderText\footnotesize{\HeaderText}\fi  
 }
    \fancyfoot[C]{    
- \footnotesize{\FooterText \\ Page \thepage~of~\pageref*{LastPage}}
+ \footnotesize{\ifdefined\FooterText\FooterText\else\quad\fi \\ Page \thepage~of~\pageref*{LastPage}}
  \ifwatermark
  \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
  	\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};
@@ -1727,9 +1735,9 @@ Date Issued: & \DocDate \\ \hline
 \fancyhf{}
 \fancyfoot[C]{
 \begin{tikzpicture}[remember picture,overlay]
-    \node[rotate = 90] at ([xshift=-1.6cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=0.5\PmxLeft-0.5\PmxRight]current page.east) {\footnotesize{\FooterText}};
+    \node[rotate = 90] at ([xshift=-1.6cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=0.5\PmxLeft-0.5\PmxRight]current page.east) {\ifdefined\FooterText\footnotesize{\FooterText}\fi};
     \node[rotate = 90] at ([xshift=-1.15cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=0.5\PmxLeft-0.5\PmxRight]current page.east) {\footnotesize{Page \thepage~of~\pageref*{LastPage}}};
-    \node[rotate = 90, text width=20cm] at ([xshift=1.65cm+\PmxTop-\PmxTopBase-\PmxHead+\PmxHeadBase,yshift=13.18cm+\PmxLeft-\PmxLeftBase]current page.south west) {\footnotesize{\HeaderText\\}};
+    \node[rotate = 90, text width=20cm] at ([xshift=1.65cm+\PmxTop-\PmxTopBase-\PmxHead+\PmxHeadBase,yshift=13.18cm+\PmxLeft-\PmxLeftBase]current page.south west) {\ifdefined\HeaderText\footnotesize{\HeaderText\\}\fi};
 \end{tikzpicture}
 \ifwatermark
 \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
