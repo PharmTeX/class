@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
-%%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+%%% Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2019/03/28}
-\def\pharmtexversion{1.10}
+\def\pharmtexdate{2019/04/16}
+\def\pharmtexversion{1.11}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}

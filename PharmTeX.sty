@@ -1,5 +1,5 @@
 %%% PharmTeX Package, part of the PharmTeX platform.
-%%% Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+%%% Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 %%% Define PharmTeX Package for LaTeX
@@ -451,7 +451,6 @@ if ($sepstr eq 'tex') {
 	$str =~ s/([^\\])\&/$1 myveryuniquetexseparator/g;
 }
 $str =~ s/\n?\z//;
-$str = "$str\n\\ifnum\\dodescription=1\\multicolumn{\\LT\@cols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\TPTL\@width}{\\rule[2mm]{\\TPTL\@widthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\fi"; # Add description to table
 my @lines = split "\n", $str; my $nline = scalar @lines - 1;
 
 my @ishline; my $tmpstr;
@@ -462,9 +461,7 @@ for ($i=0; $i <= $nline; $i++) {
 }
 
 # Check for multicolumn and column swapping
-my $multstr = $str;
-$multstr =~ s/\n.+$//g;
-if ((index($multstr, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
+if ((index($str, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
 
 # Get rid of spaces in $colspec
 $colspec =~ s/ //g;
@@ -514,7 +511,7 @@ $ncoltot = max(@ncoltots);
 my $nsep = length($sepp); my $colorder = '';
 if ($nhead < 1) { $nhead = 1; }
 if (($sepstr eq 'comma') || ($sepstr eq 'semicolon') || ($sepstr eq 'pipe') || ($sepstr eq 'tab')) {
-	for ($i=0; $i <= $nline-1; $i++) { $lines[$i] =~ s/([^$sep\n]{1,})/\\detokenize{$1}/g;} # the "-1" accounts for the description line
+	for ($i=0; $i <= $nline; $i++) { $lines[$i] =~ s/([^$sep\n]{1,})/\\detokenize{$1}/g;} # the "-1" accounts for the description line
 }
 if (($sepstr ne 'comma') && ($sepstr ne 'texcomma')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/,/myveryuniquecomma/g;}}
 if (($sepstr ne 'tab') && ($sepstr ne 'textab')) {for ($i=0; $i <= $nline; $i++) {$lines[$i] =~ s/\t/myveryuniquetab/g;}}
@@ -643,9 +640,12 @@ $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
-$str =~ s/\\\\ \\ifnum/\\\\* \\ifnum/g;
-$str =~ s/\\\\ \\end{tabularx}/ \\end{tabularx}/g;
-$str =~ s/\\fi( &)* *\\end\{tabularx\}/\\fi\\end\{tabularx\}/g;
+my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\LT\@cols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\TPTL\@width}{\\rule[2mm]{\\TPTL\@widthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\fi";
+$str =~ s/\\\\ \\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
+
+# open(FILE, '>:utf8', 'debug.txt');
+# print FILE "$str";
+# close(FILE);
 
 if ( $mkfile == 1 ) {
 	open(FILE, '>:utf8', 'file.tmp.txt');

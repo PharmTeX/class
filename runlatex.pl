@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # PharmTeX perl script, part of the PharmTeX platform.
-# Copyright (C) 2018 Christian Hove Rasmussen (contact@pharmtex.org).
+# Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
 # This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 # Load packages
@@ -23,6 +23,7 @@ my $fname = $ARGV[0];
 (my $name = $fname) =~ s/\.[^.]*$//;
 my $mode = $ARGV[1];
 if ( not defined $mode ) { $mode = 'batch'; }
+my $modeorig = $mode;
 
 # Check for supported modes
 if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear jabref > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
@@ -82,7 +83,7 @@ if ( not defined $docname ) { $docname = "$name.pdf" }
 
 # Files to delete in cleanup
 unlink ('dodel.txt');
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
+my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
 
 # Clear mode to clean out auxiliary files
 if ( $mode eq 'clear' ) {
@@ -113,7 +114,7 @@ if ( $mode eq 'batch' ) {
 # Check for word or syn modes
 my $doeqn = 0; my $domath = 0; my $doword = 0; my $dosyn = 0; my $opt = ''; my $opto = ''; my $word = ''; my $syn = ''; my $fopt; my @opts;
 if ( $mode eq 'eqn' ) {
-	($opt) = $str =~ /\n* *\\documentclass *\[([^\[^\]]{0,})\] *\{ *PharmTeX *\}/; $opt =~ s/ *//g;
+	($opt) = $str =~ /(?:^|\n) *\\documentclass *\[([^\[^\]]{0,})\] *\{ *PharmTeX *\}/; $opt =~ s/ *//g;
 } else {
 	if ( -e 'fixedoptions.txt' ) {
 		$file = "fixedoptions.txt"; open $fh, '<:raw', "$file"; $opt = do { local $/; <$fh> }; close $fh;
@@ -121,7 +122,7 @@ if ( $mode eq 'eqn' ) {
 		if ( grep { $_ eq 'synonly' } @opts ) {	$docname = "$docname-synopsis"; }
 		if ( ( grep { $_ eq 'eqnimg' } @opts ) || ( grep { $_ eq 'mathimg' } @opts ) ) { $docname = "$docname-word"; }
 	} else {
-		($fopt) = $str =~ /\n* *\\documentclass *\[([^\[^\]]{0,})\] *\{ *PharmTeX *\}/;
+		($fopt) = $str =~ /(?:^|\n) *\\documentclass *\[([^\[^\]]{0,})\] *\{ *PharmTeX *\}/;
 		if ( defined $fopt ) {
 			$fopt =~ s/ *//g;
 			@opts = split ",", $fopt;
@@ -261,7 +262,7 @@ if ( $knit == 1 ) {
 	$txt = "\nRunning knitr\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	copy "$nametex.tex", "$nametex.Rnw";
 	restore_streams(); $file = "$nametex.Rnw"; open $fh, '<', $file; $str = do { local $/; <$fh> }; close $fh; redirect_streams();
-	$str =~ s/( *(\\documentclass)( *\[[^\[^\]]{0,}\] *)*(\{ *PharmTeX *\}))/$1\n<<Preliminaries, cache=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE>>=\nlibrary(knitr)\nopts_knit\$set(self.contained=FALSE)\nopts_chunk\$set(message=FALSE, comment=NA, warning=FALSE, echo=FALSE, results='hide', cache=FALSE, tidy=FALSE, concordance=FALSE)\n@/g;
+	$str =~ s/((?:^|\n) *(\\documentclass)( *\[[^\[^\]]{0,}\] *)*(\{ *PharmTeX *\}))/$1\n<<Preliminaries, cache=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE>>=\nlibrary(knitr)\nopts_knit\$set(self.contained=FALSE)\nopts_chunk\$set(message=FALSE, comment=NA, warning=FALSE, echo=FALSE, results='hide', cache=FALSE, tidy=FALSE, concordance=FALSE)\n@/g;
 	open $fh, '>', "$file"; print $fh "$str"; close($fh);
 	system("Rscript -e \"library('knitr'); knit('$nametex.Rnw');\"");
 	restore_streams(); $file = "$nametex.tex"; open $fh, '<', $file; $str = do { local $/; <$fh> }; close $fh; redirect_streams();
@@ -398,7 +399,7 @@ if (( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) && ( -e "$name.
 	my ($date) = $log =~ /Package: PharmTeX ([0-9]{4}\/[0-9]{2}\/[0-9]{2}) v[0-9]+\.[0-9]+ PharmTeX Package/;
 	open $fh, '>:utf8', "$name.log";
 	print $fh "This is the PharmTeX Class v. $ver of $date$bbver.";
-	if ( "$out" ne "" ) { print $fh "\n\n\n<<<<<<< Overall output of PharmTeX run sequence >>>>>>>\n\n\n$out"; }
+	if ( "$out" ne "" ) { print $fh "\n\n\n<<<<<<< Overall output of PharmTeX run sequence >>>>>>>\n\n\nCompilation command: executex $name.tex $modeorig\n\n\n$out"; }
 	print $fh "\n<<<<<<< Output of final perltex/pdflatex run >>>>>>>\n\n\n$log";
 	close $fh;
 }
