@@ -98,20 +98,43 @@
 }
 \fi
 
+\newcommand{\convimg}[1]{\ensuremath{#1}}
 \ifmathimg
+\ifcconvimg\else\convimgtrue\fi
 \newwrite\myout
 \newcounter{isubjob}
 \newcommand{\domathimgload}{0}\IfFileExists{mathimg.txt}{\renewcommand{\domathimgload}{1}}{}
 \newcommand{\domathimgmake}{0}\IfFileExists{\jobname.bbl}{\IfFileExists{mathimg.txt}{}{\renewcommand{\domathimgmake}{1}}}{}
 \ifnum\domathimgmake=1
+\ifconvimg
+\renewcommand{\convimg}[1]{\protect\stepcounter{isubjob}\immediate\openout\myout=\jobname-math-\arabic{isubjob}.tex\immediate\write\myout{\detokenize{#1}}\immediate\closeout\myout}
+\fi
 \catcode`\$=13%`
 \def$#1${\protect\stepcounter{isubjob}\immediate\openout\myout=\jobname-math-\arabic{isubjob}.tex\immediate\write\myout{\detokenize{#1}}\immediate\closeout\myout}
 \global\let\tikz@ensure@dollar@catcode=\relax
 \fi
 \ifnum\domathimgload=1
+\ifconvimg
+\renewcommand{\convimg}[1]{\protect\stepcounter{isubjob}\ensuremath{\input{\jobname-math-\arabic{isubjob}.tex}}}
+\fi
 \catcode`\$=13%`
 \def$#1${\protect\stepcounter{isubjob}\ensuremath{\input{\jobname-math-\arabic{isubjob}.tex}}}
 \global\let\tikz@ensure@dollar@catcode=\relax
+\fi
+\fi
+
+\ifmathimg\else
+\ifconvimg
+\newwrite\myout
+\newcounter{isubjob}
+\newcommand{\domathimgload}{0}\IfFileExists{mathimg.txt}{\renewcommand{\domathimgload}{1}}{}
+\newcommand{\domathimgmake}{0}\IfFileExists{\jobname.bbl}{\IfFileExists{mathimg.txt}{}{\renewcommand{\domathimgmake}{1}}}{}
+\ifnum\domathimgmake=1
+\renewcommand{\convimg}[1]{\protect\stepcounter{isubjob}\immediate\openout\myout=\jobname-math-\arabic{isubjob}.tex\immediate\write\myout{\detokenize{#1}}\immediate\closeout\myout}
+\fi
+\ifnum\domathimgload=1
+\renewcommand{\convimg}[1]{\protect\stepcounter{isubjob}\ensuremath{\input{\jobname-math-\arabic{isubjob}.tex}}}
+\fi
 \fi
 \fi
 
@@ -1099,7 +1122,7 @@ my $job = $_[3];
 my $OS = "$^O";
 
 my $scale;
-if ( $OS eq 'MSWin32' ) { $scale = 72/600;  } else { $scale = 1; } # original: 72/288;
+if ( $OS eq 'MSWin32' ) { $scale = 1;  } else { $scale = 1; } # original: 72/288;
 
 open my $fh, '<:raw', "$file"; my $str = do { local $/; <$fh> }; close $fh;
 $str =~ s/\r//g;
@@ -1197,7 +1220,7 @@ my $job = $_[0];
 my $OS = "$^O";
 
 my $scale; my $name; my $fh; my $str; my $jobstr; my @newcmd; my $newcmd; my @files; my $file; my $donum; my $raise;
-if ( $OS eq 'MSWin32' ) { $scale = 0.94*72/600;  } else { $scale = 0.94*1; } # original: 72/288;
+if ( $OS eq 'MSWin32' ) { $scale = 0.94;  } else { $scale = 0.94; } # original: 72/288;
 
 if (( -e "$job-math-1.tex" ) && ( -e "$job.bbl" ) && ( ! -e "$job-math-1.png" )) {
 

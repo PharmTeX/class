@@ -120,7 +120,7 @@ if ( $mode eq 'eqn' ) {
 		$file = "fixedoptions.txt"; open $fh, '<:raw', "$file"; $opt = do { local $/; <$fh> }; close $fh;
 		@opts = split ",", $opt;
 		if ( grep { $_ eq 'synonly' } @opts ) {	$docname = "$docname-synopsis"; }
-		if ( ( grep { $_ eq 'eqnimg' } @opts ) || ( grep { $_ eq 'mathimg' } @opts ) ) { $docname = "$docname-word"; }
+		if ( ( grep { $_ eq 'eqnimg' } @opts ) || ( grep { $_ eq 'mathimg' } @opts ) || ( grep { $_ eq 'convimg' } @opts ) ) { $docname = "$docname-word"; }
 	} else {
 		($fopt) = $str =~ /(?:^|\n) *\\documentclass *\[([^\[^\]]{0,})\] *\{ *PharmTeX *\}/;
 		if ( defined $fopt ) {
@@ -133,6 +133,10 @@ if ( $mode eq 'eqn' ) {
 			if ( ( grep { $_ eq 'mathimg' } @opts ) && (not $bnum < 102) ) {
 				$domath = 1; @opts = grep ! /mathimg/, @opts;
 				if ( "$word" eq "" ) { $word = "mathimg"; } else { $word = "$word,mathimg"; }
+			}
+			if ( ( grep { $_ eq 'convimg' } @opts ) && (not $bnum < 102) ) {
+				$domath = 1; @opts = grep ! /convimg/, @opts;
+				if ( "$word" eq "" ) { $word = "convimg"; } else { $word = "$word,convimg"; }
 			}
 			if ( grep { $_ eq 'synonly' } @opts ) {
 				$dosyn = 1; @opts = grep ! /synonly/, @opts; $syn = "synonly";
@@ -194,7 +198,7 @@ if ( "$opt" ne "" ) {
 	$opt =~ s/ *, */\}\\ExecuteOptions\{/g;
 	$opt = "\\ExecuteOptions\{$opt\}";
 	$opt =~ s/\\ExecuteOptions\{\}//g;
-	if ( $bnum < 102 ) { $opt =~ s/\\ExecuteOptions\{eqnimg\}//g; $opt =~ s/\\ExecuteOptions\{mathimg\}//g; }
+	if ( $bnum < 102 ) { $opt =~ s/\\ExecuteOptions\{eqnimg\}//g; $opt =~ s/\\ExecuteOptions\{mathimg\}//g; $opt =~ s/\\ExecuteOptions\{convimg\}//g; }
 }
 open(FILE, '>', 'useroptions.txt'); print FILE "$opt"; close(FILE); system("");
 
@@ -204,8 +208,8 @@ if ( $mode eq 'batch' ) { $txt = "Finalized document compilation initiated\n\n";
 redirect_streams();
 if ( $mode eq 'batch' ) { print $txt; $txt = ''; }
 
-# Check for right version of bundle to eqnimg and mathimg
-if ( ( $mode eq 'batch' ) && (( grep { $_ eq 'eqnimg' } @opts ) || ( grep { $_ eq 'mathimg' } @opts )) && ( $bnum < 102 ) ) { $txt = "LaTeX Warning: Options \"eqnimg\" and \"mathimg\" only supported in software bundle v. 1.2 and higher (you have v. $bver). Please upgrade at http://pharmtex.org. Skipping for now...\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
+# Check for right version of bundle to eqnimg, mathimg, and convimg
+if ( ( $mode eq 'batch' ) && (( grep { $_ eq 'eqnimg' } @opts ) || ( grep { $_ eq 'mathimg' } @opts ) || ( grep { $_ eq 'convimg' } @opts )) && ( $bnum < 102 ) ) { $txt = "LaTeX Warning: Options \"eqnimg\", \"mathimg\", and \"convimg\" only supported in software bundle v. 1.2 and higher (you have v. $bver). Please upgrade at http://pharmtex.org. Skipping for now...\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
 
 # Batch mode settings
 if ( $mode eq 'batch' ) {

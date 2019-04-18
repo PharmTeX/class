@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2019/04/16}
-\def\pharmtexversion{1.11}
+\def\pharmtexdate{2019/04/18}
+\def\pharmtexversion{1.12}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -170,11 +170,11 @@
 \DeclareOption{nomathimg}{\mathimgfalse\cmathimgtrue}
 \DeclareOption{mathimg}{\mathimgtrue\cmathimgtrue}
 
-%%% Option to make PDF Word compatible
-\newif\ifword\wordfalse
-\newif\ifcword\cwordfalse
-\DeclareOption{noword}{\wordfalse\cwordtrue}
-\DeclareOption{word}{\wordtrue\cwordtrue}
+%%% Option to print and include inline math as images (only for \convimg command)
+\newif\ifconvimg\convimgfalse
+\newif\ifcconvimg\cconvimgfalse
+\DeclareOption{noconvimg}{\convimgfalse\cconvimgtrue}
+\DeclareOption{convimg}{\convimgtrue\cconvimgtrue}
 
 %%% Option to select paper size.
 \newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.54 cm}
@@ -260,12 +260,11 @@
 %%% Settings for Word compatible PDF mode
 \newcommand{\DocPDFWord}{}
 \newcommand{\doDocPDFWord}{0}
-\ifword
-	\ifceqnimg\else\eqnimgtrue\fi
-	\ifcmathimg\else\mathimgtrue\fi
-\fi
 \ifeqnimg\renewcommand{\doDocPDFWord}{1}\fi
-\ifmathimg\renewcommand{\doDocPDFWord}{1}\fi
+\ifmathimg
+	\renewcommand{\doDocPDFWord}{1}\fi
+\fi
+\ifconvimg\renewcommand{\doDocPDFWord}{1}\fi
 \ifnum\doDocPDFWord=1\renewcommand{\DocPDFWord}{-word}\fi
 
 %%% Fix error thrown by chngcntr package. Should be fixed in a later release of MiKTeX
@@ -919,7 +918,7 @@ ITEM \QAPage{} NOT FOUND
 	frame=single,
 	basicstyle={\small\ttfamily},
 	language={[LaTeX]TeX},
-	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text}
+	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text, convimg, pmxfigtable, pmx, pmxfont, pmxtight, pmxtop, pmxbottom, pmxleft, pmxright, pmxhead, pmxfoot}
 }
 \lstdefinelanguage{Nonmem}{alsoletter={...}, morekeywords={\$PROBLEM, \$INPUT, \$DATA, \$SUBROUTINES, \$PK, \$MODEL, \$DES, \$THETA, \$OMEGA, \$SIGMA, \$ERROR, \$COV, \$TABLE, \$ESTIMATION, \$COVARIANCE, \$EST, \$COV, \$SUBR, \$ERR, BLOCK, COMP, THETA, ETA, ERR, EPS, IF, THEN, ELSE, ENDIF}, comment=[l];, morecomment=[l]..., morestring=[m]'}[keywords, comments, strings]
 \newcommand{\matlabfont}[1]{\matlabbasicfont{#1}\normalfont}
