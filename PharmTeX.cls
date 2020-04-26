@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
-%%% Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
+%%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2019/04/18}
-\def\pharmtexversion{1.12}
+\def\pharmtexdate{2020/04/26}
+\def\pharmtexversion{1.13}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -322,6 +322,39 @@
 %%% Custom commands
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%% Fix bug in pax package when using filenames with spaces
+\newcommand{\mypaxfileinput}{}
+\def\PAX@AddAnnots#1#2{%
+  \kvsetkeys{PAX@Gin}{#1}%
+  \Grot@setangle{\PAX@Gin@angle}%
+  % a little careful, is type of angle int or real?
+  \loop
+  \ifdim\PAX@Gin@angle\p@<360\p@
+  \else
+    \edef\PAX@Gin@angle{\the\numexpr-360+\number\PAX@Gin@angle}%
+  \repeat
+  \loop
+  \ifdim\PAX@Gin@angle\p@<\z@
+    \edef\PAX@Gin@angle{\strip@pt\dimexpr\PAX@Gin@angle\p@+360\p@}%
+  \repeat
+  \ifcase0\ifnum\PAX@Gin@angle=0 1\fi
+          \ifnum\PAX@Gin@angle=90 1\fi
+          \ifnum\PAX@Gin@angle=180 1\fi
+          \ifnum\PAX@Gin@angle=270 1\fi
+    \PackageWarning{pax}{Unsupported value for option angle}%
+  \fi
+  \filename@parse{#2}%
+  \def\PAX@file{\filename@area\filename@base.pax}%
+  \let\[\PAX@parser
+  \def\<{<}%
+  \def\>{>}%
+  \endlinechar=-1 %
+  \InputIfFileExists{"\PAX@file"}{%
+  }{%
+    \typeout{* Missing: \PAX@file}%
+  }%
+}
+
 %%% PharmTeX and bundle versions as numbers
 \newcommand{\intpart}[1]{\expandafter\int@part#1..\@nil}
 \def\int@part#1.#2.#3\@nil{\if\relax#1\relax0\else#1\fi}
@@ -412,10 +445,10 @@
 %%% Settings for itemid
 \ifitemhyper
 \newcommand{\itemref}{\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}}
-\newcommand{\itemreref}[1]{\hyperlink{itemnumber#1}{Item #1}}
+\newcommand{\itemreref}[1]{\renewcommand{\newunderscorename}{}\fixunderscore{#1}\hyperlink{itemnumber#1}{Item \newunderscorename{}}}
 \else
 \newcommand{\itemref}{Item \theitemnumber}
-\newcommand{\itemreref}[1]{Item #1}
+\newcommand{\itemreref}[1]{\renewcommand{\newunderscorename}{}\fixunderscore{#1}Item \newunderscorename{}}
 \fi
 \newcommand{\ioutput}{0}
 \newcommand{\itemid}[1]{}
@@ -519,12 +552,15 @@
 
 %%% Include .tex doc from another run
 %%% This is used for socalled daughter steps where another LatexReport step can be loaded into the present one. All code between \begin{document} and \references is included in the spot where the \pmxinclude command is put in the mother document. It will download the daughter .tex document and print a file called "dotwice" telling runlatex.bat to compile latex an extra time and include any artifacts from the daughter document.
+\newcommand{\newunderscorename}{}
 \newcommand{\includetexdoc}{}
 % \perlnewcommand{\dotwice}{
 \newcommand{\pmxinclude}[1]{
+\renewcommand{\newunderscorename}{}
 \checkartifact{#1}
+\fixunderscore{#1}
 \ifx\fname\empty
-ITEM #1 NOT FOUND
+ITEM \newunderscorename{} NOT FOUND
 \else
 \hypertarget{itemnumber\theitemnumber}{}
 \includetex{\fname}
@@ -535,9 +571,11 @@ ITEM #1 NOT FOUND
 %%% This command can e.g. load a text file created by an R run containing an important number that will then be put into the spot where the \pmxinput is used. If the artifact is found a \footnote will be created showing the artifact ID.
 % \perlnewcommand{\inputtext}[1]{
 \newcommand{\pmxinput}[1]{%
+\renewcommand{\newunderscorename}{}
 \checkartifact{#1}%
+\fixunderscore{#1}%
 \ifx\fname\empty%
-ITEM #1 NOT FOUND%
+ITEM \newunderscorename{} NOT FOUND%
 \else%
 \hypertarget{itemnumber\theitemnumber}{}
 \inputtext{\fname}%
@@ -613,26 +651,32 @@ ITEM #1 NOT FOUND%
 \newcommand{\mytableitemnumber}{}
 \newcommand{\syntab}{0}
 \newcommand{\csvtable}{}
+\newcommand{\tabletopnote}{}
 % \perlnewcommand{\includecsv}[8]{
 % start of actual \pmxtable command using \includecsv. RETAIN empty lines in the beginning and end of \pmxtable to make sure line spacing before and after tables is correct.
 \newcommand{\tmpsubstnote}{}
 \newcommand{\pmxtable}[8][1]{
 
+\renewcommand{\mytabledescription}{}
+\renewcommand{\newunderscorename}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
+\renewcommand{\tabletopnote}{}
 \renewcommand{\tmpsubstnote}{}
 \renewcommand{\pmxtoprule}{\toprule}
 \renewcommand{\pmxmidrule}{\toprule}
 \renewcommand{\pmxbottomrule}{\bottomrule}
 \setcounter{tnote}{0}
+\renewcommand{\newunderscorename}{}
+\fixunderscore{#2}
 \checkartifact{#2}
 \tablefont
 \ifx\fname\empty
 \begin{tabularx}{\maxwidth}{C{1}} \tablabel{#6}{#5}
 	\\\toprule
-	 ITEM #2 NOT FOUND \\\midrule\endfirsthead\caption[]{#6}\\\toprule
-	 ITEM #2 NOT FOUND \\\midrule\endhead
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{#6}\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endhead
 	\endfoot\bottomrule\endlastfoot
 \end{tabularx}
 \else
@@ -655,9 +699,11 @@ ITEM #1 NOT FOUND%
 \newcounter{textable}\setcounter{textable}{0}
 \newcommand{\pmxtextable}[6][1]{
 
+\renewcommand{\mytabledescription}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
+\renewcommand{\tabletopnote}{}
 \renewcommand{\tmpsubstnote}{}
 \renewcommand{\pmxtoprule}{\toprule}
 \renewcommand{\pmxmidrule}{\toprule}
@@ -683,6 +729,8 @@ ITEM #1 NOT FOUND%
 
 %%% Function for inserting tables from image files
 \newcommand{\pmxfigtable}[5]{
+	\renewcommand{\newunderscorename}{}
+	\fixunderscore{#1}
 	\checkartifact{#1}
 	\ifx\fname\empty
 	\edef\numberofpages{1}
@@ -692,7 +740,7 @@ ITEM #1 NOT FOUND%
 	\begin{table}[H]
 		\hypertarget{#2}{}\caption{#3}\label{#2}
 		\addtocontents{lot}{\protect{\bookmark[rellevel=1,keeplevel,dest=#2]{\tablename~\thetable. #3}}}
-		\ifx\fname\empty ITEM #1 NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
+		\ifx\fname\empty ITEM \newunderscorename{} NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
 		\ifnum\numberofpages=1
 		\\\vspace{0.2\baselineskip}
 		\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}
@@ -750,6 +798,7 @@ ITEM #1 NOT FOUND%
 
 \ifitemid\ifnum\docsvtable=0\else
 \renewcommand{\csvtable}{}
+\renewcommand{\tabletopnote}{}
 %\begin{landscape}
 \section*{\itemlistname}
 \phantomsection
@@ -835,6 +884,8 @@ ITEM \QAPage{} NOT FOUND
 \end{figure}
 \vspace{-0.8\baselineskip}
 }{
+\renewcommand{\newunderscorename}{}
+\fixunderscore{#1}
 \checkartifact{#1}
 \ifx\fname\empty
 \edef\numberofpages{1}
@@ -844,12 +895,13 @@ ITEM \QAPage{} NOT FOUND
 \ifnum\numberofpages>1\renewcommand{\tmpstr}{ (1 of \numberofpages)}\else\renewcommand{\tmpstr}{}\fi
 \begin{figure}[H]
 	\iffigcapbelow\else\figlabel{#3\tmpstr}{#2}\fi % caption above
-	\ifx\fname\empty ITEM #1 NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
+	\ifx\fname\empty ITEM \newunderscorename{} NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
 	\iffigcapbelow\figlabel{#3\tmpstr}{#2}\fi % caption below
 	\ifnum\numberofpages=1
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
+	% \footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\numberofpages>1
@@ -863,7 +915,8 @@ ITEM \QAPage{} NOT FOUND
 	\ifnum\x=\numberofpages
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4}\fi
+	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
+	% \footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\x=\numberofpages\else\clearpage\fi}
@@ -1009,17 +1062,16 @@ ITEM \QAPage{} NOT FOUND
 {c}{\renewcommand{\xsl}{0.00cm}\renewcommand{\xta}{center}\renewcommand{\xal}{center}}
 {r}{\renewcommand{\xsl}{ \ifletterpaper 11.27cm\fi \ifisopaper 12.14cm\fi }\renewcommand{\xta}{right}\renewcommand{\xal}{east}}
 }
+\renewcommand{\newunderscorename}{}
+\fixunderscore{#2}
 \checkartifact{#2}
 \label{#4}
 \ifx\fname\empty
-ITEM #2 NOT FOUND
+ITEM \newunderscorename{} NOT FOUND
 \else
 
-%%% Use Pax (Perl script) to extract hyperlinks from external PDF
-\IfFileExists{\fbase.pax}{}{\immediate\write18{paxify "\fbase.pdf"}\fixpax{\fbase.pax}}
-
-%%% Use custom Perl script to extract PDF bookmarks (side pane)
-\IfFileExists{\fbase.pay}{}{\immediate\write18{pdftk "\fbase.pdf" dump_data_utf8 > "\fbase.pay"}}
+%%% Use Pax (Perl script) to extract hyperlinks from external PDF and custom Perl script to extract PDF bookmarks (side pane)
+\fixpax{\fbase}
 \pdfloadfile{\fbase}{\thesection}{\thepage}
 
 \pdfpages{\fname}
@@ -1039,7 +1091,10 @@ The next page is an external document\ifitemid{} with \itemid{#2}.\else.\fi\fi\x
 
 \else
 
-ITEM #2 OMITTED DUE TO "noexpdf" OPTION.\label{#4}
+\renewcommand{\newunderscorename}{}
+\fixunderscore{#2}
+
+ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 
 \fi
 

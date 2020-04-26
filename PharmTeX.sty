@@ -1,5 +1,5 @@
-%%% PharmTeX Package, part of the PharmTeX platform.
-%%% Copyright (C) 2019 Christian Hove Rasmussen (contact@pharmtex.org).
+%%% Cognigen Package, part of the PharmTeX platform.
+%%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 %%% Define PharmTeX Package for LaTeX
@@ -398,7 +398,8 @@ if ($file ne '') {
 if ( $domake == 1 ) { $str =~ s/\\\\/\\\\\n/g; }
 
 $str =~ s/ *\\begin *\{table\}\[[a-zA-Z]+\]//g;
-$str =~ s/ *\\centering//g;
+#$str =~ s/ *\\centering//g;
+$str =~ s/\\tabularnewline/\\\\/g;
 $str =~ s/ *\\caption *\{[a-zA-Z ]+\}//g;
 $str =~ s/ *\\begin *\{tabular\}[^ ]+//g;
 $str =~ s/\\end *\{tabular\}//g;
@@ -483,6 +484,20 @@ for ($i=0; $i <= $nline; $i++) {
 	$lines[$i] =~ s/\\hline|\\midrule|\\toprule|\\bottomrule//g;
 }
 
+# Get rid of spaces in $colspec
+$colspec =~ s/ //g;
+
+# Determine number of columns in file
+my @ncoltots = 0; my $ncoltot;
+for ($i=0; $i <= $nline; $i++) {
+	$ncoltots[$i] = () = $lines[$i] =~ /$sep/gi;
+	$ncoltots[$i] = $ncoltots[$i] + 1;
+}
+$ncoltot = max(@ncoltots);
+
+# Use all columns in file if nothing specified by user
+if ( $colspec eq '' ) { $colspec = 'L' x $ncoltot; }
+
 # Check for multicolumn and column swapping
 if ((index($str, '\multicolumn') != -1) && (index($colspec, '[') != -1)) { die "Column swapping ($colspec) not supported with merged columns (multicolumn)!"; }
 
@@ -524,12 +539,7 @@ $modcolspec =~ s/uu10/ex/g;
 $modcolspec =~ s/uu11/em/g;
 $colspec = $modcolspec;
 
-my $ncolinp = scalar @modcols; my @ncoltots = 0; my $ncoltot;
-for ($i=0; $i <= $nline; $i++) {
-	$ncoltots[$i] = () = $lines[$i] =~ /$sep/gi;
-	$ncoltots[$i] = $ncoltots[$i] + 1;
-}
-$ncoltot = max(@ncoltots);
+my $ncolinp = scalar @modcols;
 
 my $nsep = length($sepp); my $colorder = '';
 if ($nhead < 1) { $nhead = 1; }
@@ -550,7 +560,7 @@ if (@cols ~~ @colseq) {$docol = 0;} else {
 			for ($j=0; $j <= $ncol; $j++) {
 				$newline[$j] = $fields[$cols[$j]-1];
 			}
-			$lines[$i] = join("$sepp", @newline);;
+			$lines[$i] = join("$sepp", @newline);
 		}
 		$colorder = "@cols "; $colorder = substr($colorder, 0, -1); $colorder = "Columns [$colorder] out of $ncoltot";
 	}
@@ -631,7 +641,7 @@ my $retstr = "
 \\renewcommand{\\tmpsubstnote}{$substnote}
 \\renewcommand{\\csvtable}{
 \\begin{tabularx}{\\maxwidth}{$colspec} \\tablabel{$label}{$key}
-	\\\\\\pmxtoprule
+	\\ifthenelse{\\equal{\\tabletopnote}{}}{}{\\\\\\multicolumn{$ncoltot}{c}{\\textbf{\\normalsize\\tabletopnote}}}\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endfirsthead\\caption[]{$label}\\\\\\pmxtoprule
 	 @header \\\\\\pmxmidrule\\endhead
 	\\endfoot
@@ -665,6 +675,11 @@ if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
 my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\LT\@cols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\TPTL\@width}{\\rule[2mm]{\\TPTL\@widthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\fi";
 $str =~ s/\\\\ \\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
+
+$str =~ s/\\\\/\\tabularnewline/g;
+
+$str =~ s/\\multicolumn\{1\}\{c\}\{(.*?)\}/\\centering $1/g;
+$str =~ s/\\multicolumn\{1\}\{r\}\{(.*?)\}/\\raggedleft $1/g;
 
 # open(FILE, '>:utf8', 'debug.txt');
 # print FILE "$str";
@@ -805,7 +820,7 @@ my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; 
 if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	$lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
 	@lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
 	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
@@ -815,7 +830,7 @@ if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	}
 }
 else {
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM $1$2 NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
 	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
@@ -968,11 +983,17 @@ binmode(STDOUT, ":utf8");
 use Path::Tiny;
 my $paxfile = $_[0];
 my $str;
-$str = path($paxfile)->slurp;
-$str =~ s/\\\[\{dest\}\{([0-9]+)\}\{([0-9]+)\}\{FitR\}\{\n  Rect=\{([+-]?([0-9]*[.])?[0-9]+) ([+-]?([0-9]*[.])?[0-9]+) [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+\},\n\}\\\\/\\\[\{dest\}\{$1\}\{$2\}\{XYZ\}\{\n  DestY=\{$5\},DestX=\{$3\},\n\}\\\\/g;
-open(FILE, '>:utf8', "$paxfile");
-print FILE "$str";
-close(FILE);
+if ( ! -e "$paxfile.pax" ) {
+	system("paxify \"$paxfile.pdf\"");
+	$str = path($paxfile)->slurp;
+	$str =~ s/\\\[\{dest\}\{([0-9]+)\}\{([0-9]+)\}\{FitR\}\{\n  Rect=\{([+-]?([0-9]*[.])?[0-9]+) ([+-]?([0-9]*[.])?[0-9]+) [+-]?([0-9]*[.])?[0-9]+ [+-]?([0-9]*[.])?[0-9]+\},\n\}\\\\/\\\[\{dest\}\{$1\}\{$2\}\{XYZ\}\{\n  DestY=\{$5\},DestX=\{$3\},\n\}\\\\/g;
+	open(FILE, '>:utf8', "$paxfile");
+	print FILE "$str";
+	close(FILE);
+}
+if ( ! -e "$paxfile.pay" ) {
+	system("pdftk \"$paxfile.pdf\" dump_data_utf8 > \"$paxfile.pay\"");
+}
 }
 \perlnewcommand{\addsynsec}[3]{
 $mysyncnt = $_[0];
@@ -1293,6 +1314,16 @@ print FILE "";
 close(FILE);
 return;
 }
+\perlnewcommand{\fixunderscore}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $name = $_[0];
+my $newname = $name;
+$newname =~ s/\_/\\\_/g;
+return "\\renewcommand{\\newunderscorename}{$newname}";
+}
 
 \else
 
@@ -1321,6 +1352,7 @@ return;
 \newcommand{\saveeqnfile}[4]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\savemathfiles}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixunderscore}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 
 \fi
 
