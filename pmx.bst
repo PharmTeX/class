@@ -2,7 +2,7 @@
 %% This is file `pmx.bst',
 %% generated with the docstrip utility.
 %%
-%% Modified and included in PharmTeX platform and by Christian Hove Claussen (contact@pharmtex.org) - see license information for this file below.
+%% Modified and included in PharmTeX platform and by Christian Hove Rasmussen (contact@pharmtex.org) - see license information for this file below.
 %%
 %% The original source files were:
 %%

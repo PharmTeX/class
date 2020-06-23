@@ -10,6 +10,7 @@ use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 use Encode;
 use File::Copy qw(copy);
+use File::Path;
 use File::Compare;
 use PDF::API2;
 use Encoding::FixLatin qw(fix_latin);
@@ -83,13 +84,13 @@ if ( not defined $docname ) { $docname = "$name.pdf" }
 
 # Files to delete in cleanup
 unlink ('dodel.txt');
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
+my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "$name.upa", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
 
 # Clear mode to clean out auxiliary files
 if ( $mode eq 'clear' ) {
 	print STDERR "\nClearing auxiliary files\n\n";
 	do './delauxitems.pl';
-	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "sigpage.pdf", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name.log", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log", "$logfile.out", @delfiles);
+	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "sigpage.pdf", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name.log", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log", "$logfile.out", @delfiles); #rmtree('pmxinputfiles');
 	open(FILENEW, '>:utf8', 'dodel.txt'); close(FILENEW);
 	$ENV{PATH} = "$oldpath";
 	exit;
@@ -107,7 +108,7 @@ if ( $mode eq 'jabref' ) {
 # Batch mode initialization
 if ( $mode eq 'batch' ) {
 	do './delauxitems.pl';
-	unlink ("sigpage.pdf", "$docname.pdf", "$name.pdf", "$name.log", "$logfile.out", @delfiles);
+	unlink ("sigpage.pdf", "$docname.pdf", "$name.pdf", "$name.log", "$logfile.out", @delfiles); #rmtree('pmxinputfiles');
 	if ( $sub == 0 ) { unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log"); }
 }
 
@@ -358,7 +359,7 @@ if ( $finalize == 1 ) {
 		unlink "batch.txt";
 	}
 	do './delauxitems.pl';
-	unlink (@delfiles, "fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt");
+	unlink (@delfiles, "fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt"); #rmtree('pmxinputfiles');
 }
 $txt = "\nDone. Please check $name.log for error messages and warnings.\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 

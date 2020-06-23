@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2020/04/26}
-\def\pharmtexversion{1.13}
+\def\pharmtexdate{2020/06/22}
+\def\pharmtexversion{1.14}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -45,12 +45,14 @@
 \DeclareOption{notoc}{\tocfalse\ctoctrue}
 
 %%% Option to show LOF
+\newif\iflofcl\lofclfalse
 \newif\iflof\loftrue
 \newif\ifclof\cloffalse
 \DeclareOption{nolof}{\loffalse\cloftrue}
 \DeclareOption{lof}{\loftrue\cloftrue}
 
 %%% Option to show LOT
+\newif\ifloftfirst\loftfirsttrue
 \newif\iflot\lottrue
 \newif\ifclot\clotfalse
 \DeclareOption{nolot}{\lotfalse\clottrue}
@@ -59,6 +61,8 @@
 %%% Option to show glossary
 \newif\ifglossary\glossarytrue
 \newif\ifcglossary\cglossaryfalse
+\newif\ifglossaryupper\glossaryuppertrue
+\newif\ifglossarypostdot\glossarypostdottrue
 \DeclareOption{noglossary}{\glossaryfalse\cglossarytrue}
 \DeclareOption{glossary}{\glossarytrue\cglossarytrue}
 
@@ -69,6 +73,7 @@
 \DeclareOption{synopsis}{\synopsistrue\csynopsistrue}
 
 %%% Option to signature page
+\newif\ifprintsigpage\printsigpagetrue
 \newif\ifsigpage\sigpagetrue
 \newif\ifcsigpage\csigpagefalse
 \DeclareOption{nosigpage}{\sigpagefalse\csigpagetrue}
@@ -176,6 +181,12 @@
 \DeclareOption{noconvimg}{\convimgfalse\cconvimgtrue}
 \DeclareOption{convimg}{\convimgtrue\cconvimgtrue}
 
+%%% Option to copy all inputfiles to ./inputfiles and load from there if present
+\newif\ifcopy\copyfalse
+\newif\ifccopy\ccopyfalse
+\DeclareOption{nocopy}{\copyfalse\ccopytrue}
+\DeclareOption{copy}{\copytrue\ccopytrue}
+
 %%% Option to select paper size.
 \newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.54 cm}
 \newlength{\PmxBottomBase}\setlength{\PmxBottomBase}{2.54 cm}
@@ -190,7 +201,7 @@
 \newlength{\PmxHead}\setlength{\PmxHead}{0.25 cm}
 \newlength{\PmxFoot}\setlength{\PmxFoot}{1 cm}
 \newcommand{\pmxtop}[1]{\setlength{\PmxTop}{#1}\geometry{top = \PmxTop}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxbottom}[1]{\setlength{\PmxBottom}{#1}\geometry{nottom = \PmxBottom}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
+\newcommand{\pmxbottom}[1]{\setlength{\PmxBottom}{#1}\geometry{bottom = \PmxBottom}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
 \newcommand{\pmxleft}[1]{\setlength{\PmxLeft}{#1}\geometry{left = \PmxLeft}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
 \newcommand{\pmxright}[1]{\setlength{\PmxRight}{#1}\geometry{right = \PmxRight}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
 \newcommand{\pmxhead}[1]{\setlength{\PmxHead}{#1}\geometry{headsep = \PmxHead}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
@@ -267,6 +278,13 @@
 \ifconvimg\renewcommand{\doDocPDFWord}{1}\fi
 \ifnum\doDocPDFWord=1\renewcommand{\DocPDFWord}{-word}\fi
 
+%%% Settings for draftmode
+\ifcopy
+	\newcommand{\docopy}{1}
+\else
+	\newcommand{\docopy}{0}
+\fi
+
 %%% Fix error thrown by chngcntr package. Should be fixed in a later release of MiKTeX
 \let\counterwithout\relax
 \let\counterwithin\relax
@@ -297,12 +315,13 @@
 \usepackage{expl3}
 \usepackage{regexpatch}
 \usepackage[hang, flushmargin]{footmisc}
-\usepackage[bookmarksnumbered, pdftex]{hyperref}
+\usepackage[bookmarksnumbered, pdftex, unicode]{hyperref}
 \usepackage[open,openlevel=1]{bookmark}
 \usepackage[nameinlink, capitalise, noabbrev]{cleveref}
 \usepackage{needspace, refcount}
 \usepackage{mathptmx, helvet, courier}
-\usepackage{threeparttable, threeparttablex, booktabs, longtable, tabularx, ltablex, multirow, nameref, pdflscape}
+\usepackage{threeparttable, threeparttablex, booktabs, longtable, tabularx, ltablex, nameref, pdflscape, hhline}
+\usepackage[longtable]{multirow}
 \usepackage[originalparameters, document]{ragged2e}
 \usepackage{bigstrut, here, float, rotating, subcaption, appendix, upquote, chngcntr}
 \usepackage{printlen, upgreek, csvsimple, pbox, arrayjobx, xstring, pgf, ifthen, pax, filecontents, ifplatform}
@@ -479,12 +498,11 @@
 \newcommand{\artifacts}{}
 \newcommand{\missingartifacts}{}
 \newcommand{\missingrfiles}{}
-% \perlnewcommand{\findartifact}[1]{
 %%% Note that the % symbols are required to be there, since otherwise a few of the commands using the \checkartifact command will have issues with line spacing
 \newcommand\additemrfile{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemrfile\expandafter{\expandafter;\exptmp}}
 \newcommand\additemartifact{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemartifact\expandafter{\expandafter;\exptmp}}
 \newcommand{\checkartifact}[1]{%
-\findartifact{#1}%
+\findartifact{#1}{\docopy}%
 \addtocounter{itemnumber}{1}%
 \ifnum\ioutput=1%
 \additemrfile%
@@ -547,8 +565,18 @@
 \newcommand{\hyperoff}[1]{\begin{NoHyper}#1\end{NoHyper}} % command for turning off a specific hyperlink for a \cref command
 \newcommand{\bundleos}{\ifwindows{}Win\else{}Lin\fi}
 
-%%% Spacing in enumerate and itemize. Can also be changed in each list using [noitemsep] etc.
+%%% Settings in enumerate and itemize
+% \def\labelitemi{\textbullet}
 \setlist{noitemsep}
+\setlist[1]{labelindent=\parindent} % < Usually a good idea
+\setlist[itemize]{labelsep=0.3in}
+\setlist[itemize,1]{label=\footnotesize$\bullet$,leftmargin=*}
+\setlist[itemize,2]{label=\footnotesize$\circ$,leftmargin=0.3in}
+\setlist[itemize,3]{label=\tiny$\square$,leftmargin=0.3in}
+\setlist[enumerate]{labelsep=0.3in}
+\setlist[enumerate,1]{label = \arabic*.,ref = \arabic*,leftmargin=*}
+\setlist[enumerate,2]{label = \alph*.,ref = \theenumi.\emph{\alph*},leftmargin=0.3in}
+\setlist[enumerate,3]{label = \roman*.,ref = \theenumii.\roman*,leftmargin=0.3in}
 
 %%% Include .tex doc from another run
 %%% This is used for socalled daughter steps where another LatexReport step can be loaded into the present one. All code between \begin{document} and \references is included in the spot where the \pmxinclude command is put in the mother document. It will download the daughter .tex document and print a file called "dotwice" telling runlatex.bat to compile latex an extra time and include any artifacts from the daughter document.
@@ -621,6 +649,9 @@ ITEM \newunderscorename{} NOT FOUND%
   \@nameuse{LT@\romannumeral\c@LT@tables}
   \endgroup}
 }
+\newcommand{\ltcols}{\LT@cols}
+\newcommand{\tptlwidth}{\TPTL@width}
+\newcommand{\tptlwidthh}{\TPTL@widthh}
 
 %%% Turn off badness 10000 warning
 \hbadness=10000
@@ -646,6 +677,8 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\tablenote}{} % compatibility with earlier versions of the template
 
 %%% Function for making tables from csv file
+\newcommand{\istable}{0}
+\newcommand{\mypmxcaption}{}
 \newcommand{\dodescription}{0}
 \newcommand{\mytabledescription}{}
 \newcommand{\mytableitemnumber}{}
@@ -657,6 +690,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\tmpsubstnote}{}
 \newcommand{\pmxtable}[8][1]{
 
+\renewcommand{\istable}{1}
 \renewcommand{\mytabledescription}{}
 \renewcommand{\newunderscorename}{}
 \renewcommand{\dodescription}{0}
@@ -669,13 +703,15 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\pmxbottomrule}{\bottomrule}
 \setcounter{tnote}{0}
 \renewcommand{\newunderscorename}{}
+\renewcommand{\mypmxcaption}{#6}
+\fixglscaption{\mypmxcaption}
 \fixunderscore{#2}
 \checkartifact{#2}
 \tablefont
 \ifx\fname\empty
-\begin{tabularx}{\maxwidth}{C{1}} \tablabel{#6}{#5}
+\begin{tabularx}{\maxwidth}{C{1}} \tablabel{\mypmxcaption}{#5}
 	\\\toprule
-	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{#6}\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{\mypmxcaption}\\\toprule
 	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endhead
 	\endfoot\bottomrule\endlastfoot
 \end{tabularx}
@@ -684,12 +720,13 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\mytableitemnumber}{\itemid{#2}}
 \renewcommand{\mytabledescription}{#7}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
-\includecsv{#1}{\fname}{#3}{#4}{#5}{#6}{\detokenize{#8}}{\dotight}{0}
+\includecsv{#1}{\fname}{#3}{#4}{#5}{\mypmxcaption}{\detokenize{#8}}{\dotight}{0}
 \csvtable
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
 \renewcommand{\dotight}{0}
+\renewcommand{\mypmxcaption}{}
 \fi
 
 }
@@ -699,6 +736,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcounter{textable}\setcounter{textable}{0}
 \newcommand{\pmxtextable}[6][1]{
 
+\renewcommand{\istable}{1}
 \renewcommand{\mytabledescription}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
@@ -709,6 +747,8 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\pmxmidrule}{\toprule}
 \renewcommand{\pmxbottomrule}{\bottomrule}
 \setcounter{tnote}{0}
+\renewcommand{\mypmxcaption}{#4}
+\fixglscaption{\mypmxcaption}
 \addtocounter{textable}{1}
 
 %% Load via printed file.
@@ -718,18 +758,23 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\mytableitemnumber}{Inline table}
 \renewcommand{\mytabledescription}{#5}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
-\includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{#4}{}{\dotight}{1}
+\includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{\mypmxcaption}{}{\dotight}{1}
 \csvtable
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
 \renewcommand{\dotight}{0}
+\renewcommand{\mypmxcaption}{}
 
 }
 
 %%% Function for inserting tables from image files
+\newcommand{\istable}{0}
 \newcommand{\pmxfigtable}[5]{
+	\renewcommand{\istable}{1}
 	\renewcommand{\newunderscorename}{}
+	\renewcommand{\mypmxcaption}{#3}
+	\fixglscaption{\mypmxcaption}
 	\fixunderscore{#1}
 	\checkartifact{#1}
 	\ifx\fname\empty
@@ -738,8 +783,8 @@ ITEM \newunderscorename{} NOT FOUND%
 	\ifthenelse{\equal{\fext}{pdf}}{\pdfpages{\fname}}{\edef\numberofpages{1}}
 	\fi
 	\begin{table}[H]
-		\hypertarget{#2}{}\caption{#3}\label{#2}
-		\addtocontents{lot}{\protect{\bookmark[rellevel=1,keeplevel,dest=#2]{\tablename~\thetable. #3}}}
+		\hypertarget{#2}{}\caption{\mypmxcaption}\label{#2}
+		\addtocontents{lot}{\protect{\bookmark[rellevel=1,keeplevel,dest=#2]{\tablename~\thetable. \mypmxcaption}}}
 		\ifx\fname\empty ITEM \newunderscorename{} NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
 		\ifnum\numberofpages=1
 		\\\vspace{0.2\baselineskip}
@@ -750,7 +795,7 @@ ITEM \newunderscorename{} NOT FOUND%
 	\foreach \x in {2,...,\numberofpages}{
 		\addtocounter{table}{-1}
 		\begin{table}[H]
-			\caption[]{#3}
+			\caption[]{\mypmxcaption}
 			\includegraphics[page=\x,#5]{\fname}
 			\ifnum\x=\numberofpages
 			\\\vspace{0.2\baselineskip}
@@ -761,6 +806,7 @@ ITEM \newunderscorename{} NOT FOUND%
 		\clearpage
 		\fi}
 	\fi
+	\renewcommand{\mypmxcaption}{}
 }
 
 %%% List of Items. This code below, including the perl code, creates the latex code for the list of items table. It is a longtable instead of a tabularx.
@@ -774,16 +820,6 @@ ITEM \newunderscorename{} NOT FOUND%
 % \perlnewcommand{\includemetacsv}[3]{
 
 \newcommand{\itemlist}{
-
-\ifqapage
-\ifdefined\QAPage
-\ifthenelse{\equal{\QAPage}{}}{}{
-\ifx\fname\empty\else
-\checkartifact{\QAPage}
-\fi
-}
-\fi
-\fi
 
 % Clear last comma or separator in lists of items created by this template
 \StrGobbleRight{\artifacts}{1}[\artifacts]
@@ -816,59 +852,24 @@ ITEM \newunderscorename{} NOT FOUND%
 \fi\fi
 \normalsize
 
-% Insert QA page
-\newcommand{\qabookmark}{}
-\ifqapage
-\ifdefined\QAPage
-
-\clearpage
-\phantomsection
-\hypertarget{qapagetarget}{}
-\label{qapage}
-\addtocontents{toc}{\@backslashchar contentsline {section}{QUALITY ASSURANCE STATEMENT}{\@backslashchar pageref{qapage}}{qapagetarget}}
-\bookmark[level=1,dest=qapagetarget]{QUALITY ASSURANCE STATEMENT}
-
-\ifthenelse{\equal{\QAPage}{}}{
-\section*{QUALITY ASSURANCE STATEMENT}
-}{
-\ifx\fname\empty
-\clearpage
-\hypertarget{itemnumber\theitemnumber}{}
-ITEM \QAPage{} NOT FOUND
-\else
-% \immediate\write18{paxify tmpqapage.pdf}
-% \IfFileExists{tmpqapage.pdf}{}{\immediate\write18{\gscmd\space -dSAFER -dBATCH -dNOPAUSE -dNOCACHE -sDEVICE=pdfwrite -dFirstPage=\QAPageNo\space -dLastPage=\QAPageNo\space -sOutputFile="tmpqapage.pdf" \fname}}
-% \IfFileExists{\fbase.pax}{}{}
-\includepdf[pages=\QAPageNo, pagecommand={
-\thispagestyle{empty}
-\hypertarget{itemnumber\theitemnumber}{}
-% \blfootnote{\itemid{\QAPage}}
-\ifwatermark
-\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
-	\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};
-\end{tikzpicture}
-\fi
-}
-]{\fname}
-% }]{tmpqapage.pdf}
-\fi
-}
-\fi
-\fi
-
 }
 
 %%% Include figures from image files. The code below creates the \pmxfigure command.
 % Perl function for plotting PDF files with one or several page
+\newcommand{\isfigure}{0}
 \newcommand{\synfig}{0}
 \newcommand{\tmpstr}{}
 \newcommand{\figcapbelow}{0}
+\newcommand{\myfiguredescription}{}
 % \perlnewcommand{\makesubfigopt}[1]{
 % \perlnewcommand{\makesubfig}[3]{
 \newcommand{\issubfigure}{0}
 % Create \pmxfigure command
 \newcommand{\pmxfigure}[5]{
 
+\renewcommand{\isfigure}{1}
+\renewcommand{\mypmxcaption}{#3}
+\fixglscaption{\mypmxcaption}
 \renewcommand{\synfig}{1}
 \begingroup
 \renewcommand{\tmpstr}{}
@@ -876,13 +877,13 @@ ITEM \QAPage{} NOT FOUND
 \IfSubStr{\issubfigure}{1}{
 \makesubfigopt{#5}
 \iffigcapbelow\renewcommand{\figcapbelow}{1}\else\renewcommand{\figcapbelow}{0}\fi
+\renewcommand{\myfiguredescription}{#4}
 \begin{figure}[H]
-	\makesubfig{#1}{#2}{#3}{\figcapbelow}
-	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
-	\iffigcapbelow\quad\\[-0.4\myspacer]\fi % caption below
-	\footnotesize\ifthenelse{\equal{\detokenize{#4}}{}}{}{#4}
+\makesubfig{#1}{#2}{\mypmxcaption}{\figcapbelow}
+\footnotesize\ifthenelse{\equal{\detokenize{#4}}{}}{}{#4}
 \end{figure}
 \vspace{-0.8\baselineskip}
+\renewcommand{\myfiguredescription}{}
 }{
 \renewcommand{\newunderscorename}{}
 \fixunderscore{#1}
@@ -894,14 +895,13 @@ ITEM \QAPage{} NOT FOUND
 \fi
 \ifnum\numberofpages>1\renewcommand{\tmpstr}{ (1 of \numberofpages)}\else\renewcommand{\tmpstr}{}\fi
 \begin{figure}[H]
-	\iffigcapbelow\else\figlabel{#3\tmpstr}{#2}\fi % caption above
+	\iffigcapbelow\else\figlabel{\mypmxcaption\tmpstr}{#2}\fi % caption above
 	\ifx\fname\empty ITEM \newunderscorename{} NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
-	\iffigcapbelow\figlabel{#3\tmpstr}{#2}\fi % caption below
+	\iffigcapbelow\figlabel{\mypmxcaption\tmpstr}{#2}\fi % caption below
 	\ifnum\numberofpages=1
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
-	% \footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\numberofpages>1
@@ -909,18 +909,18 @@ ITEM \QAPage{} NOT FOUND
 \foreach \x in {2,...,\numberofpages}{
 \addtocounter{figure}{-1}
 \begin{figure}[H]
-	\iffigcapbelow\else\caption[]{#3 (\x{} of \numberofpages)}\fi % caption above
+	\iffigcapbelow\else\caption[]{\mypmxcaption (\x{} of \numberofpages)}\fi % caption above
 	\includegraphics[page=\x,#5]{\fname}
-	\iffigcapbelow\caption[]{#3 (\x{} of \numberofpages)}\fi % caption below
+	\iffigcapbelow\caption[]{\mypmxcaption (\x{} of \numberofpages)}\fi % caption below
 	\ifnum\x=\numberofpages
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
-	% \footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{\vspace{-1\baselineskip}}{\xspace#4~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\x=\numberofpages\else\clearpage\fi}
 \fi}
+\renewcommand{\mypmxcaption}{}
 \endgroup
 
 }
@@ -928,17 +928,21 @@ ITEM \QAPage{} NOT FOUND
 %%% Create \pmxtexfigure command
 \newcommand{\pmxtexfigure}[4]{
 
+\renewcommand{\isfigure}{1}
+\renewcommand{\mypmxcaption}{#2}
+\fixglscaption{\mypmxcaption}
 \renewcommand{\synfig}{1}
 \begingroup
 \begin{figure}[H]
-	\iffigcapbelow\else\figlabel{#2}{#1}\fi % caption above
+	\iffigcapbelow\else\figlabel{\mypmxcaption}{#1}\fi % caption above
 	#4
-	\iffigcapbelow\figlabel{#2}{#1}\fi % caption below
+	\iffigcapbelow\figlabel{\mypmxcaption}{#1}\fi % caption below
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption below
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
 	\footnotesize\ifitemid{}Inline figure\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace#3}
 \end{figure}
 \vspace{-0.8\baselineskip}
+\renewcommand{\mypmxcaption}{}
 \endgroup
 
 }
@@ -973,6 +977,7 @@ ITEM \QAPage{} NOT FOUND
 	language={[LaTeX]TeX},
 	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text, convimg, pmxfigtable, pmx, pmxfont, pmxtight, pmxtop, pmxbottom, pmxleft, pmxright, pmxhead, pmxfoot}
 }
+\lstdefinelanguage{Monolix}{morekeywords={LONGITUDINAL, DESCRIPTION, PK, EQUATION, EQUATION, OUTPUT, ddt}, comment=[l];}[keywords, comments, strings]
 \lstdefinelanguage{Nonmem}{alsoletter={...}, morekeywords={\$PROBLEM, \$INPUT, \$DATA, \$SUBROUTINES, \$PK, \$MODEL, \$DES, \$THETA, \$OMEGA, \$SIGMA, \$ERROR, \$COV, \$TABLE, \$ESTIMATION, \$COVARIANCE, \$EST, \$COV, \$SUBR, \$ERR, BLOCK, COMP, THETA, ETA, ERR, EPS, IF, THEN, ELSE, ENDIF}, comment=[l];, morecomment=[l]..., morestring=[m]'}[keywords, comments, strings]
 \newcommand{\matlabfont}[1]{\matlabbasicfont{#1}\normalfont}
 \newcommand{\dootherlang}{0}
@@ -981,24 +986,29 @@ ITEM \QAPage{} NOT FOUND
 \renewcommand{\dootherlang}{0}
 \phantom{X}
 \checkartifact{#1}
+\renewcommand{\mypmxcaption}{#4}
+\fixglscaption{\mypmxcaption}
 \listingfont
 \ifx\fname\empty
 \printtmplisting{#1}
-\lstinputlisting[numbers={none},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}
+\lstinputlisting[numbers={none},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}
 \else
 \printlstlisting{\fname}
 % RETAIN % symbols below, if not, line spacing will not behave properly
 \IfStrEqCase{#2}{%
-{nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{Nonmem}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{NONMEM}{\lstinputlisting[language={Nonmem},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{matlab}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{MATLAB}{\lstinputlisting[language={Matlab},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{r}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
-{R}{\lstinputlisting[language={R},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{monolix}{\lstinputlisting[language={Monolix},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{Monolix}{\lstinputlisting[language={Monolix},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{MONOLIX}{\lstinputlisting[language={Monolix},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{nonmem}{\lstinputlisting[language={Nonmem},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{Nonmem}{\lstinputlisting[language={Nonmem},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{NONMEM}{\lstinputlisting[language={Nonmem},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{matlab}{\lstinputlisting[language={Matlab},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{MATLAB}{\lstinputlisting[language={Matlab},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{r}{\lstinputlisting[language={R},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
+{R}{\lstinputlisting[language={R},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
 {}{\lstinputlisting[language={Fortran},keywordstyle={\color[rgb]{0,0,0}},commentstyle={\color[rgb]{0,0,0}},stringstyle={\color[rgb]{0,0,0}},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}}%
 }[\renewcommand{\dootherlang}{1}]%
-\ifnum\dootherlang=1 \lstinputlisting[language={#2},caption={#4},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}\fi
+\ifnum\dootherlang=1 \lstinputlisting[language={#2},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}\fi
 \fi
 \footnotesize
 \vspace{-1.2\baselineskip}
@@ -1006,6 +1016,7 @@ ITEM \QAPage{} NOT FOUND
 \normalsize
 \renewcommand{\tablefont}{\footnotesize}
 \renewcommand{\listingfont}{\scriptsize}
+\renewcommand{\mypmxcaption}{}
 
 }
 
@@ -1352,10 +1363,21 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand\cftsubparaaftersnum{.}
 \renewcommand\cftsecfont{\mdseries}
 \renewcommand\cftsecpagefont{\mdseries}
+\ifnum\bundlenumber<103
 \setlength{\cftbeforesecskip}{0pt}
 \renewcommand\cftsecafterpnum{\vskip-4pt}
 \renewcommand\cftsubsecafterpnum{\vskip-4pt}
 \renewcommand\cftsubsubsecafterpnum{\vskip-4pt}
+\else
+\setlength{\cftbeforesecskip}{11.7pt}
+\renewcommand\cftsecafterpnum{\vskip7.77pt}
+\renewcommand\cftsubsecafterpnum{\vskip7.77pt}
+\renewcommand\cftsubsubsecafterpnum{\vskip7.77pt}
+\setlength{\cftbeforefigskip}{11.7pt}
+\setlength{\cftbeforetabskip}{11.7pt}
+\renewcommand\cftfigafterpnum{\vskip0.1pt}
+\renewcommand\cfttabafterpnum{\vskip0.1pt}
+\fi
 \addtolength{\cftsecnumwidth}{-0cm}
 \addtolength{\cftsubsecnumwidth}{-0.03cm}
 \addtolength{\cftsubsubsecnumwidth}{-0.09cm}
@@ -1619,18 +1641,6 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \newcommand{\docqcdate}[1]{\newcommand{\DocQCDate}{#1\xspace}}
 \newcommand{\doctype}[1]{\newcommand{\DocType}{#1\xspace}}
 \newcommand{\docpdfname}[1]{\edef\DocPDFName{#1\ifsynonly-synopsis\fi}}
-\newcommand{\docauthora}[1]{\newcommand{\DocAuthora}{#1}}
-\newcommand{\docauthorb}[1]{\newcommand{\DocAuthorb}{#1}}
-\newcommand{\docauthorc}[1]{\newcommand{\DocAuthorc}{#1}}
-\newcommand{\docauthord}[1]{\newcommand{\DocAuthord}{#1}}
-\newcommand{\docauthore}[1]{\newcommand{\DocAuthore}{#1}}
-\newcommand{\docauthorf}[1]{\newcommand{\DocAuthorf}{#1}}
-\newcommand{\docapprovera}[1]{\newcommand{\DocApprovera}{#1}}
-\newcommand{\docapproverb}[1]{\newcommand{\DocApproverb}{#1}}
-\newcommand{\docapproverc}[1]{\newcommand{\DocApproverc}{#1}}
-\newcommand{\docapproverd}[1]{\newcommand{\DocApproverd}{#1}}
-\newcommand{\docapprovere}[1]{\newcommand{\DocApprovere}{#1}}
-\newcommand{\docapproverf}[1]{\newcommand{\DocApproverf}{#1}}
 \newcommand{\logo}[2][scale=1]{\newcommand{\Logo}{\includegraphics[#1]{#2}}}
 \newcommand{\refstyle}[1]{\checkfile{#1}{RefStyle}}
 \newcommand{\reffile}[1]{\checkfile{#1}{RefFile}\fixbib{\RefFile}\edef\RefFileOrig{#1}}
@@ -1724,10 +1734,6 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 \multicolumn{2}{|c|}{\textbf{\DocType}} \\ \hline
 Report Title: & \DocTitle \\ \hline
 Date Issued: & \DocDate \\ \hline
-% \begin{tabularx}{\maxwidth}{|L{0.25}|L{0.25}L{0.25}L{0.25}|} \hline
-% \multicolumn{4}{|c|}{\textbf{APPROVAL PAGE}} \\
-% \multicolumn{4}{|c|}{\textbf{\DocType}} \\ \hline
-% Report Title: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocTitle} \\ \hline
 \ApproverLine
 \end{tabularx}
 \renewcommand{\arraystretch}{1.2}
@@ -1757,6 +1763,14 @@ Date Issued: & \DocDate \\ \hline
 
 \fi
 }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% QA page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{nqaapprover}
+\setcounter{nqaapprover}{1}
+\newcommand{\QaApprover}{}
+\newcommand{\qaapprover}[1]{\expandafter\def\csname QaApprover\alph{nqaapprover}\endcsname{#1}\addtocounter{nqaapprover}{1}}
 
 % Portrait pages
 \fancypagestyle{regularstyle}{
@@ -1882,6 +1896,7 @@ ITEM \RefFile.bib NOT FOUND.
 % Initialize commands
 \newcommand{\coverbookmark}{}
 \newcommand{\sigbookmark}{}
+\newcommand{\qabookmark}{}
 \newcommand{\synbookmark}{}
 \newcommand{\tocbookmark}{}
 \newcommand{\glsbookmark}{}
@@ -1943,9 +1958,6 @@ ITEM \RefFile.bib NOT FOUND.
 \renewcommand{\url}[1]{\begin{NoHyper}\oldurl{#1}\end{NoHyper}}
 \fi
 
-% Determine if ghostscript command should be Windows or Linux
-\ifwindows\newcommand{\gscmd}{gswin32c}\else\newcommand{\gscmd}{gs}\fi
-
 % Insert cover page
 \ifcoverpage
 \ifdefined\CoverPage
@@ -1955,13 +1967,9 @@ ITEM \RefFile.bib NOT FOUND.
 ITEM \CoverPage{} NOT FOUND
 \clearpage
 \else
-%\immediate\write18{paxify tmpcoverpage.pdf}
-% \IfFileExists{tmpcoverpage.pdf}{}{\immediate\write18{\gscmd\space -dSAFER -dBATCH -dNOPAUSE -dNOCACHE -sDEVICE=pdfwrite -dFirstPage=\CoverPageNo\space -dLastPage=\CoverPageNo\space -sOutputFile="tmpcoverpage.pdf" \fname}}
-% \IfFileExists{\fbase.pax}{}{}
 \includepdf[pages=\CoverPageNo,pagecommand={
 \thispagestyle{empty}
 \hypertarget{itemnumber\theitemnumber}{}
-% \blfootnote{\itemid{\CoverPage}}
 \hypertarget{cov}{}
 \ifwatermark
 \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
@@ -1969,7 +1977,6 @@ ITEM \CoverPage{} NOT FOUND
 \end{tikzpicture}
 \fi
 }]{\fname}
-% }]{tmpcoverpage.pdf}
 \fi
 \else
 \hypertarget{cov}{}
@@ -1989,21 +1996,16 @@ ITEM \CoverPage{} NOT FOUND
 ITEM \SignaturePage{} NOT FOUND
 \clearpage
 \else
-%\immediate\write18{paxify tmpcoverpage.pdf}
-% \IfFileExists{tmpcoverpage.pdf}{}{\immediate\write18{\gscmd\space -dSAFER -dBATCH -dNOPAUSE -dNOCACHE -sDEVICE=pdfwrite -dFirstPage=\SignaturePageNo\space -dLastPage=\SignaturePageNo\space -sOutputFile="tmpcoverpage.pdf" \fname}}
-% \IfFileExists{\fbase.pax}{}{}
-\includepdf[pages=\SignaturePageNo,pagecommand={
-\thispagestyle{empty}
 \hypertarget{itemnumber\theitemnumber}{}
-% \blfootnote{\itemid{\SignaturePage}}
 \hypertarget{sig}{}
+\includepdf[pages=-,pagecommand={
+\thispagestyle{empty}
 \ifwatermark
 \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
 	\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};
 \end{tikzpicture}
 \fi
 }]{\fname}
-% }]{tmpcoverpage.pdf}
 \fi
 \else
 \hypertarget{sig}{}
@@ -2012,6 +2014,41 @@ ITEM \SignaturePage{} NOT FOUND
 \fi
 \renewcommand{\sigbookmark}{\bookmark[level=1,dest=sig]{APPROVAL PAGE}}
 \fi\fi
+
+% Insert QA page
+\ifsynonly\else
+\ifqapage
+\ifdefined\QAPage
+\checkartifact{\QAPage}
+\ifx\fname\empty
+\hypertarget{itemnumber\theitemnumber}{}
+\hypertarget{qapage}{}
+ITEM \QAPage{} NOT FOUND
+\renewcommand{\qabookmark}{\bookmark[level=1,dest=qapage]{QUALITY ASSURANCE STATEMENT}}
+\clearpage
+\else
+\hypertarget{itemnumber\theitemnumber}{}
+\hypertarget{qapage}{}
+\includepdf[pages=-,pagecommand={
+\thispagestyle{empty}
+\ifwatermark
+\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
+	\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};
+\end{tikzpicture}
+\fi
+}]{\fname}
+\renewcommand{\qabookmark}{\bookmark[level=1,dest=qapage]{QUALITY ASSURANCE STATEMENT}}
+\fi
+\else
+\ifdefined\QaApprovera
+\hypertarget{qapage}{}
+\insertqapage
+\renewcommand{\qabookmark}{\bookmark[level=1,dest=qapage]{QUALITY ASSURANCE STATEMENT}}
+\clearpage
+\fi
+\fi
+\fi
+\fi
 
 % Create glossary
 \newcommand{\insertglossary}{
@@ -2037,7 +2074,11 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 \fi
 
+\ifglossarypostdot
 \printglossary[title=\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist]
+\else
+\printglossary[title=\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist,nopostdot]
+\fi
 \ifnum\themycnt>0
 \nonemptyglossary
 \else
@@ -2064,8 +2105,11 @@ ITEM \GlsFile.tex NOT FOUND.
 \hypertarget{syn}{}
 \ifdefined\insertsynopsis\ifsynopsis
 \section*{SYNOPSIS}
+\ifdefined\synopsisintro
+\synopsisintro
+\else
 \textbf{\DocTitle}
-\fi\fi
+\fi\fi\fi
 \synsecs
 \setcounter{section}{0}
 \setcounter{subsection}{0}
@@ -2100,6 +2144,12 @@ ITEM \GlsFile.tex NOT FOUND.
 \clearpage
 \fi
 
+\ifloftfirst\else
+\coverbookmark
+\sigbookmark
+\qabookmark
+\fi
+
 % Insert List of Tables
 \iflot
 %% The code below (commented out) will only insert LoT if any tables are present in document
@@ -2117,6 +2167,7 @@ ITEM \GlsFile.tex NOT FOUND.
 %\fi
 
 \iflof
+\iflot\iflofcl\clearpage\fi\fi
 %% The code below (commented out) will only insert LoF if any figures are present in document
 %\iftotalfigures
 %\phantomsection\label{loflabel}
@@ -2137,8 +2188,11 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 
 % Insert PDF bookmarks in correct order
+\ifloftfirst
 \coverbookmark
 \sigbookmark
+\qabookmark
+\fi
 \ifsynonly\glsbookmark\fi
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
@@ -2148,12 +2202,6 @@ ITEM \GlsFile.tex NOT FOUND.
 % End document if synonly mode
 \ifsynonly\references\clearpage\itemlist\end{document}\fi
 }
-
-% Create perl files>
-% missingartifacts.txt - artifacts to download
-% finalize.pl - deletes artifacts and temporary files in the LaTeX compilation sequence
-% clear.pl - executed with F4 in Texmaker, deletes temporary files and, if run is a server run, also all downloaded artifacts
-% \perlnewcommand{\createfiles}[5]{
 
 %%% Code to be executed at \end{document}
 \AtEndDocument{
@@ -2170,7 +2218,8 @@ ITEM \GlsFile.tex NOT FOUND.
 
 % True false variables as well as perl script printing
 \ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{\jobname}\fi
-\newcommand{\doprintsig}{0}\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi
+\newcommand{\doprintsig}{0}
+\ifprintsigpage\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
 \ifdraftmode
 \createfiles{\jobname}{\DocPDF\DocPDFWord}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing

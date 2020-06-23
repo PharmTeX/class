@@ -33,7 +33,7 @@
   \renewcommand*{\glsgroupheading}[1]{}%
   \renewcommand{\glossentry}[2]{%
     \glsentryitem{##1}\glstarget{##1}{\glossentryname{##1}} &
-    \Glossentrydesc{##1}\glspostdescription\space ##2%
+    \ifglossaryupper\Glossentrydesc{##1}\glspostdescription\space ##2\else\glossentrydesc{##1}\glspostdescription\space ##2\fi%
     \addtocounter{mycnt}{1}
     \tabularnewline
   }%
@@ -58,6 +58,7 @@
 \fi
 
 %%% Settings for eqnimg option
+\newcommand{\saveeqnfont}{0}
 \ifeqnimg
 \newcounter{subjob}
 \newcommand{\myalignatnum}{}
@@ -80,21 +81,21 @@
 \AfterEndEnvironment{subequations}{\nlalign}
 \renewcommand{\nlalign}{\vspace{-\baselineskip}}
 }{
-\renewenvironment{align}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align}{}{\jobname}}
-\renewenvironment{align*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align*}{}{\jobname}}
-\renewenvironment{alignat}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat}{\myalignatnum}{\jobname}}
-\renewenvironment{alignat*}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat*}{\myalignatnum}{\jobname}}
-\renewenvironment{equation}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation}{}{\jobname}}
-\renewenvironment{equation*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation*}{}{\jobname}}
-\renewenvironment{eqnarray}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray}{}{\jobname}}
-\renewenvironment{eqnarray*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray*}{}{\jobname}}
-\renewenvironment{gather}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather}{}{\jobname}}
-\renewenvironment{gather*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather*}{}{\jobname}}
-\renewenvironment{multline}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline}{}{\jobname}}
-\renewenvironment{multline*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline*}{}{\jobname}}
-\renewenvironment{flalign}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign}{}{\jobname}}
-\renewenvironment{flalign*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign*}{}{\jobname}}
-\renewenvironment{subequations}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{subequations}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{subequations}{}{\jobname}}
+\renewenvironment{align}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{align*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{align*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{align*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{alignat}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat}{\myalignatnum}{\jobname}{\saveeqnfont}}
+\renewenvironment{alignat*}[1]{\gdef\myalignatnum{##1}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{alignat*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{alignat*}{\myalignatnum}{\jobname}{\saveeqnfont}}
+\renewenvironment{equation}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{equation*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{equation*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{equation*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{eqnarray}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{eqnarray*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{eqnarray*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{eqnarray*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{gather}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{gather*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{gather*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{gather*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{multline}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{multline*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{multline*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{multline*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{flalign}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{flalign*}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{flalign*}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{flalign*}{}{\jobname}{\saveeqnfont}}
+\renewenvironment{subequations}{\gdef\myalignatnum{}\stepcounter{subjob}\filecontents{\jobname-eqn-\thesubjob.tex}}{\endfilecontents}\AfterEndEnvironment{subequations}{\saveeqnfile{\jobname-eqn-\thesubjob.tex}{subequations}{}{\jobname}{\saveeqnfont}}
 }
 \fi
 
@@ -145,13 +146,15 @@
 \ifnum\dopharmtexperl=1
 
 \RequirePackage{perltex}
-\perlnewcommand{\findartifact}[1]{
+\perlnewcommand{\findartifact}[2]{
 use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 use PDF::API2;
+use File::Copy qw(copy);
 my $artid = $_[0];
+my $docopy = $_[1];
 if ($artid =~ /RA[0-9]+/) {
 	opendir D, '.';
 	my @filelist = grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D)));
@@ -161,8 +164,15 @@ if ($artid =~ /RA[0-9]+/) {
 	else {return "\\renewcommand{\\ioutput}{0}\\let\\fname\\empty";}
 }
 else {
+	my ($fname) = $artid =~ /\/*([^\/]+?)$/;
+	$fname = "pmxinputfiles/$fname";
+	if ($docopy==1) {
+		if (!-e 'pmxinputfiles') { mkdir('pmxinputfiles'); }
+		if (-f $artid) { copy $artid, $fname; }
+		$artid = $fname;
+	}
 	if (-f $artid) {
-		my ($ext) = $artid =~ /\.([^.]+)$/; my $pages;
+		my ($ext) = $artid =~ /\.([^.]+?)$/; my $pages;
 		if ($ext eq 'pdf') {
 			my $pdf = PDF::API2->open($artid);
 			$pages = $pdf->pages;
@@ -395,7 +405,7 @@ if ($file ne '') {
 } else {
 	$str = $newhead; $newhead = '';
 }
-if ( $domake == 1 ) { $str =~ s/\\\\/\\\\\n/g; }
+if ( $domake>0 ) { $str =~ s/\\\\/\\\\\n/g; }
 
 $str =~ s/ *\\begin *\{table\}\[[a-zA-Z]+\]//g;
 #$str =~ s/ *\\centering//g;
@@ -435,7 +445,7 @@ $str =~ s/myuntilde/\\string\~/g;
 
 $str =~ s/\\textbackslash *\{\}newline\{\}/\\newline\{\}/g;
 
-if ( $domake == 1 ) { 
+if ( $domake>0 ) { 
 	$str=~ s/\r\n?/\n/g;
 	$str=~ s/ *\n/\n/g;
 
@@ -673,8 +683,12 @@ $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
-my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\LT\@cols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\TPTL\@width}{\\rule[2mm]{\\TPTL\@widthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\fi";
-$str =~ s/\\\\ \\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
+if ($domake==2){
+	$str =~ s/\\\\ \\end{tabularx}/\\\\ \\pmxbottomrule \\end{tabularx}/g;
+} else {
+	my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\ltcols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\tptlwidth}{\\rule[2mm]{\\tptlwidthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\else\\pmxbottomrule\\fi";
+	$str =~ s/\\\\ \\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
+}
 
 $str =~ s/\\\\/\\tabularnewline/g;
 
@@ -689,7 +703,7 @@ if ( $mkfile == 1 ) {
 	open(FILE, '>:utf8', 'file.tmp.txt');
 	print FILE "$str";
 	close(FILE);
-	return "\\input{file.tmp.txt}";
+	return "";
 } else {
 	return "$str";
 }}
@@ -803,6 +817,47 @@ $str =~ s/\[/$i++ >= 28 ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
 $str =~ s/]/}/g;
 return "$str";
 }
+% \perlnewcommand{\makesubfig}[4]{
+% use strict;
+% use warnings;
+% use open OUT => ':raw';
+% binmode(STDOUT, ":utf8");
+
+% my $str = $_[0];
+% my $lbl = $_[1];
+% my $cap = $_[2];
+% my $figcapbelow = $_[3];
+
+% $str =~ s/\.\./myveryuniquedoubledot/g;
+% $str =~ s/[ \n]//g; $lbl =~ s/[ \n]//g;
+% my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; my @lbllst; 
+% if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
+	% $lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
+	% @lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
+	% $str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
+	% $str =~ s/&/\\hspace{0cm}/g;
+	% $str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
+	% if ($figcapbelow == 1) {
+		% $str = "$str \\figlabelpl{$cap}{$lblmain} \\quad"; # caption below
+	% } else {
+		% $str = "\\figlabelpl{$cap}{$lblmain} $str"; # caption above
+	% }
+% }
+% else {
+	% $str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
+	% $str =~ s/&/\\hspace{-1cm}/g;
+	% $str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
+	% if ($figcapbelow == 1) {
+		% $str = "$str \\figlabelpl{$cap}{$lbl} \\quad"; # caption below
+	% } else {
+		% $str = "\\figlabelpl{$cap}{$lbl} $str"; # caption above
+	% }
+	
+% }
+% $str =~ s/myveryuniquedoubledot/\.\./g;
+
+% return "$str";
+% }
 \perlnewcommand{\makesubfig}[4]{
 use strict;
 use warnings;
@@ -814,33 +869,55 @@ my $lbl = $_[1];
 my $cap = $_[2];
 my $figcapbelow = $_[3];
 
+my $isbreak;
+if ($str =~ /\|\|/){
+	$isbreak = 1;
+} else {
+	$isbreak = 0;
+}
+
 $str =~ s/\.\./myveryuniquedoubledot/g;
 $str =~ s/[ \n]//g; $lbl =~ s/[ \n]//g;
 my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; my @lbllst; 
 if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	$lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
 	@lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
+	if ($figcapbelow == 1) {
+		$str =~ s/\|\|/\\pagebreak\\end{figure} \\begin{figure}[H] \\ContinuedFloat/g;
+	} else {
+		$str =~ s/\|\|/\\pagebreak\\end{figure} \\begin{figure}[H] \\ContinuedFloat \\caption[]{$cap}/g;
+	}
 	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
-		$str = "$str \\figlabelpl{$cap}{$lblmain} \\quad"; # caption below
+		$str =~ s/myveryuniquemarkera/\\figlabelpl{$cap}{$lblmain}/g;
+		$str =~ s/myveryuniquemarker[a-z]/\\caption[]{$cap}/g;
 	} else {
-		$str = "\\figlabelpl{$cap}{$lblmain} $str"; # caption above
+		$str = "\\figlabelpl{$cap}{$lblmain} $str";
+		$str =~ s/myveryuniquemarker[a-z]//g;
 	}
 }
 else {
-	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
+	$str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
+	if ($figcapbelow == 1) {
+		$str =~ s/\|\|/\\pagebreak\\end{figure} \\begin{figure}[H] \\ContinuedFloat/g;
+	} else {
+		$str =~ s/\|\|/\\pagebreak\\end{figure} \\begin{figure}[H] \\ContinuedFloat \\caption[]{$cap}/g;
+	}
 	$str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
 	if ($figcapbelow == 1) {
-		$str = "$str \\figlabelpl{$cap}{$lbl} \\quad"; # caption below
+		$str =~ s/myveryuniquemarkera/\\figlabelpl{$cap}{$lbl}/g;
+		$str =~ s/myveryuniquemarker[a-z]/\\caption[]{$cap}/g;
 	} else {
-		$str = "\\figlabelpl{$cap}{$lbl} $str"; # caption above
+		$str = "\\figlabelpl{$cap}{$lbl} $str";
+		$str =~ s/myveryuniquemarker[a-z]//g;
 	}
 	
 }
 $str =~ s/myveryuniquedoubledot/\.\./g;
+$str = "$str \\footnotesize \\iffigcapbelow\\else\\\\[0.4\\myspacer]\\fi \\iffigcapbelow\\quad\\\\[-0.4\\myspacer]\\fi";
 
 return "$str";
 }
@@ -1129,7 +1206,7 @@ close(FILE);
 
 return;
 }
-\perlnewcommand{\saveeqnfile}[4]{
+\perlnewcommand{\saveeqnfile}[5]{
 use strict;
 use warnings;
 use File::Path;
@@ -1140,10 +1217,12 @@ my $file = $_[0];
 my $env = $_[1];
 my $num = $_[2];
 my $job = $_[3];
+my $small = $_[4];
 my $OS = "$^O";
 
 my $scale;
 if ( $OS eq 'MSWin32' ) { $scale = 1;  } else { $scale = 1; } # original: 72/288;
+if ( $small==1 ) { $scale = 10/12*$scale; }
 
 open my $fh, '<:raw', "$file"; my $str = do { local $/; <$fh> }; close $fh;
 $str =~ s/\r//g;
@@ -1158,11 +1237,12 @@ $jobstr =~ s/\n/ /g;
 $jobstr =~ s/myveryuniquepercent/\\%/g;
 $jobstr =~ s/\\\{/myveryuniqueleftcurlybracket/g;
 $jobstr =~ s/\\\}/myveryuniquerightcurlybracket/g;
-my @newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
-my $newcmd = join( "\n", @newcmd );
-$newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
-$newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
-if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+# my @newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
+# my $newcmd = join( "\n", @newcmd );
+# $newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
+# $newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
+# if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+my $newcmd = '';
 
 if ( $num eq '' ){
 	$num = "";
@@ -1230,7 +1310,7 @@ close(FILEII);
 
 return;
 }
-\perlnewcommand{\savemathfiles}[1]{
+\perlnewcommand{\savemathfiles}[2]{
 use strict;
 use warnings;
 use File::Path;
@@ -1253,11 +1333,12 @@ $jobstr =~ s/\n/ /g;
 $jobstr =~ s/myveryuniquepercent/\\%/g;
 $jobstr =~ s/\\\{/myveryuniqueleftcurlybracket/g;
 $jobstr =~ s/\\\}/myveryuniquerightcurlybracket/g;
-@newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
-$newcmd = join( "\n", @newcmd );
-$newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
-$newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
-if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+# @newcmd = ( $jobstr =~ /(\\newcommand\{*[^\{\}]*\}*\[*[^\[\]\{\}]*\]*\{[^\{\}]*\})/g );
+# $newcmd = join( "\n", @newcmd );
+# $newcmd =~ s/myveryuniqueleftcurlybracket/\\\{/g;
+# $newcmd =~ s/myveryuniquerightcurlybracket/\\\}/g;
+# if ( $newcmd ne '' ) { $newcmd = "\n$newcmd"; }
+$newcmd = '';
 
 copy 'PharmTeX.fmt', 'PharmTeX-eqnbackup.fmt';
 copy 'PharmTeX.log', 'PharmTeX-eqnbackup.log';
@@ -1324,6 +1405,18 @@ my $newname = $name;
 $newname =~ s/\_/\\\_/g;
 return "\\renewcommand{\\newunderscorename}{$newname}";
 }
+\perlnewcommand{\fixglscaption}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $str = $_[0];
+$str =~ s/\\gls/\\acrshort/g;
+$str =~ s/\\Gls/\\Acrshort/g;
+$str =~ s/\\glspl/\\acrshortpl/g;
+$str =~ s/\\Glspl/\\Acrshortpl/g;
+return "\\renewcommand{\\mypmxcaption}{$str}";
+}
 
 \else
 
@@ -1353,6 +1446,7 @@ return "\\renewcommand{\\newunderscorename}{$newname}";
 \newcommand{\savemathfiles}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\fixunderscore}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixglscaption}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 
 \fi
 

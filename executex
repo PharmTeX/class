@@ -38,7 +38,7 @@ fi
 
 # Load MiKTeX Tool if gui mode
 if [ "$MODE" == "gui" ]; then
-	texmaker "$NAME.tex"
+	texstudio "$NAME.tex"
 else
 	perl runlatex.pl "$NAME" "$MODE"
 fi

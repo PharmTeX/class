@@ -29,7 +29,7 @@ if "%MODE%"=="path" ( exit )
 REM Load MiKTeX Tool if gui mode
 if "%MODE%"=="gui" (
 	start miktex-taskbar-icon
-	call texmaker "%NAME%.tex"
+	call texstudio "%NAME%.tex"
 )
 
 REM Pass arguments on
