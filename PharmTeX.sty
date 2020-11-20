@@ -616,38 +616,102 @@ if ($newhead ne '') {@header = $newhead; $substnote = "$substnote $headnote.";}
 if (($ncolinp < $ncoltot) || ($docol == 1)) {$substnote = "$substnote $colorder.";}
 
 # Assume scale = 1 for unscaled columns (without {#})
-my $newcolspec = $colspec;
+my $newcolspec = $colspec; my $sum;
 my @newcols = $newcolspec =~ /\|?[A-Za-z][\{\}\[\]\d\.]*\|?/xg;
-foreach $x (@newcols) {$x =~ s/([A-Z])(\|?)$/$1\{1\}$2/g;}
+foreach $x (@newcols) {
+	$x =~ s/([A-Z])(\|?)$/$1\{1\}$2/g;
+	$x =~ s/L\{([0-9\.]*?[a-zA-Z]+)\}/O\{$1\}/g;
+	$x =~ s/R\{([0-9\.]*?[a-zA-Z]+)\}/P\{$1\}/g;
+	$x =~ s/C\{([0-9\.]*?[a-zA-Z]+)\}/Q\{$1\}/g;
+}
+my @colspecnum = @newcols;
+my @colspecalign = @newcols;
+my @colspecleft = @newcols;
+my @colspecright = @newcols;
+for ($i=0; $i <= $ncol; $i++) {
+	$colspecnum[$i] =~ s/\|*[LRC]\{([0-9\.]*)\}\|*/$1/g;
+	$colspecalign[$i] =~ s/\|*([LRC])\{[0-9\.]*\}\|*/$1/g;
+	$colspecleft[$i] =~ s/(\|*)[LRC]\{[0-9\.]*\}\|*/$1/g;
+	$colspecright[$i] =~ s/\|*[LRC]\{[0-9\.]*\}(\|*)/$1/g;
+	
+}
+$sum = 0; for ($i=0; $i <= $ncol; $i++) { $sum = $sum + $colspecnum[$i]; }
+for ($i=0; $i <= $ncol; $i++) {
+	if ($newcols[$i] =~ /\|*[LRC]\{([0-9\.]*)\}\|*/){
+		$colspecnum[$i] = $colspecnum[$i]/$sum;
+		$newcols[$i] = "$colspecleft[$i]$colspecalign[$i]\{$colspecnum[$i]\}$colspecright[$i]";
+	}
+}
 $newcolspec = "@newcols"; $newcolspec =~ s/ //g;
 
-# Rescale column scalers
-@newcols = $newcolspec =~ /\{([0-9\.]*?)\}/xg;
-my $sum = sum(@newcols);
-my $newncol = scalar @newcols;
-my $y; $i = 1; foreach my $x (@newcols) {$y = $x/$sum*$newncol; $y = sprintf('%.3f', $y); $newcolspec =~ s/\{$x\}/\{$y\_number\}/; $i = $i + 1;}
-$newcolspec =~ s/\_number//g;
-$newcolspec =~ s/L\{([0-9\.]*?[a-zA-Z]+)\}/O\{$1\}/g;
-$newcolspec =~ s/R\{([0-9\.]*?[a-zA-Z]+)\}/P\{$1\}/g;
-$newcolspec =~ s/C\{([0-9\.]*?[a-zA-Z]+)\}/Q\{$1\}/g;
 $colspec = $newcolspec;
 
 # Check for vertical lines
 my $dovert;
 if (index($colspec, '|') != -1) { $dovert = 1 } else { $dovert = 0; }
 
-# Space between columns - here measured in a number of phantom dots
+# Space between columns
+my $multisepspace = '';
+my $sepspace = '';
 if ($dotight == 1) {
-	my $sepspace = '||';
 	@cols = $colspec =~ /\|?[A-Za-z][u\{\}\d\.]*\|?/xg;
 	$ncol = scalar @cols - 1;
 	for ($i=0; $i <= $ncol; $i++) {
-		$cols[$i] =~ s/(\|)?([A-Za-z][u\{\}\d\.]*)(\|)?/$1\@{\\phantom{$sepspace}}$2\@{\\phantom{$sepspace}}$3/g;
+		$cols[$i] =~ s/(\|)?([A-Za-z][u\{\}\d\.]*)(\|)?/$1\@{}$2\@{}$3/g;
 	}
 	$colspec = "@cols"; $colspec =~ s/ //g;
+	$sepspace = "\\setlength\{\\tabcolsep\}\{2pt\}";
+	$multisepspace = "\@\{\}";
+}
+
+my $nrowhead = scalar @header - 1;
+my $nrowbody = scalar @body - 1;
+my $ncoli; my @cells; my $I = 0; my $J; my $k; my $colalign; my $textalign;
+if ($nrowhead>0) {
+for ($i=0; $i <= $nrowhead; $i++) {
+	@cells = split "&", $header[$i];
+	$ncoli = scalar @cells - 1;
+	for ($j=0; $j <= $ncoli; $j++) {
+		if ($cells[$j] =~ /\\multicolumn/){
+			if ($colspecalign[$I] eq 'L') {$colalign = '\raggedright'; $textalign = '';} elsif ($colspecalign[$I] eq 'R') {$colalign = '\raggedleft'; $textalign = '';} else {$colalign = '\centering'; $textalign = '\centering';}
+			($J) = $cells[$j] =~ /\\multicolumn *\{ *([0-9]+) *\}/;
+			$sum = 0;
+			for ($k=$I; $k < $I+$J; $k++) { $sum = $sum + $colspecnum[$k]; }
+			$cells[$j] =~ s/\\multicolumn *\{ *([0-9]+) *\} *\{ *(\|*) *\= *(\|*) *\}/\\multicolumn\{$1\}\{$2$multisepspace\>\{\\hsize\=\\dimexpr$sum\\hsize+$1\\tabcolsep$colalign\\arraybackslash\}X$multisepspace$3\}/g;
+			if ($colspecalign[$I] eq 'C') { $cells[$j] =~ s/(\\multirow.*?\{ *[0-9]* *\} *\{ *\= *\} *\{)/$1$textalign/g; } #}
+			$I = $I + $J;
+		} else {
+			$I = $I + 1;
+		}
+	}
+	$I = 0;
+	$header[$i] = join("&", @cells);
+}
+}
+if ($nrowbody>0) {
+for ($i=0; $i <= $nrowbody; $i++) {
+	@cells = split "&", $body[$i];
+	$ncoli = scalar @cells - 1;
+	for ($j=0; $j <= $ncoli; $j++) {
+		if ($cells[$j] =~ /\\multicolumn/){
+			if ($colspecalign[$I] eq 'L') {$colalign = '\raggedright'; $textalign = '';} elsif ($colspecalign[$I] eq 'R') {$colalign = '\raggedleft'; $textalign = '';} else {$colalign = '\centering'; $textalign = '\centering';}
+			($J) = $cells[$j] =~ /\\multicolumn *\{ *([0-9]+) *\}/;
+			$sum = 0;
+			for ($k=$I; $k < $I+$J; $k++) { $sum = $sum + $colspecnum[$k]; }
+			$cells[$j] =~ s/\\multicolumn *\{ *([0-9]+) *\} *\{ *(\|*) *\= *(\|*) *\}/\\multicolumn\{$1\}\{$2$multisepspace\>\{\\hsize\=\\dimexpr$sum\\hsize+$1\\tabcolsep$colalign\\arraybackslash\}X$multisepspace$3\}/g;
+			if ($colspecalign[$I] eq 'C') { $cells[$j] =~ s/(\\multirow.*?\{ *[0-9]* *\} *\{ *\= *\} *\{)/$1$textalign/g; } #}
+			$I = $I + $J;
+		} else {
+			$I = $I + 1;
+		}
+	}
+	$I = 0;
+	$body[$i] = join("&", @cells);
+}
 }
 
 my $retstr = "
+$sepspace
 \\renewcommand{\\tmpsubstnote}{$substnote}
 \\renewcommand{\\csvtable}{
 \\begin{tabularx}{\\maxwidth}{$colspec} \\tablabel{$label}{$key}
@@ -686,14 +750,19 @@ if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 if ($domake==2){
 	$str =~ s/\\\\ \\end{tabularx}/\\\\ \\pmxbottomrule \\end{tabularx}/g;
 } else {
-	my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\ltcols}{l}{\\hspace{-0.21cm}\\makebox[0pt][l]{\\parbox{\\tptlwidth}{\\rule[2mm]{\\tptlwidthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\else\\pmxbottomrule\\fi";
-	$str =~ s/\\\\ \\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
+	my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\ltcols}{l}{\\hspace{\\dimexpr-0.21cm+\\pmxtabcolsep-\\tabcolsep}\\makebox[0pt][l]{\\parbox{\\tptlwidth}{\\rule[2mm]{\\tptlwidthh}{1pt}\\newline\\ifitemid\\mytableitemnumber.\\fi\\tmpsubstnote\\xspace\\mytabledescription}}}\\else\\pmxbottomrule\\fi";
+	$str =~ s/\\\\ *\\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
 }
 
 $str =~ s/\\\\/\\tabularnewline/g;
 
 $str =~ s/\\multicolumn\{1\}\{c\}\{(.*?)\}/\\centering $1/g;
 $str =~ s/\\multicolumn\{1\}\{r\}\{(.*?)\}/\\raggedleft $1/g;
+
+$str =~ s/\\&/myunand/g;
+$str =~ s/\&/\\stepcounter{pmxcolumnnumber}\&/g;
+$str =~ s/\\tabularnewline/\\setcounter{pmxcolumnnumber}{1}\\tabularnewline/g;
+$str =~ s/myunand/\\&/g;
 
 # open(FILE, '>:utf8', 'debug.txt');
 # print FILE "$str";
@@ -817,47 +886,6 @@ $str =~ s/\[/$i++ >= 28 ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
 $str =~ s/]/}/g;
 return "$str";
 }
-% \perlnewcommand{\makesubfig}[4]{
-% use strict;
-% use warnings;
-% use open OUT => ':raw';
-% binmode(STDOUT, ":utf8");
-
-% my $str = $_[0];
-% my $lbl = $_[1];
-% my $cap = $_[2];
-% my $figcapbelow = $_[3];
-
-% $str =~ s/\.\./myveryuniquedoubledot/g;
-% $str =~ s/[ \n]//g; $lbl =~ s/[ \n]//g;
-% my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; my @lbllst; 
-% if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
-	% $lbl =~ /^([^\[]{1,})\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
-	% @lbllst = ($lbl =~ /\[([^\[\]]{1,})\]/g);
-	% $str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi}"/eg;
-	% $str =~ s/&/\\hspace{0cm}/g;
-	% $str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
-	% if ($figcapbelow == 1) {
-		% $str = "$str \\figlabelpl{$cap}{$lblmain} \\quad"; # caption below
-	% } else {
-		% $str = "\\figlabelpl{$cap}{$lblmain} $str"; # caption above
-	% }
-% }
-% else {
-	% $str =~ s/(RA[0-9]{3,})|([^\.\&\|]+\.{0,1}[a-zA-Z0-9]{0,4})/$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi}"/eg;
-	% $str =~ s/&/\\hspace{-1cm}/g;
-	% $str =~ s/\|/\\\\\\vspace{0.4\\myspacer}/g;
-	% if ($figcapbelow == 1) {
-		% $str = "$str \\figlabelpl{$cap}{$lbl} \\quad"; # caption below
-	% } else {
-		% $str = "\\figlabelpl{$cap}{$lbl} $str"; # caption above
-	% }
-	
-% }
-% $str =~ s/myveryuniquedoubledot/\.\./g;
-
-% return "$str";
-% }
 \perlnewcommand{\makesubfig}[4]{
 use strict;
 use warnings;
@@ -1417,6 +1445,28 @@ $str =~ s/\\glspl/\\acrshortpl/g;
 $str =~ s/\\Glspl/\\Acrshortpl/g;
 return "\\renewcommand{\\mypmxcaption}{$str}";
 }
+\perlnewcommand{\getpmxcolspec}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+my $colspec = $_[0];
+my $ncol = $_[1];
+my $dcol = $_[2];
+
+$colspec =~ s/[a-zA-Z]\{//g;
+$colspec =~ s/\}//g;
+my @cols = split ";", $colspec;
+
+my @ishline; my $i; my $tmpstr;
+my $out = 0;
+for ($i=$ncol-1; $i < $ncol+$dcol-1; $i++) {
+	$out = $out + $cols[$i];
+}
+
+# return "\\gdef\\mypmxindcolspec{$out}";
+return "";
+}
 
 \else
 
@@ -1447,6 +1497,7 @@ return "\\renewcommand{\\mypmxcaption}{$str}";
 \newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\fixunderscore}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\fixglscaption}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\getpmxcolspec}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 
 \fi
 

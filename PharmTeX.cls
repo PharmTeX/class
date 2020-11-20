@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2020/06/22}
-\def\pharmtexversion{1.14}
+\def\pharmtexdate{2020/07/03}
+\def\pharmtexversion{1.15}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -39,6 +39,7 @@
 \DeclareOption{qapage}{\qapagetrue\cqapagetrue}
 
 %%% Option to show TOC
+\newif\iftocintoc\tocintocfalse
 \newif\iftoc\toctrue
 \newif\ifctoc\ctocfalse
 \DeclareOption{toc}{\toctrue\ctoctrue}
@@ -677,6 +678,8 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\tablenote}{} % compatibility with earlier versions of the template
 
 %%% Function for making tables from csv file
+\newlength{\pmxtabcolsep}\setlength{\pmxtabcolsep}{\tabcolsep}
+\newcounter{pmxcolumnnumber}\setcounter{pmxcolumnnumber}{1}
 \newcommand{\istable}{0}
 \newcommand{\mypmxcaption}{}
 \newcommand{\dodescription}{0}
@@ -690,9 +693,9 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\tmpsubstnote}{}
 \newcommand{\pmxtable}[8][1]{
 
+\setcounter{pmxcolumnnumber}{1}
 \renewcommand{\istable}{1}
 \renewcommand{\mytabledescription}{}
-\renewcommand{\newunderscorename}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
@@ -736,6 +739,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcounter{textable}\setcounter{textable}{0}
 \newcommand{\pmxtextable}[6][1]{
 
+\setcounter{pmxcolumnnumber}{1}
 \renewcommand{\istable}{1}
 \renewcommand{\mytabledescription}{}
 \renewcommand{\dodescription}{0}
@@ -765,6 +769,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\listingfont}{\scriptsize}
 \renewcommand{\dotight}{0}
 \renewcommand{\mypmxcaption}{}
+\setlength{\tabcolsep}{\pmxtabcolsep}
 
 }
 
@@ -1722,6 +1727,7 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 \newcounter{napprover}
 \setcounter{napprover}{1}
 \newcommand{\DocApprover}{}
+\newcommand{\approvalpagename}{APPROVAL PAGE}
 \newcommand{\docapprover}[1]{\expandafter\def\csname DocApprover\alph{napprover}\endcsname{#1}\addtocounter{napprover}{1}}
 
 \newcommand{\insertsigpage}{
@@ -1730,7 +1736,7 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 \quad\vspace{-1.5\myspacer}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\maxwidth}{|l|L{1}|} \hline
-\multicolumn{2}{|c|}{\textbf{APPROVAL PAGE}} \\
+\multicolumn{2}{|c|}{\textbf{}} \\
 \multicolumn{2}{|c|}{\textbf{\DocType}} \\ \hline
 Report Title: & \DocTitle \\ \hline
 Date Issued: & \DocDate \\ \hline
@@ -2012,7 +2018,7 @@ ITEM \SignaturePage{} NOT FOUND
 \insertsigpage
 \clearpage
 \fi
-\renewcommand{\sigbookmark}{\bookmark[level=1,dest=sig]{APPROVAL PAGE}}
+\renewcommand{\sigbookmark}{\bookmark[level=1,dest=sig]{\approvalpagename}}
 \fi\fi
 
 % Insert QA page
@@ -2140,6 +2146,10 @@ ITEM \GlsFile.tex NOT FOUND.
 \iftoc
 \hypertarget{toc}{}
 \renewcommand{\tocbookmark}{\bookmark[level=1,dest=toc]{TABLE OF CONTENTS}}
+\iftocintoc
+\phantomsection\label{toclabel}
+\addtocontents{toc}{\protect\contentsline{section}{TABLE OF CONTENTS}{\protect\pageref{toclabel}}{toc}}
+\fi
 \tableofcontents
 \clearpage
 \fi
@@ -2148,6 +2158,10 @@ ITEM \GlsFile.tex NOT FOUND.
 \coverbookmark
 \sigbookmark
 \qabookmark
+\ifsynonly\glsbookmark\fi
+\synbookmark
+\ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
+\tocbookmark
 \fi
 
 % Insert List of Tables
@@ -2192,11 +2206,11 @@ ITEM \GlsFile.tex NOT FOUND.
 \coverbookmark
 \sigbookmark
 \qabookmark
-\fi
 \ifsynonly\glsbookmark\fi
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
 \tocbookmark
+\fi
 \ifsynonly\else\glsbookmark\fi
 
 % End document if synonly mode

@@ -29,6 +29,9 @@ my $modeorig = $mode;
 # Check for supported modes
 if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear jabref > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
 
+# Defined processes to kill at the end to avoid hanging processes
+my $kill = 'taskkill /f /im pdflatex.exe >nul 2>&1 & taskkill /f /im bibtex.exe >nul 2>&1 & taskkill /f /im makeglossaries.exe >nul 2>&1';
+
 # Determine bundle version if used
 my $file; my $fh; my $str; my $bver = ''; my $bbver = ''; my $bnum; my $btru; my $brnd; my $oss;
 if ( "$OS" eq 'MSWin32' ) {
@@ -84,7 +87,7 @@ if ( not defined $docname ) { $docname = "$name.pdf" }
 
 # Files to delete in cleanup
 unlink ('dodel.txt');
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "$name.upa", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
+my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz" , "$name.synctex.gz(busy)", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "$name.upa", "$name.upb", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
 
 # Clear mode to clean out auxiliary files
 if ( $mode eq 'clear' ) {
@@ -93,6 +96,7 @@ if ( $mode eq 'clear' ) {
 	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "sigpage.pdf", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name.log", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log", "$logfile.out", @delfiles); #rmtree('pmxinputfiles');
 	open(FILENEW, '>:utf8', 'dodel.txt'); close(FILENEW);
 	$ENV{PATH} = "$oldpath";
+	system($kill);
 	exit;
 }
 
@@ -236,7 +240,7 @@ if ( $mode ne 'fmt' ) {
 	if ( $mkfile == 1 ) {
 		if (( $cp == 0 ) && ( $mode ne 'noperl' )) {
 			$namesave = "$name-save"; $save = 1;
-			if ( -e "$namesave.tex" ) { $txt = "LaTeX Warning: Old backup file $namesave.tex exists. Please check contents against $name.tex.\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; sleep 3; exit; }
+			if ( -e "$namesave.tex" ) { $txt = "LaTeX Warning: Old backup file $namesave.tex exists. Please check contents against $name.tex.\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; sleep 3; exit; system($kill); }
 			copy "$name.tex", "$namesave.tex";
 		}
 		open $fh, '>:utf8', "$nametex.tex"; print $fh "$str"; close($fh);
@@ -259,7 +263,7 @@ if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("user
 	if ( $mode ne 'eqn' ) {	$txt = "Compiling PharmTeX class\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
 	copy 'useroptions.txt', 'useroptionscomp.txt';
 	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" PharmTeX.ini");
-	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; exit; }
+	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; system($kill); exit; }
 }
 
 # If knitr insert R settings and clean out knitr generated preamble
@@ -398,6 +402,7 @@ if (( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) && ( -e "$name.
 	
 	# Ignore warning caused by hyperref
 	$log =~ s/pdfTeX warning \(ext4\):/Ignored by PharmTeX:/g;
+	$log =~ s/Package hyperref Warning:( Option `pdftex' has already been used)/Ignored by PharmTeX:$1/g;
 	
 	# Save log file
 	my ($ver)  = $log =~ /Package: PharmTeX [0-9]{4}\/[0-9]{2}\/[0-9]{2} v([0-9]+\.[0-9]+) PharmTeX Package/;
@@ -415,6 +420,9 @@ if ( $sub == 0 ) { unlink (("bundleversion.txt"), (<*-tmpfixfile.*>)) }
 # Reset to old path and clean up
 $ENV{PATH} = "$oldpath";
 if ( -e "noperlfirst.txt" ) { unlink "noperlfirst.txt"; }
+
+# Kill hanging commands
+if ( grep $_ eq $mode, < batch full fast err fmt noperl clear > ) {	if ( "$OS" eq 'MSWin32' ) { system($kill); } }
 
 ##############################################################
 sub restore_streams

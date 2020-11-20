@@ -36,7 +36,13 @@ REM Pass arguments on
 if not "%MODE%"=="gui" ( call perl runlatex.pl %NAME% %MODE% )
 
 REM Clean up
-if "%MODE%"=="gui" ( call taskkill /F /IM miktex-taskbar-icon.exe )
+if "%MODE%"=="gui" (
+	call taskkill /F /IM miktex-taskbar-icon.exe >nul 2>&1
+	call taskkill /F /IM pdflatex.exe >nul 2>&1
+	call taskkill /F /IM bibtex.exe >nul 2>&1
+	call taskkill /F /IM makeglossaries.exe >nul 2>&1
+	call taskkill /F /IM perl.exe >nul 2>&1
+)
 if exist "%LDIR%" ( if exist jabref.xml ( move jabref.xml "%LDIR%\jabref\jabref.xml" >nul 2>&1 ) )
 if not exist "%LDIR%" ( del jabref.xml >nul 2>&1 )
 if exist dodel.txt ( del dodel.txt "%NAME%.pdf" >nul 2>&1 )
