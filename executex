@@ -1,60 +1,24 @@
 #!/bin/bash
-# PharmTeX Linux bash script, part of the PharmTeX platform.
+# PharmTeX Linux bash wrapper script, part of the PharmTeX platform.
 # Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 # This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
-# Set main path for PharmTeX
+# Path to PharmTeX software installation
 LDIR="$HOME/pharmtex"; export LDIR
 
-# Get job name and mode
-NAME=$(basename "$1")
-EXT="${NAME##*.}"
-NAME="${NAME%.*}"
-MODE="$2"
+# Path to PharmTeX files
+PHARMTEXDIR="$LDIR/pharmtex"; export PHARMTEXDIR
 
 # If no options set, prompt user
-if [ -z "$NAME" ] && [ -z "$MODE" ]; then
-	read -p 'File to edit = ' NAME
-	MODE=gui
+if [ "$1" == "" ]; then
+	read -p 'File to edit = ' CNAME
 fi
 
-# Choose batch mode if no mode set
-if [ -z "$MODE" ]; then
-	MODE=batch
+# GUI mode
+if [ "$CNAME" != "" ]; then
+	$PHARMTEXDIR/runlatex.sh "$CNAME" gui
+	exit
 fi
 
-# Temporarily change paths if PharmTeX bundle is present
-OLDPATH="$PATH"
-OLDMANPATH="MANPATH"
-OLDINFOPATH="INFOPATH"
-if [ -d "$LDIR" ]; then
-	. $LDIR/bin/setpath
-fi
-
-# Exit if script is run to set path only
-if [ "$MODE" == "path" ]; then 
-	exit;
-fi
-
-# Load MiKTeX Tool if gui mode
-if [ "$MODE" == "gui" ]; then
-	texstudio "$NAME.tex"
-else
-	perl runlatex.pl "$NAME" "$MODE"
-fi
-
-# Clean up
-if [ -e jabref.xml ] && [-d "$LDIR" ]; then
-	mv jabref.xml "$LDIR/jabref/jabref.xml"
-elif [ -e jabref.xml ]; then
-	rm jabref.xml
-fi
-if [ -e dodel.txt ]; then
-	rm dodel.txt
-	if [ -e "$NAME.pdf" ]; then
-		rm "$NAME.pdf" 
-	fi
-fi
-PATH="$OLDPATH"; export PATH
-MANPATH="OLDMANPATH"; export MANPATH
-INFOPATH="OLDINFOPATH"; export INFOPATH
+# Run runlatex.bat with input options
+$PHARMTEXDIR/runlatex.sh $*

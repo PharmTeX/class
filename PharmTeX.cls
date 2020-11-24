@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2020/07/03}
-\def\pharmtexversion{1.15}
+\def\pharmtexdate{2020/10/31}
+\def\pharmtexversion{2.0}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -19,6 +19,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Apply user options (for \documentclass[options]{PharmTeX})
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Default font size is 12pt
+\def\@@ptsize{12pt}
+\DeclareOption{10pt}{\def\@@ptsize{10pt}}
+\DeclareOption{11pt}{\def\@@ptsize{11pt}}
+\DeclareOption{12pt}{\def\@@ptsize{12pt}}
 
 %%% Option to show appendix
 \newif\ifappendix\appendixtrue
@@ -44,6 +50,12 @@
 \newif\ifctoc\ctocfalse
 \DeclareOption{toc}{\toctrue\ctoctrue}
 \DeclareOption{notoc}{\tocfalse\ctoctrue}
+
+%%% Option to show LOA
+\newif\ifloa\loatrue
+\newif\ifcloa\cloafalse
+\DeclareOption{loa}{\loatrue\cloatrue}
+\DeclareOption{noloa}{\loafalse\cloatrue}
 
 %%% Option to show LOF
 \newif\iflofcl\lofclfalse
@@ -81,7 +93,7 @@
 \DeclareOption{sigpage}{\sigpagetrue\csigpagetrue}
 
 %%% Option allow same page hyperlinks
-\newif\ifsamepagelinks\samepagelinksfalse
+\newif\ifsamepagelinks\samepagelinkstrue
 \newif\ifcsamepagelinks\csamepagelinksfalse
 \DeclareOption{nosamepagelinks}{\samepagelinksfalse\csamepagelinkstrue}
 \DeclareOption{samepagelinks}{\samepagelinkstrue\csamepagelinkstrue}
@@ -99,10 +111,17 @@
 \DeclareOption{webhyper}{\webhypertrue\cwebhypertrue}
 
 %%% Option to show item IDs
+\newif\ifshowinlinetable\showinlinetabletrue
 \newif\ifitemid\itemidtrue
 \newif\ifcitemid\citemidfalse
 \DeclareOption{noitemid}{\itemidfalse\citemidtrue}
 \DeclareOption{itemid}{\itemidtrue\citemidtrue}
+
+%%% Option to display List of Numbers
+\newif\iflon\IfFileExists{batch.txt}{\lonfalse}{\lontrue}
+\newif\ifclon\clonfalse
+\DeclareOption{nolon}{\lonfalse\clontrue}
+\DeclareOption{lon}{\lontrue\clontrue}
 
 %%% Option to item number hyperlinks
 \newif\ifitemhyper\itemhypertrue
@@ -182,47 +201,45 @@
 \DeclareOption{noconvimg}{\convimgfalse\cconvimgtrue}
 \DeclareOption{convimg}{\convimgtrue\cconvimgtrue}
 
+%%% Option to copy all inputfiles to ./pmxinputfiles and load from there if present
+\newif\ifitemsbytime\itemsbytimefalse
+\newif\ifcitemsbytime\citemsbytimefalse
+\DeclareOption{itemsbyid}{\itemsbytimefalse\citemsbytimetrue}
+\DeclareOption{itemsbytime}{\itemsbytimetrue\citemsbytimetrue}
+
 %%% Option to copy all inputfiles to ./inputfiles and load from there if present
 \newif\ifcopy\copyfalse
 \newif\ifccopy\ccopyfalse
 \DeclareOption{nocopy}{\copyfalse\ccopytrue}
 \DeclareOption{copy}{\copytrue\ccopytrue}
 
-%%% Option to select paper size.
-\newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.54 cm}
-\newlength{\PmxBottomBase}\setlength{\PmxBottomBase}{2.54 cm}
-\newlength{\PmxLeftBase}\setlength{\PmxLeftBase}{3.175 cm}
-\newlength{\PmxRightBase}\setlength{\PmxRightBase}{2.54 cm}
-\newlength{\PmxHeadBase}\setlength{\PmxHeadBase}{0.25 cm}
-\newlength{\PmxFootBase}\setlength{\PmxFootBase}{1 cm}
-\newlength{\PmxTop}\setlength{\PmxTop}{2.54 cm}
-\newlength{\PmxBottom}\setlength{\PmxBottom}{2.54 cm}
-\newlength{\PmxLeft}\setlength{\PmxLeft}{3.175 cm}
-\newlength{\PmxRight}\setlength{\PmxRight}{2.54 cm}
-\newlength{\PmxHead}\setlength{\PmxHead}{0.25 cm}
-\newlength{\PmxFoot}\setlength{\PmxFoot}{1 cm}
-\newcommand{\pmxtop}[1]{\setlength{\PmxTop}{#1}\geometry{top = \PmxTop}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxbottom}[1]{\setlength{\PmxBottom}{#1}\geometry{bottom = \PmxBottom}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxleft}[1]{\setlength{\PmxLeft}{#1}\geometry{left = \PmxLeft}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxright}[1]{\setlength{\PmxRight}{#1}\geometry{right = \PmxRight}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxhead}[1]{\setlength{\PmxHead}{#1}\geometry{headsep = \PmxHead}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\pmxfoot}[1]{\setlength{\PmxFoot}{#1}\geometry{footskip = \PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-\newcommand{\mypaper}{a4paper}
-\newif\ifisopaper\isopaperfalse
+%%% Option for paper size
 \newif\ifletterpaper\letterpaperfalse
-\DeclareOption*{isopaper}{
-  \PassOptionsToClass{\CurrentOption}{article}
-  \renewcommand{\mypaper}{a4paper}
-  \PassOptionsToPackage{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, headheight = 1.75 cm,  headsep = \PmxHead, footskip = \PmxFoot}{geometry}
-  \letterpaperfalse\isopapertrue
-}
-\DeclareOption{letterpaper}{
-  \PassOptionsToClass{\CurrentOption}{article}
-  \renewcommand{\mypaper}{letterpaper}
-  \PassOptionsToPackage{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, headheight = 1.75 cm,  headsep = \PmxHead, footskip = \PmxFoot}{geometry}
-  \letterpapertrue\isopaperfalse
-}
-\ExecuteOptions{isopaper}
+\newcommand{\mypaperkoma}{a4}
+\newif\ifcletterpaper\cletterpaperfalse
+\DeclareOption{a4paper}{\letterpaperfalse\cletterpapertrue\renewcommand{\mypaperkoma}{a4}}
+\DeclareOption{isopaper}{\letterpaperfalse\cletterpapertrue\renewcommand{\mypaperkoma}{a4}}
+\DeclareOption{letterpaper}{\letterpapertrue\cletterpapertrue\renewcommand{\mypaperkoma}{letter}}
+
+%%% Ready-to-use mutually exclusive document type options: rep = report-type document (default), sow = scope of work
+\newif\ifrep\reptrue
+\DeclareOption{rep}{\reptrue\sowfalse\emptyfalse}
+\newif\ifsow\sowfalse
+\DeclareOption{sow}{\repfalse\sowtrue\emptyfalse\ExecuteOptions{10pt}}
+\newif\ifempty\emptyfalse
+\DeclareOption{empty}{\repfalse\sowfalse\emptytrue}
+
+%%% Use \footnotesize in synopsis true/false
+\newif\ifsynopsisfootfont\synopsisfootfontfalse
+
+%%% Display table swapping information
+\newif\ifsubstnote\substnotetrue
+
+%%% Option to select paper size.
+\PassOptionsToClass{\CurrentOption}{article}
+
+%%% Make url package obey spaces
+\PassOptionsToPackage{obeyspaces}{url}
 
 %%% Suppress errors about certain symbols
 \PassOptionsToPackage{warn}{textcomp}
@@ -234,9 +251,9 @@
 \useroptions
 
 %%% Transfer options to main class
-\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption,\@@ptsize}{article}}
 \ProcessOptions\relax
-\LoadClass[12pt,\mypaper]{article}
+\LoadClass[\@@ptsize]{article}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Change some settings after option processing
@@ -269,21 +286,38 @@
 	\ifcsamepagelinks\else\samepagelinkstrue\fi
 \fi
 
+%%% Settings for blank
+\ifempty
+	\ifcletterpaper\else\letterpapertrue\fi
+	\ifccoverpage\else\coverpagefalse\fi
+	\ifctoc\else\tocfalse\fi
+	\ifcloa\else\loafalse\fi
+	\ifclot\else\lotfalse\fi
+	\ifclof\else\loffalse\fi
+	\ifcglossary\else\glossaryfalse\fi
+	\ifcitemid\else\itemidfalse\fi
+\fi
+
 %%% Settings for Word compatible PDF mode
 \newcommand{\DocPDFWord}{}
 \newcommand{\doDocPDFWord}{0}
 \ifeqnimg\renewcommand{\doDocPDFWord}{1}\fi
-\ifmathimg
-	\renewcommand{\doDocPDFWord}{1}\fi
-\fi
+\ifmathimg\renewcommand{\doDocPDFWord}{1}\fi
 \ifconvimg\renewcommand{\doDocPDFWord}{1}\fi
 \ifnum\doDocPDFWord=1\renewcommand{\DocPDFWord}{-word}\fi
 
-%%% Settings for draftmode
+%%% Settings for copy
 \ifcopy
 	\newcommand{\docopy}{1}
 \else
 	\newcommand{\docopy}{0}
+\fi
+
+%%% Settings for sorting itemlist
+\ifitemsbytime
+	\newcommand{\doitemsbytime}{1}
+\else
+	\newcommand{\doitemsbytime}{0}
 \fi
 
 %%% Fix error thrown by chngcntr package. Should be fixed in a later release of MiKTeX
@@ -293,11 +327,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Include packages
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage{scrwfile}
+%\usepackage{etex}
 \usepackage[utf8]{inputenc}
 \usepackage[extendedchars]{grffile}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
+\usepackage{footnotehyper}
 \usepackage[table]{xcolor}
+\usepackage[usegeometry]{typearea}
+\usepackage{scrlayer-scrpage}
 \usepackage{geometry, afterpage, etoolbox}
 \usepackage[nomessages]{fp}
 \usepackage{changepage, amsmath, amssymb, parskip, sectsty, color, setspace, pdfpages}
@@ -306,22 +345,22 @@
 \usepackage[figure,table,lstlisting]{totalcount}
 \usepackage[hhmmss]{datetime}
 \usepackage[pagewise]{lineno}
-\usepackage{afterpage, currfile, graphicx, xspace, enumitem}
+\usepackage{afterpage, currfile, graphicx, xspace, enumitem, moreenum}
 \usepackage[absolute]{textpos}
-\usepackage{calc, lipsum, fancyhdr}
+\usepackage{calc, lipsum}
 \usepackage[square, comma, numbers, sort&compress]{natbib}
 \usepackage{lastpage, textcomp, tocvsec2}
 \usepackage[titles]{tocloft}
 \usepackage[compact,bf,explicit]{titlesec}
 \usepackage{expl3}
 \usepackage{regexpatch}
-\usepackage[hang, flushmargin]{footmisc}
+\usepackage[hang, flushmargin, bottom]{footmisc}
 \usepackage[bookmarksnumbered, pdftex, unicode]{hyperref}
 \usepackage[open,openlevel=1]{bookmark}
 \usepackage[nameinlink, capitalise, noabbrev]{cleveref}
 \usepackage{needspace, refcount}
-\usepackage{mathptmx, helvet, courier}
-\usepackage{threeparttable, threeparttablex, booktabs, longtable, tabularx, ltablex, nameref, pdflscape, hhline}
+\usepackage{mathptmx, helvet, courier, sansmath}
+\usepackage{threeparttable, threeparttablex, booktabs, longtable, tabularx, ltablex, nameref, hhline}
 \usepackage[longtable]{multirow}
 \usepackage[originalparameters, document]{ragged2e}
 \usepackage{bigstrut, here, float, rotating, subcaption, appendix, upquote, chngcntr}
@@ -337,6 +376,9 @@
 
 %%% Package for checking page design, showing boxes etc.
 %\usepackage{layouts}
+
+%%% Set paper size for KOMA
+\KOMAoptions{paper=\mypaperkoma}\recalctypearea
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Custom commands
@@ -536,13 +578,14 @@
 \newcommand{\x}{\;\!} % implicit multiplier for equations. Put in a small space.
 \newcommand{\tild}{\string~\xspace} % tilde in text
 \newcommand{\regtm}{\textsuperscript{\textregistered}\xspace} % registered trademark
+\newcommand{\tm}{\texttrademark\xspace} % trademark
 \newcommand{\nt}{\noindent} % do not indent the first line after an empty line in the .tex file
 \newcommand{\nl}{\vspace{-0.9\baselineskip}} % skip back approximately one line, used just before a new equation
 \newcommand{\nlalign}{\vspace{-0.9\baselineskip}} % same command, just for use with eqnimg
 \newcommand{\nn}{\nonumber} % skip the equation number for a given equation.
 \newcommand{\ee}[1]{\cdot 10^{#1}} % *10^ scientific format in pretty print
 \newcommand{\degree}{^\circ} % degree symbyl
-\newcommand{\s}[1]{_\text{\:\!#1}} % subscript with non-italics in math mode
+\newcommand{\s}[1]{_\mathrm{\:\!#1}} % subscript with non-italics in math mode
 \newcommand{\diff}[2]{\frac{\text{d} #1}{\text{d} #2}} % d{someting}/d{something else}
 \newcommand{\pdfpages}[1]{\pdfximage{#1}\edef\numberofpages{\the\pdflastximagepages}} % comment out if switching to xelatex. Counts the number of pages in a PDF file.
 \newcommand{\figlabel}[2]{\hypertarget{#2}{}\caption{#1}\label{#2}\addtocontents{lof}{\protect{\bookmark[rellevel=1,keeplevel,dest=#2]{\figurename~\thefigure. #1}}}} % command for creating a figure label that also adds itself to the List of Figures entry in the top of the PDF bookmarks.
@@ -553,31 +596,94 @@
 \newcommand{\nonmem}{NONMEM\regtm} % NONMEM
 \newcommand{\itab}[1]{\hspace{0em}\rlap{#1}} % used with DRM (Dose Rationale Memo) document
 \newcommand{\tab}[1]{\hspace{2.5cm}\rlap{#1}} % used with DRM (Dose Rationale Memo) document
-\newcommand{\tablefont}{\footnotesize} % default fontsize for tables
-\newcommand{\listingfont}{\scriptsize} % default fontsize for listings
+\newcommand{\descfont}{\footnotesize} % default fontsize for description
+\newcommand{\tabledeffont}{\footnotesize} % default fontsize for tables
+\newcommand{\listingdeffont}{\scriptsize} % default fontsize for listings
+\newcommand{\tablefont}{\tabledeffont} % default fontsize for tables
+\newcommand{\listingfont}{\listingdeffont} % fontsize for listings
 \newcommand{\dotight}{0} % flag for make a table look tighter, i.e. with less whitespace
 \newcommand{\pmxtight}{\renewcommand{\dotight}{1}} % command for setting the \dotight flag
 \newcommand{\allowchangefont}{1} % change to 0 to disable font changing option (\tablefont) for main body - will then only work in appendices.
 \newcommand{\pmxfont}[1]{\ifnum\allowchangefont=1 \renewcommand{\tablefont}{#1} \renewcommand{\listingfont}{#1} \fi} % command for changing the tablefont and listingfont
 \newcommand{\pmxtoprule}{\toprule} % default toprule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
-\newcommand{\pmxmidrule}{\toprule} % default midrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
+\newcommand{\pmxmidrule}{\midrule} % default midrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
 \newcommand{\pmxbottomrule}{\bottomrule} % default bottomrule for tables (horizontal line). Apparently the commands interact in different ways with the tabularx environment.
-\newoutputstream{tmp}\newcommand{\savefile}[2]{\openoutputfile{#1}{tmp}\addtostream{tmp}{#2}\closeoutputstream{tmp}}
+%\newoutputstream{tmp}\newcommand{\savefile}[2]{\openoutputfile{#1}{tmp}\addtostream{tmp}{#2}\closeoutputstream{tmp}}
 \newcommand{\hyperoff}[1]{\begin{NoHyper}#1\end{NoHyper}} % command for turning off a specific hyperlink for a \cref command
 \newcommand{\bundleos}{\ifwindows{}Win\else{}Lin\fi}
+\newcommand{\thefontsize}{\f@size} % font size in pt (print e.g. 12)
+\newcommand{\secheadfont}{\normalsize} % font size for section, subsection, etc. headings
+\newcommand*{\getlength}[1]{\strip@pt#1} % get length as number without units
+\newcommand*\makeAlph[1]{\ifnum#1<27\symbol{\numexpr96+#1}\else\PackageError{PharmTeX}{Number exceeds the number of letters in the alphabet.}{}\fi}
+\newcommand{\citelocation}{}
+
+%%% Set page margins
+% Headheight:
+% 12 pt 1 lines = 14.5 pt (14.49998pt)
+% 12 pt 2 lines = 29.0 pt (28.99998pt)
+% 12 pt 3 lines = 43.5 pt (43.49998pt)
+% 10 pt 1 lines = 14.5pt = \baselineskip
+% 10 pt 2 lines = 24.0pt
+% 10 pt 3 lines = 36.0pt
+%  8 pt 1 lines = 12.0pt = \baselineskip
+%  8 pt 2 lines = 19.0pt (18.99998pt)
+%  8 pt 3 lines = 28.5pt (28.49998pt)
+\newlength{\PmxTopBase}\setlength{\PmxTopBase}{2.55 cm}
+\newlength{\PmxBottomBase}\setlength{\PmxBottomBase}{2.65 cm}
+\newlength{\PmxLeftBase}\setlength{\PmxLeftBase}{3.175 cm}
+\newlength{\PmxRightBase}\setlength{\PmxRightBase}{2.54 cm}
+\newlength{\PmxHeadBase}\setlength{\PmxHeadBase}{0.8 cm}
+\newlength{\PmxFootBase}\setlength{\PmxFootBase}{1.35 cm}
+\newlength{\PmxHeadHeightBase}\setlength{\PmxHeadHeightBase}{43.5 pt}
+\newlength{\PmxFootHeightBase}\setlength{\PmxFootHeightBase}{24 pt}
+\newlength{\PmxTop}\setlength{\PmxTop}{2.55 cm}
+\newlength{\PmxBottom}\setlength{\PmxBottom}{2.65 cm}
+\newlength{\PmxLeft}\setlength{\PmxLeft}{3.175 cm}
+\newlength{\PmxRight}\setlength{\PmxRight}{2.54 cm}
+\newlength{\PmxHead}\setlength{\PmxHead}{0.8 cm}
+\newlength{\PmxFoot}\setlength{\PmxFoot}{1.35 cm}
+\newlength{\PmxHeadHeight}\setlength{\PmxHeadHeight}{43.5 pt}
+\newlength{\PmxFootHeight}\setlength{\PmxFootHeight}{24 pt}
+\newcommand{\pmxtop}[1]{\setlength{\PmxTop}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxbottom}[1]{\setlength{\PmxBottom}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxleft}[1]{\setlength{\PmxLeft}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxright}[1]{\setlength{\PmxRight}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxhead}[1]{\setlength{\PmxHead}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxfoot}[1]{\setlength{\PmxFoot}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxheadheight}[1]{\setlength{\PmxHeadHeight}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\newcommand{\pmxfootheight}[1]{\setlength{\PmxFootHeight}{#1}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}\KOMAoptions{footheight=\PmxFootHeight}}
+\geometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}
+\KOMAoptions{footheight=\PmxFootHeight}
+\setlength{\maxwidth}{\textwidth}
+\setlength{\maxheight}{\textheight}
+\newcommand*{\useportrait}{\clearpage\KOMAoptions{paper=portrait,DIV=current}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
+\newcommand*{\uselandscape}{\clearpage\KOMAoptions{paper=landscape,DIV=current}\newgeometry{top = \PmxTop, bottom = \PmxBottom, left = \PmxLeft, right = \PmxRight, head = \PmxHeadHeight, headsep = \PmxTop-\PmxHead-\PmxHeadHeight, footskip = \PmxBottom-\PmxFoot}\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
+\newenvironment{landscape}{}{}
+\BeforeBeginEnvironment{landscape}{\uselandscape}
+\AfterEndEnvironment{landscape}{\useportrait}
+
+\addtokomafont{pagehead}{\normalfont\footnotesize}
+\addtokomafont{pagefoot}{\normalfont\footnotesize}
+\ihead{\ifdefined\HeaderText\HeaderText\fi}
+\chead{}
+\ohead{}
+\ifoot{}
+\cfoot{\ifdefined\FooterText\FooterText\else\quad\fi \\ Page \thepage~of~\pageref*{LastPage}\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi}
+\ofoot{}
 
 %%% Settings in enumerate and itemize
-% \def\labelitemi{\textbullet}
 \setlist{noitemsep}
 \setlist[1]{labelindent=\parindent} % < Usually a good idea
-\setlist[itemize]{labelsep=0.3in}
-\setlist[itemize,1]{label=\footnotesize$\bullet$,leftmargin=*}
-\setlist[itemize,2]{label=\footnotesize$\circ$,leftmargin=0.3in}
-\setlist[itemize,3]{label=\tiny$\square$,leftmargin=0.3in}
-\setlist[enumerate]{labelsep=0.3in}
-\setlist[enumerate,1]{label = \arabic*.,ref = \arabic*,leftmargin=*}
-\setlist[enumerate,2]{label = \alph*.,ref = \theenumi.\emph{\alph*},leftmargin=0.3in}
-\setlist[enumerate,3]{label = \roman*.,ref = \theenumii.\roman*,leftmargin=0.3in}
+\setlist[itemize]{align=parleft,itemsep=3pt,partopsep=0pt,topsep=3pt,labelsep=*,leftmargin=0.3in} % use labelsep=0.3in,leftmargin=* to switch to right side of label for aligning
+\setlist[itemize,1]{label=\footnotesize$\bullet$,topsep=3pt}
+\setlist[itemize,2]{label=\footnotesize$\circ$,topsep=3pt}
+\setlist[itemize,3]{label=\tiny$\square$,topsep=3pt}
+\setlist[itemize,4]{label=\tiny$\triangle$,topsep=3pt}
+\setlist[enumerate]{align=parleft,itemsep=3pt,partopsep=0pt,topsep=3pt,labelsep=*,leftmargin=0.3in} % use labelsep=0.3in,leftmargin=* to switch to right side of label for aligning
+\setlist[enumerate,1]{label=\arabic*.,ref=\arabic*}
+\setlist[enumerate,2]{label=\alph*.,ref=\theenumi.\alph*}
+\setlist[enumerate,3]{label=\roman*.,ref=\theenumii.\roman*}
+\setlist[enumerate,4]{label=\greek*.,ref=\theenumiii.\greek*}
 
 %%% Include .tex doc from another run
 %%% This is used for socalled daughter steps where another LatexReport step can be loaded into the present one. All code between \begin{document} and \references is included in the spot where the \pmxinclude command is put in the mother document. It will download the daughter .tex document and print a file called "dotwice" telling runlatex.bat to compile latex an extra time and include any artifacts from the daughter document.
@@ -599,7 +705,7 @@ ITEM \newunderscorename{} NOT FOUND
 %%% Include a text file from a run.
 %%% This command can e.g. load a text file created by an R run containing an important number that will then be put into the spot where the \pmxinput is used. If the artifact is found a \footnote will be created showing the artifact ID.
 % \perlnewcommand{\inputtext}[1]{
-\newcommand{\pmxinput}[1]{%
+\newcommand{\pmxtxt}[1]{%
 \renewcommand{\newunderscorename}{}
 \checkartifact{#1}%
 \fixunderscore{#1}%
@@ -631,6 +737,19 @@ ITEM \newunderscorename{} NOT FOUND%
 }
 \setlength{\LTleft}{0pt} % fills out longtables (used for glossary and List of Items) to fill the full page width
 \setlength{\LTright}{0pt} % fills out longtables to fill the full page width
+% \def\@cline#1-#2\@nil{%
+  % \omit
+  % \@multicnt#1%
+  % \advance\@multispan\m@ne
+  % \ifnum\@multicnt=\@ne\@firstofone{&\omit}\fi
+  % \@multicnt#2%
+  % \advance\@multicnt-#1%
+  % \advance\@multispan\@ne
+  % \leaders\hrule\@height\arrayrulewidth\hfill
+  % \cr
+  % \noalign{\nobreak\vskip-\arrayrulewidth}}
+% \let\pmxcline\cline
+\let\pmxcline\cmidrule
 
 % Tools for keeping the description of a table on the same page as the table itself
 \renewcommand\TPTminimum{\maxwidth}
@@ -672,7 +791,8 @@ ITEM \newunderscorename{} NOT FOUND%
 \crefname{tnote}{Tablenote}{Tablenotes}
 %\renewcommand{\thetnote}{$^\text{\alph{tnote}}$}
 \renewcommand{\thetnote}{\textsuperscript{\alph{tnote}}}
-\renewcommand{\tnote}[2]{\raisebox{\ht\strutbox}{\hypertarget{#1}{}}\refstepcounter{tnote}\thetnote#2\label{#1}}
+\renewcommand{\tnote}[2]{\refstepcounter{tnote}\thetnote\space#2\label{#1}}
+%\renewcommand{\tnote}[2]{\raisebox{\ht\strutbox}{\hypertarget{#1}{}}\refstepcounter{tnote}\thetnote\space#2\label{#1}}
 \newcommand{\tref}[1]{\ref*{#1}} % Disables hyperlinks within tables
 %\newcommand{\tref}[1]{\nref{#1}} % Enables hyperlinks within tables. But the hyperlinks in header doesn't always respect nosamepagelinks due to the setup of package longtable/tabularx (firsthead and lasthead are compiled on first and second page only, respectively, not on every page). Thus, hyperlinks are disabled for \tnote. They still work for a \cref to a \tnote.
 \newcommand{\tablenote}{} % compatibility with earlier versions of the template
@@ -681,13 +801,15 @@ ITEM \newunderscorename{} NOT FOUND%
 \newlength{\pmxtabcolsep}\setlength{\pmxtabcolsep}{\tabcolsep}
 \newcounter{pmxcolumnnumber}\setcounter{pmxcolumnnumber}{1}
 \newcommand{\istable}{0}
+\newcommand{\istextable}{0}
 \newcommand{\mypmxcaption}{}
 \newcommand{\dodescription}{0}
-\newcommand{\mytabledescription}{}
+\newcommand{\myfloatdescription}{}
 \newcommand{\mytableitemnumber}{}
 \newcommand{\syntab}{0}
 \newcommand{\csvtable}{}
 \newcommand{\tabletopnote}{}
+\ifitemid\newcommand{\doitemid}{1}\else\newcommand{\doitemid}{0}\fi
 % \perlnewcommand{\includecsv}[8]{
 % start of actual \pmxtable command using \includecsv. RETAIN empty lines in the beginning and end of \pmxtable to make sure line spacing before and after tables is correct.
 \newcommand{\tmpsubstnote}{}
@@ -695,22 +817,20 @@ ITEM \newunderscorename{} NOT FOUND%
 
 \setcounter{pmxcolumnnumber}{1}
 \renewcommand{\istable}{1}
-\renewcommand{\mytabledescription}{}
+\renewcommand{\istextable}{0}
+\renewcommand{\myfloatdescription}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tabletopnote}{}
 \renewcommand{\tmpsubstnote}{}
-\renewcommand{\pmxtoprule}{\toprule}
-\renewcommand{\pmxmidrule}{\toprule}
-\renewcommand{\pmxbottomrule}{\bottomrule}
 \setcounter{tnote}{0}
 \renewcommand{\newunderscorename}{}
 \renewcommand{\mypmxcaption}{#6}
 \fixglscaption{\mypmxcaption}
 \fixunderscore{#2}
 \checkartifact{#2}
-\tablefont
+{\tablefont
 \ifx\fname\empty
 \begin{tabularx}{\maxwidth}{C{1}} \tablabel{\mypmxcaption}{#5}
 	\\\toprule
@@ -719,17 +839,17 @@ ITEM \newunderscorename{} NOT FOUND%
 	\endfoot\bottomrule\endlastfoot
 \end{tabularx}
 \else
-\fixnewline{\detokenize{#7}}
 \renewcommand{\mytableitemnumber}{\itemid{#2}}
-\renewcommand{\mytabledescription}{#7}
+\fixnewline{\detokenize{#7}}{\doitemid}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{\fname}{#3}{#4}{#5}{\mypmxcaption}{\detokenize{#8}}{\dotight}{0}
 \csvtable
-\normalsize
-\renewcommand{\tablefont}{\footnotesize}
-\renewcommand{\listingfont}{\scriptsize}
+}
+\renewcommand{\tablefont}{\tabledeffont}
+\renewcommand{\listingfont}{\listingdeffont}
 \renewcommand{\dotight}{0}
 \renewcommand{\mypmxcaption}{}
+\setlength{\tabcolsep}{\pmxtabcolsep}
 \fi
 
 }
@@ -741,15 +861,13 @@ ITEM \newunderscorename{} NOT FOUND%
 
 \setcounter{pmxcolumnnumber}{1}
 \renewcommand{\istable}{1}
-\renewcommand{\mytabledescription}{}
+\renewcommand{\istextable}{1}
+\renewcommand{\myfloatdescription}{}
 \renewcommand{\dodescription}{0}
 \renewcommand{\syntab}{1}
 \renewcommand{\csvtable}{}
 \renewcommand{\tabletopnote}{}
 \renewcommand{\tmpsubstnote}{}
-\renewcommand{\pmxtoprule}{\toprule}
-\renewcommand{\pmxmidrule}{\toprule}
-\renewcommand{\pmxbottomrule}{\bottomrule}
 \setcounter{tnote}{0}
 \renewcommand{\mypmxcaption}{#4}
 \fixglscaption{\mypmxcaption}
@@ -757,16 +875,15 @@ ITEM \newunderscorename{} NOT FOUND%
 
 %% Load via printed file.
 \savefile{file.tmp.txt}{\detokenize{#6}}
-\tablefont
-\fixnewline{\detokenize{#5}}
+{\tablefont
 \renewcommand{\mytableitemnumber}{Inline table}
-\renewcommand{\mytabledescription}{#5}
+\fixnewline{\detokenize{#5}}{\doitemid}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{\mypmxcaption}{}{\dotight}{1}
 \csvtable
-\normalsize
-\renewcommand{\tablefont}{\footnotesize}
-\renewcommand{\listingfont}{\scriptsize}
+}
+\renewcommand{\tablefont}{\tabledeffont}
+\renewcommand{\listingfont}{\listingdeffont}
 \renewcommand{\dotight}{0}
 \renewcommand{\mypmxcaption}{}
 \setlength{\tabcolsep}{\pmxtabcolsep}
@@ -774,8 +891,9 @@ ITEM \newunderscorename{} NOT FOUND%
 }
 
 %%% Function for inserting tables from image files
-\newcommand{\istable}{0}
 \newcommand{\pmxfigtable}[5]{
+	\renewcommand{\myfloatdescription}{}
+	\fixnewline{\detokenize{#4}}{\doitemid}
 	\renewcommand{\istable}{1}
 	\renewcommand{\newunderscorename}{}
 	\renewcommand{\mypmxcaption}{#3}
@@ -793,9 +911,10 @@ ITEM \newunderscorename{} NOT FOUND%
 		\ifx\fname\empty ITEM \newunderscorename{} NOT FOUND \else \includegraphics[page=1,#5]{\fname} \fi
 		\ifnum\numberofpages=1
 		\\\vspace{0.2\baselineskip}
-		\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}
+		\descfont\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\myfloatdescription~}
 		\fi
 	\end{table}
+	\vspace{-0.8\baselineskip}
 	\ifnum\numberofpages>1
 	\foreach \x in {2,...,\numberofpages}{
 		\addtocounter{table}{-1}
@@ -804,9 +923,10 @@ ITEM \newunderscorename{} NOT FOUND%
 			\includegraphics[page=\x,#5]{\fname}
 			\ifnum\x=\numberofpages
 			\\\vspace{0.2\baselineskip}
-			\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}
+			\descfont\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\myfloatdescription}
 			\fi
 		\end{table}
+		\vspace{-0.8\baselineskip}
 		\ifnum\x<\numberofpages
 		\clearpage
 		\fi}
@@ -814,17 +934,47 @@ ITEM \newunderscorename{} NOT FOUND%
 	\renewcommand{\mypmxcaption}{}
 }
 
-%%% List of Items. This code below, including the perl code, creates the latex code for the list of items table. It is a longtable instead of a tabularx.
-\newcommand{\itemlistname}{LIST OF ITEMS}
-\newcommand{\artipagecmd}{
-\begin{tikzpicture}[remember picture,overlay]
-	\node[rotate = 0] at ([xshift=10.3cm,yshift=5.51cm]current page.center) {\textbf{\normalsize{\itemlistname}}};
-\end{tikzpicture}
+%%% List of Numbers
+\newcommand{\numberlistname}{LIST OF NUMBERS}
+\newcounter{listofnumbersvalue}
+\newcommand{\rout}[1]{\ifdefined\LonFile\loadlistofnumbersvalue{\pmxlonallname}{\pmxlonallnum}{\pmxlonallpath}{\pmxlonallvar}{\pmxlonalltime}{\detokenize{#1}}{\thelistofnumbersvalue}\addtocounter{listofnumbersvalue}{1}\else\PackageError{PharmTeX}{\@backslashchar lonfile needs to be defined for \@backslashchar rout to work.}{}\fi}
+\newcommand{\pmxlonname}{}
+\newcommand{\pmxlonnum}{}
+\newcommand{\pmxlonpath}{}
+\newcommand{\pmxlonvar}{}
+\newcommand{\pmxlontime}{}
+\newcommand{\pmxlonpage}{}
+
+\newcommand{\numberlist}{
+
+\renewcommand{\csvtable}{}
+\section*{\centering\numberlistname}
+\phantomsection
+\hypertarget{numberlisttarget}{}
+\hypertarget{itemnumber\thelonitemid}{}
+\label{numberlist}
+\addtocontents{toc}{\@backslashchar contentsline {section}{\numberlistname}{\@backslashchar pageref{numberlist}}{numberlisttarget}}
+\bookmark[level=1,dest=numberlisttarget,startatroot]{\numberlistname}
+\IfStrEqCase{\thefontsize}{
+{10}{\small}
+{10.95}{\footnotesize}
+{12}{\scriptsize}
+}[]
+\printlistofnumbers{\pmxlonname}{\pmxlonnum}{\pmxlonpath}{\pmxlonvar}{\pmxlontime}
+\addtocounter{table}{-1}
+\normalsize
+
 }
+
+%%% List of Items. This code below, including the perl code, creates the latex code for the list of items table. It is a longtable instead of a tabularx.
+\ifcopy\newcommand{\docopyfiles}{1}\else\newcommand{\docopyfiles}{0}\fi
+\newcommand{\itemlistname}{LIST OF ITEMS}
 \newcommand{\mysp}{\phantom{...}}
 % \perlnewcommand{\includemetacsv}[3]{
 
 \newcommand{\itemlist}{
+
+\iflon\ifnum\thelistofnumbersvalue>0\numberlist\clearpage\fi\fi
 
 % Clear last comma or separator in lists of items created by this template
 \StrGobbleRight{\artifacts}{1}[\artifacts]
@@ -840,18 +990,22 @@ ITEM \newunderscorename{} NOT FOUND%
 \ifitemid\ifnum\docsvtable=0\else
 \renewcommand{\csvtable}{}
 \renewcommand{\tabletopnote}{}
+\includemetacsv{\artifacts}{\rfiles}{\theitemnumber}{\itemartifact}{\itemrfile}{\docopyfiles}{\doitemsbytime}
 %\begin{landscape}
-\section*{\itemlistname}
+\section*{\centering\itemlistname}
 \phantomsection
 \hypertarget{itemlisttarget}{}
 \label{itemlist}
 \addtocontents{toc}{\@backslashchar contentsline {section}{\itemlistname}{\@backslashchar pageref{itemlist}}{itemlisttarget}}
 \bookmark[level=1,dest=itemlisttarget,startatroot]{\itemlistname}
-\scriptsize
+\IfStrEqCase{\thefontsize}{
+{10}{\small}
+{10.95}{\footnotesize}
+{12}{\scriptsize}
+}[]
 \setlength\LTcapwidth{\maxwidth} % default: 4in
 \setlength\LTleft{0pt}           % default: \parindent
 \setlength\LTright{0pt}          % default: \fill
-\includemetacsv{\artifacts}{\rfiles}{\theitemnumber}{\itemartifact}{\itemrfile}
 \csvtable
 %\end{landscape}
 \fi\fi
@@ -865,13 +1019,14 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\synfig}{0}
 \newcommand{\tmpstr}{}
 \newcommand{\figcapbelow}{0}
-\newcommand{\myfiguredescription}{}
 % \perlnewcommand{\makesubfigopt}[1]{
 % \perlnewcommand{\makesubfig}[3]{
 \newcommand{\issubfigure}{0}
 % Create \pmxfigure command
 \newcommand{\pmxfigure}[5]{
 
+\renewcommand{\myfloatdescription}{}
+\fixnewline{\detokenize{#4}}{\doitemid}
 \renewcommand{\isfigure}{1}
 \renewcommand{\mypmxcaption}{#3}
 \fixglscaption{\mypmxcaption}
@@ -882,13 +1037,11 @@ ITEM \newunderscorename{} NOT FOUND%
 \IfSubStr{\issubfigure}{1}{
 \makesubfigopt{#5}
 \iffigcapbelow\renewcommand{\figcapbelow}{1}\else\renewcommand{\figcapbelow}{0}\fi
-\renewcommand{\myfiguredescription}{#4}
 \begin{figure}[H]
 \makesubfig{#1}{#2}{\mypmxcaption}{\figcapbelow}
-\footnotesize\ifthenelse{\equal{\detokenize{#4}}{}}{}{#4}
+\descfont\ifthenelse{\equal{\detokenize{#4}}{}}{}{\myfloatdescription}
 \end{figure}
 \vspace{-0.8\baselineskip}
-\renewcommand{\myfiguredescription}{}
 }{
 \renewcommand{\newunderscorename}{}
 \fixunderscore{#1}
@@ -906,7 +1059,7 @@ ITEM \newunderscorename{} NOT FOUND%
 	\ifnum\numberofpages=1
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4~}\fi
+	\descfont\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\myfloatdescription~}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\numberofpages>1
@@ -914,13 +1067,13 @@ ITEM \newunderscorename{} NOT FOUND%
 \foreach \x in {2,...,\numberofpages}{
 \addtocounter{figure}{-1}
 \begin{figure}[H]
-	\iffigcapbelow\else\caption[]{\mypmxcaption (\x{} of \numberofpages)}\fi % caption above
+	\iffigcapbelow\else\caption[]{\mypmxcaption{} (\x{} of \numberofpages)}\fi % caption above
 	\includegraphics[page=\x,#5]{\fname}
 	\iffigcapbelow\caption[]{\mypmxcaption (\x{} of \numberofpages)}\fi % caption below
 	\ifnum\x=\numberofpages
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption above
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace#4}\fi
+	\descfont\ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#4}}{}}{}{\xspace\myfloatdescription}\fi
 \end{figure}
 \vspace{-0.8\baselineskip}
 \ifnum\x=\numberofpages\else\clearpage\fi}
@@ -933,6 +1086,8 @@ ITEM \newunderscorename{} NOT FOUND%
 %%% Create \pmxtexfigure command
 \newcommand{\pmxtexfigure}[4]{
 
+\renewcommand{\myfloatdescription}{}
+\fixnewline{\detokenize{#3}}{\doitemid}
 \renewcommand{\isfigure}{1}
 \renewcommand{\mypmxcaption}{#2}
 \fixglscaption{\mypmxcaption}
@@ -944,7 +1099,7 @@ ITEM \newunderscorename{} NOT FOUND%
 	\iffigcapbelow\figlabel{\mypmxcaption}{#1}\fi % caption below
 	\iffigcapbelow\else\\[0.4\myspacer]\fi % caption below
 	\iffigcapbelow\quad\\[-0.5\myspacer]\fi % caption below
-	\footnotesize\ifitemid{}Inline figure\tmpsubstnote\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace#3}
+	\descfont\ifshowinlinetable\ifitemid{}Inline figure\tmpsubstnote\fi\fi\ifthenelse{\equal{\detokenize{#3}}{}}{}{\xspace\myfloatdescription}
 \end{figure}
 \vspace{-0.8\baselineskip}
 \renewcommand{\mypmxcaption}{}
@@ -980,7 +1135,7 @@ ITEM \newunderscorename{} NOT FOUND%
 	frame=single,
 	basicstyle={\small\ttfamily},
 	language={[LaTeX]TeX},
-	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text, convimg, pmxfigtable, pmx, pmxfont, pmxtight, pmxtop, pmxbottom, pmxleft, pmxright, pmxhead, pmxfoot}
+	moretexcs={gls, newacronym, multirow, subsection, subsubsection, paragraph, subparagraph, cref, logo, refstyle, reffile, glsfile, docpdfname, headertext, footertext, doctype, doctitle, docdate, coverline, coverline, docauthor, coverpage, approverline, docapprover, signaturepage, synopsis, references, appendix, pmxfigure, pmxtable, pmxtextable, pmxpdf, pmxlisting, pmxinclude, pmxinput, pmxtxt, SweaveInput, SweaveOpts, perlnewcommand, add, newcommand, newline, Sexpr, pmxtexfigure, setatomsep, chemfig, color, schemestart, arrow, schemestop, Cref, cpageref, Cpageref, nref, glspl, Glspl, Gls, newglossaryentry, dfrac, itemlist, qapage, function, text, convimg, pmxfigtable, pmx, pmxfont, pmxtight, pmxtop, pmxbottom, pmxleft, pmxright, pmxhead, pmxfoot, rout}
 }
 \lstdefinelanguage{Monolix}{morekeywords={LONGITUDINAL, DESCRIPTION, PK, EQUATION, EQUATION, OUTPUT, ddt}, comment=[l];}[keywords, comments, strings]
 \lstdefinelanguage{Nonmem}{alsoletter={...}, morekeywords={\$PROBLEM, \$INPUT, \$DATA, \$SUBROUTINES, \$PK, \$MODEL, \$DES, \$THETA, \$OMEGA, \$SIGMA, \$ERROR, \$COV, \$TABLE, \$ESTIMATION, \$COVARIANCE, \$EST, \$COV, \$SUBR, \$ERR, BLOCK, COMP, THETA, ETA, ERR, EPS, IF, THEN, ELSE, ENDIF}, comment=[l];, morecomment=[l]..., morestring=[m]'}[keywords, comments, strings]
@@ -989,13 +1144,12 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\pmxlisting}[5]{
 
 \renewcommand{\dootherlang}{0}
-\phantom{X}
+\phantom{X}\vspace{-1.1\baselineskip}
 \checkartifact{#1}
 \renewcommand{\mypmxcaption}{#4}
 \fixglscaption{\mypmxcaption}
-\listingfont
 \ifx\fname\empty
-\printtmplisting{#1}
+{\listingfont\printtmplisting{#1}}
 \lstinputlisting[numbers={none},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}
 \else
 \printlstlisting{\fname}
@@ -1015,12 +1169,12 @@ ITEM \newunderscorename{} NOT FOUND%
 }[\renewcommand{\dootherlang}{1}]%
 \ifnum\dootherlang=1 \lstinputlisting[language={#2},caption={\mypmxcaption},label={#3},aboveskip={0\baselineskip},belowskip={1\baselineskip},numbers=left,frame=none,basicstyle={\scriptsize\ttfamily}]{file.tmp.txt}\fi
 \fi
-\footnotesize
+{\descfont
 \vspace{-1.2\baselineskip}
 \ifitemid{}\itemid{#1}.\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\xspace#5}
-\normalsize
-\renewcommand{\tablefont}{\footnotesize}
-\renewcommand{\listingfont}{\scriptsize}
+}
+\renewcommand{\tablefont}{\tabledeffont}
+\renewcommand{\listingfont}{\listingdeffont}
 \renewcommand{\mypmxcaption}{}
 
 }
@@ -1041,7 +1195,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\pdfmark}{
 \thispagestyle{empty}
 \begin{tikzpicture}[remember picture,overlay]
-    \node[rotate = 0, align=\xta, anchor=\xal] at ([xshift=\xs+0.5\PmxLeft-0.5\PmxRight, yshift=0.73cm+\PmxBottom-\PmxBottomBase-\PmxFoot+\PmxFootBase]current page.south) {\footnotesize{\textbf{Main Page \thepage~of~\pageref*{LastPage}}}};
+    \node[rotate = 0, align=\xta, anchor=\xal] at ([xshift=\xs+0.5\PmxLeft-0.5\PmxRight, yshift=0.8cm+0.73cm+\PmxBottom-\PmxBottomBase-\PmxFoot+\PmxFootBase]current page.south) {\footnotesize{\textbf{Main Page \thepage~of~\pageref*{LastPage}}}};
 \end{tikzpicture}
 \ifwatermark
 \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
@@ -1052,7 +1206,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \newcommand{\pdflmark}{
 \thispagestyle{empty}
 \begin{tikzpicture}[remember picture,overlay]
-    \node[rotate = 90, align=\xta, anchor=\xal] at ([xshift=-0.73cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=\xsl+0.5\PmxLeft-0.5\PmxRight]current page.east) {\footnotesize{\textbf{Main Page \thepage~of~\pageref*{LastPage}}}};
+    \node[rotate = 90, align=\xta, anchor=\xal] at ([xshift=-0.8cm-0.73cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=\xsl+0.5\PmxLeft-0.5\PmxRight]current page.east) {\footnotesize{\textbf{Main Page \thepage~of~\pageref*{LastPage}}}};
 \end{tikzpicture}
 \ifwatermark
 \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
@@ -1069,14 +1223,14 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\pdfmakebookmark}{}
 \renewcommand{\pdfmakecontents}{}
 \IfStrEqCase{#3}{
-{l}{\renewcommand{\xs}{ \ifletterpaper -8.12cm\fi \ifisopaper -7.77cm\fi }\renewcommand{\xta}{left}\renewcommand{\xal}{west}}
+{l}{\renewcommand{\xs}{ \ifletterpaper -8.12cm \else -7.77cm \fi }\renewcommand{\xta}{left}\renewcommand{\xal}{west}}
 {c}{\renewcommand{\xs}{0.00cm}\renewcommand{\xta}{center}\renewcommand{\xal}{center}}
-{r}{\renewcommand{\xs}{ \ifletterpaper 8.12cm\fi \ifisopaper 7.77cm\fi }\renewcommand{\xta}{right}\renewcommand{\xal}{east}}
+{r}{\renewcommand{\xs}{ \ifletterpaper 8.12cm \else 7.77cm \fi }\renewcommand{\xta}{right}\renewcommand{\xal}{east}}
 }
 \IfStrEqCase{#3}{
-{l}{\renewcommand{\xsl}{ \ifletterpaper -11.27cm\fi \ifisopaper -12.14cm\fi }\renewcommand{\xta}{left}\renewcommand{\xal}{west}}
+{l}{\renewcommand{\xsl}{ \ifletterpaper -11.27cm \else -12.14cm \fi }\renewcommand{\xta}{left}\renewcommand{\xal}{west}}
 {c}{\renewcommand{\xsl}{0.00cm}\renewcommand{\xta}{center}\renewcommand{\xal}{center}}
-{r}{\renewcommand{\xsl}{ \ifletterpaper 11.27cm\fi \ifisopaper 12.14cm\fi }\renewcommand{\xta}{right}\renewcommand{\xal}{east}}
+{r}{\renewcommand{\xsl}{ \ifletterpaper 11.27cm \else 12.14cm \fi }\renewcommand{\xta}{right}\renewcommand{\xal}{east}}
 }
 \renewcommand{\newunderscorename}{}
 \fixunderscore{#2}
@@ -1085,6 +1239,8 @@ ITEM \newunderscorename{} NOT FOUND%
 \ifx\fname\empty
 ITEM \newunderscorename{} NOT FOUND
 \else
+
+\copytmppdffile{\fname}
 
 %%% Use Pax (Perl script) to extract hyperlinks from external PDF and custom Perl script to extract PDF bookmarks (side pane)
 \fixpax{\fbase}
@@ -1135,7 +1291,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \titlespacing{\paragraph}{\parindent}{*0}{*-1}
 \titlespacing{\subparagraph}{0pt}{*0}{*-1}
 \fi
-\titleformat{\section}{\normalsize\bfseries}{\thesection.}{4pt}{#1}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{4pt}{\MakeUppercase{#1}}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{4pt}{#1}
 \titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{4pt}{#1}
 \titleformat{\paragraph}{\normalsize\bfseries}{\theparagraph.}{4pt}{#1}
@@ -1164,6 +1320,8 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand{\labelitemiii}{\tiny{$\bullet$}}
 \renewcommand{\cftdotsep}{0.7}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\newcommand{\listappendixname}{LIST OF APPENDICES}
+\newlistof{appendix}{loa}{LIST OF APPENDICES}
 \crefname{appsec}{Appendix}{Appendices}
 \crefname{appsubsec}{Appendix}{Appendices}
 \crefname{appsubsubsec}{Appendix}{Appendices}
@@ -1194,7 +1352,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{section}%
       \ifx\@pptempa\@pptempb
-\oldacl@pp{##1}{##2}{\appendixname\space ##3}%
+\oldacl@pp{loa}{##2}{\appendixname\space ##3}%
       \else
         \oldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1208,7 +1366,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subsection}%
       \ifx\@pptempa\@pptempb
-\ooldacl@pp{##1}{##2}{\appendixname\space ##3}%
+% \ooldacl@pp{loa}{##2}{\appendixname\space ##3}%
       \else
         \ooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1222,7 +1380,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subsubsection}%
       \ifx\@pptempa\@pptempb
-\oooldacl@pp{##1}{##2}{\appendixname\space ##3}%
+% \oooldacl@pp{loa}{##2}{\appendixname\space ##3}%
       \else
         \oooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1236,7 +1394,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{paragraph}%
       \ifx\@pptempa\@pptempb
-\ooooldacl@pp{##1}{##2}{\appendixname\space ##3}%
+% \ooooldacl@pp{loa}{##2}{\appendixname\space ##3}%
       \else
         \ooooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1250,7 +1408,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subparagraph}%
       \ifx\@pptempa\@pptempb
-\oooooldacl@pp{##1}{##2}{\appendixname\space ##3}%
+% \oooooldacl@pp{loa}{##2}{\appendixname\space ##3}%
       \else
         \oooooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1258,11 +1416,11 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
       \oooooldacl@pp{##1}{##2}{##3}%
     \fi}
 
-\titleformat{\section}{\normalsize\bfseries}{\appendixname~\thesection.}{4pt}{##1}
-\titleformat{\subsection}{\normalsize\bfseries}{\appendixname~\thesubsection.}{4pt}{##1}
-\titleformat{\subsubsection}{\normalsize\bfseries}{\appendixname~\thesubsubsection.}{4pt}{##1}
-\titleformat{\paragraph}{\normalsize\bfseries}{\appendixname~\theparagraph.}{4pt}{##1}
-\titleformat{\subparagraph}{\normalsize\bfseries}{\appendixname~\thesubparagraph.}{4pt}{##1}
+\titleformat{\section}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thenumberappendix}{}}\bookmark[level=1,dest=app\thenumberappendix]{\appendixname~\thenumberappendix. ##1}\appendixname~\thesection.}{4pt}{##1}
+\titleformat{\subsection}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thesubsection}{}}\bookmark[level=2,dest=app\thesubsection]{A\thesubsection. ##1}A\thesubsection.}{4pt}{##1}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thesubsubsection}{}}\bookmark[level=2,dest=app\thesubsubsection]{A\thesubsubsection. ##1}A\thesubsubsection.}{4pt}{##1}
+\titleformat{\paragraph}{\normalsize\bfseries}{A\theparagraph.}{4pt}{##1}
+\titleformat{\subparagraph}{\normalsize\bfseries}{A\thesubparagraph.}{4pt}{##1}
 \counterwithin{equation}{section}
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
@@ -1271,10 +1429,10 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand\thefigure{A\arabic{section}.\arabic{figure}}
 \renewcommand\thetable{A\arabic{section}.\arabic{table}}
 \renewcommand\thelstlisting{A\arabic{section}.\arabic{lstlisting}}
+\renewcommand{\citelocation}{A\arabic{section}.}
 
 \newtotcounter{numberappendix}
-\hypertarget{app}{}
-\ifnum\totvalue{numberappendix}>1
+\ifnum\totvalue{numberappendix}>2
 \bookmark[level=0,dest=app]{APPENDICES}
 \fi
 
@@ -1284,6 +1442,8 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand{\setthesubsection}{\arabic{subsection}}
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\theHsection}{\Alph{section}}
+\def\bibsection{\subsection{References}\csname biblst@rthook\endcsname\par}
+\newcounter{appcitenum}\setcounter{appcitenum}{0}
 
 \crefalias{section}{appsec}
 \crefalias{subsection}{appsubsec}
@@ -1291,7 +1451,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \crefalias{paragraph}{apppar}
 \crefalias{subparagraph}{appsubpar}
 \let\stdsection\section
-\renewcommand\section{\stepcounter{numberappendix}\clearpage\stdsection}
+\renewcommand\section{\ifnum\thenumberappendix>0\ifnum\theappcitenum>0\fixmultibib{\RefFile}{XA\alph{numberappendix}}\csname bibliographyXA\alph{numberappendix}\endcsname{XA\alph{numberappendix}.bib}\fi\fi\setcounter{appcitenum}{0}\stepcounter{numberappendix}\expandafter\let\csname citen\expandafter\endcsname\csname citeXA\alph{numberappendix}\endcsname\let\oriciten\citen\renewcommand\citen{\stepcounter{appcitenum}\oriciten}\expandafter\let\csname citea\expandafter\endcsname\csname citetXA\alph{numberappendix}\endcsname\let\oricitea\citea\renewcommand\citea{\stepcounter{appcitenum}\oricitea}\expandafter\let\csname Citea\expandafter\endcsname\csname CitetXA\alph{numberappendix}\endcsname\let\oriCitet\Citet\renewcommand\Citet{\stepcounter{appcitenum}\oriCitet}\expandafter\let\csname citey\expandafter\endcsname\csname citeyearXA\alph{numberappendix}\endcsname\let\oricitey\citey\renewcommand\citey{\stepcounter{appcitenum}\oricitey}\clearpage\glsresetall\ifnum\thenumberappendix=1\hypertarget{app}{}\fi\stdsection}
 }
 \makeatother
 \else
@@ -1303,17 +1463,17 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 % \perlnewcommand{\addsynsec}[3]{
 \newcommand{\synsecs}{
 \ifsynonly
-\titleformat{name = \section, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{1}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{2}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subsubsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{3}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \paragraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{4}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subparagraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{5}{##1}\normalsize\bfseries}{}{0pt}{##1}
+\titleformat{name = \section, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{1}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{2}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subsubsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{3}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \paragraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{4}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subparagraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{5}{##1}\secheadfont\bfseries}{}{0pt}{##1}
 \else
-\titleformat{name = \section, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{2}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{3}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subsubsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{4}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \paragraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{5}{##1}\normalsize\bfseries}{}{0pt}{##1}
-\titleformat{name = \subparagraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{6}{##1}\normalsize\bfseries}{}{0pt}{##1}
+\titleformat{name = \section, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{2}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{3}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subsubsection, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{4}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \paragraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{5}{##1}\secheadfont\bfseries}{}{0pt}{##1}
+\titleformat{name = \subparagraph, numberless}{\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{6}{##1}\secheadfont\bfseries}{}{0pt}{##1}
 \fi
 }
 \newcommand{\normsecs}{
@@ -1323,8 +1483,6 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \titleformat{name = \paragraph, numberless}{\normalsize\bfseries}{}{0pt}{##1}
 \titleformat{name = \subparagraph, numberless}{\normalsize\bfseries}{}{0pt}{##1}
 }
-
-\newcommand{\synopsis}[1]{\newcommand{\insertsynopsis}{#1}}
 
 \newcommand\mainbody{
 \setcounter{section}{0}
@@ -1349,6 +1507,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand{\contentsname}{\normalsize{\textbf{\hfill TABLE OF CONTENTS \hfill}}}
 \renewcommand{\listfigurename}{\selectfont \normalsize {\centerline{LIST OF FIGURES}}}
 \renewcommand{\listtablename}{\selectfont \normalsize {\centerline{LIST OF TABLES}}}
+\renewcommand{\listappendixname}{\selectfont \normalsize {\centerline{LIST OF APPENDICES}}}
 }
 \newlength{\cuslen}
 \cftsetindents{figure}{0em}{0em}
@@ -1626,6 +1785,14 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
   \@starttoc{lof}%
  \fi
 }
+\renewcommand\listofappendix{%
+  \iflof
+    \section*{\listappendixname}%
+ \fi
+ \iflof
+  \@starttoc{loa}%
+ \fi
+}
 \def\@starttoc#1{%
   \begingroup
     \makeatletter
@@ -1645,10 +1812,13 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \newcommand{\doctitle}[1]{\newcommand{\DocTitle}{#1\xspace}}
 \newcommand{\docqcdate}[1]{\newcommand{\DocQCDate}{#1\xspace}}
 \newcommand{\doctype}[1]{\newcommand{\DocType}{#1\xspace}}
-\newcommand{\docpdfname}[1]{\edef\DocPDFName{#1\ifsynonly-synopsis\fi}}
+\newcommand{\docstate}[1]{\newcommand{\DocState}{#1\xspace}}
+\newcommand{\docpdfname}[1]{\ifsynonly\def\DocPDFName{#1-synopsis}\else\def\DocPDFName{#1}\fi}
 \newcommand{\logo}[2][scale=1]{\newcommand{\Logo}{\includegraphics[#1]{#2}}}
 \newcommand{\refstyle}[1]{\checkfile{#1}{RefStyle}}
 \newcommand{\reffile}[1]{\checkfile{#1}{RefFile}\fixbib{\RefFile}\edef\RefFileOrig{#1}}
+\newcommand{\lonfile}[1]{\newcommand{\LonFile}{#1}\checkartifact{\LonFile}\newcounter{lonitemid}\setcounter{lonitemid}{\theitemnumber}\ifx\fname\empty\PackageError{PharmTeX}{\@backslashchar lonfile not found, but is needed for \@backslashchar rout to work.}{}\else\loadlistofnumbers{\LonFile}\fi}
+\newcommand{\synopsis}[1]{\newcommand{\insertsynopsis}{#1}}
 \newcommand{\signaturepage}[2][1]{\newcommand{\SignaturePageNo}{#1}\newcommand{\SignaturePage}{#2}}
 \newcommand{\coverpage}[2][1]{\newcommand{\CoverPageNo}{#1}\newcommand{\CoverPage}{#2}}
 \newcommand{\qapage}[2][1]{\newcommand{\QAPageNo}{#1}\newcommand{\QAPage}{#2}}
@@ -1778,100 +1948,54 @@ Date Issued: & \DocDate \\ \hline
 \newcommand{\QaApprover}{}
 \newcommand{\qaapprover}[1]{\expandafter\def\csname QaApprover\alph{nqaapprover}\endcsname{#1}\addtocounter{nqaapprover}{1}}
 
-% Portrait pages
-\fancypagestyle{regularstyle}{
-  \fancyhf{}
-  \fancyhead{}
-  \renewcommand{\headrulewidth}{0pt}
-  \renewcommand{\footrulewidth}{0pt}
-  \fancyheadoffset[L]{0cm}
-  \fancyheadoffset[R]{0cm}                 
-  \fancyfootoffset[L,R]{0cm}
-  \fancyhead[L]{\ifdefined\HeaderText\footnotesize{\HeaderText}\fi  
-}
-   \fancyfoot[C]{    
- \footnotesize{\ifdefined\FooterText\FooterText\else\quad\fi \\ Page \thepage~of~\pageref*{LastPage}}
- \ifwatermark
- \begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
- 	\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};
- \end{tikzpicture}
- \fi
- }
-   \fancyhead[R]{}
-  \fancyfoot[L]{}
-   \fancyfoot[R]{}
-}
-
-% Landscape pages
-\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}
-\fancypagestyle{lscape}{
-\renewcommand{\footrulewidth}{0pt}
-\fancyhf{}
-\fancyfoot[C]{
-\begin{tikzpicture}[remember picture,overlay]
-    \node[rotate = 90] at ([xshift=-1.6cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=0.5\PmxLeft-0.5\PmxRight]current page.east) {\ifdefined\FooterText\footnotesize{\FooterText}\fi};
-    \node[rotate = 90] at ([xshift=-1.15cm-\PmxBottom+\PmxBottomBase+\PmxFoot-\PmxFootBase, yshift=0.5\PmxLeft-0.5\PmxRight]current page.east) {\footnotesize{Page \thepage~of~\pageref*{LastPage}}};
-    \node[rotate = 90, text width=20cm] at ([xshift=1.65cm+\PmxTop-\PmxTopBase-\PmxHead+\PmxHeadBase,yshift=13.18cm+\PmxLeft-\PmxLeftBase]current page.south west) {\ifdefined\HeaderText\footnotesize{\HeaderText\\}\fi};
-\end{tikzpicture}
-\ifwatermark
-\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]
-	\node[rotate = 135] at (current page.center) {\Huge{\Watermark}};
-\end{tikzpicture}
-\fi
- }
-}
-\AtBeginEnvironment{landscape}{\newgeometry{top = \PmxRight, bottom = \PmxLeft, left = \PmxTop, right = \PmxBottom, headheight = 1.75 cm, headsep = \PmxHead, footskip = \PmxFoot}\pagestyle{lscape}\setlength{\maxwidth}{\textheight}\setlength{\maxheight}{\textwidth}}
-
-%\AtEndEnvironment{landscape}{}
-\AfterEndEnvironment{landscape}{\restoregeometry\setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}}
-
-% Choose regular style as default
-\pagestyle{regularstyle}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Settings for the glossary (used to be here)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% Counter for bibliography to determine if any citations are used
-\newtotcounter{citenum}
-\def\oldcite{}
-\let\oldcite=\bibcite
-\def\bibcite{\stepcounter{citenum}\oldcite}
+%\newtotcounter{citenum}
+%\let\oldcite\bibcite
+%\def\bibcite{\stepcounter{citenum}\oldcite}
 
-%%% Disable empty bibliography warning
-\let\myBib\thebibliography
-\let\endmyBib\endthebibliography
-\renewcommand\thebibliography[1]{\ifx\relax#1\relax\else\myBib{#1}\fi}
+% %%% Disable empty bibliography warning
+% \let\myBib\thebibliography
+% \let\endmyBib\endthebibliography
+% \renewcommand\thebibliography[1]{\ifx\relax#1\relax\else\myBib{#1}\fi}
 
 %%% Bibliography setup
+\newcommand{\doprintbibliography}{1}
 \newcommand{\references}{
+\checkemptybib{\jobname}
+\ifnum\doprintbibliography=1
 \begingroup
 
-\ifnum\thecitenum>0
+\setbiblabelwidth{100}
+%\ifnum\thecitenum>0
 \clearpage
 \ifsynonly
 \def\bibsection{\bookmark[level=1,dest=synref]{REFERENCES}\hypertarget{synref}{}\section*{REFERENCES}\csname biblst@rthook\endcsname\par}
 \else
 \def\bibsection{\section{REFERENCES}\csname biblst@rthook\endcsname\par}
 \fi
-\else
-\def\bibsection{}
-\fi
+%\else
+%\def\bibsection{}
+%\fi
 
 \ifdefined\RefStyle
-\IfFileExists{\RefStyle.bst}{\bibliographystyle{\RefStyle}}{\bibliographystyle{unsrt}}
+\bibliographystyle{\RefStyle}
 \else
 \bibliographystyle{unsrt}
 \fi
 
 \ifdefined\RefFile
-\ifnum\thecitenum>0
+%\ifnum\thecitenum>0
 \checkartifact{\RefFileOrig}
 \hypertarget{itemnumber\theitemnumber}{}
-\fi
+%\fi
 \ifx\fname\empty
 ITEM \RefFile.bib NOT FOUND.
-\savefile{pmxref-tmpfixfile.bib}{}\bibliography{pmxref-tmpfixfile.bib}
+\savefile{pmxref-tmpfixfile.bib}{}
+\bibliography{pmxref-tmpfixfile.bib}
 \else
 \bibliography{\RefFile}
 \fi
@@ -1882,6 +2006,33 @@ ITEM \RefFile.bib NOT FOUND.
 \fi
 
 \endgroup
+%\else
+%\def\bibsection{}
+\fi
+}
+
+%%% Synopsis references
+\newcommand{\synrefname}{References}
+\newcounter{synrefcnt}\setcounter{synrefcnt}{0}
+\newcommand{\synreferences}{
+
+\ifnum\thesynrefcnt>0
+\begingroup
+\fixmultibib{\RefFile}{XS}
+\setbiblabelwidth{10}
+\stepcounter{mysyncnt}\hypertarget{mysynhyper\roman{mysyncnt}}{}\addsynsec{\roman{mysyncnt}}{2}{\synrefname}
+\def\bibsection{\section*{\ifsynopsisfootfont\footnotesize\fi{}\synrefname}\csname biblst@rthook\endcsname\par}
+
+\ifdefined\RefStyle
+\bibliographystyleXS{\RefStyle}
+\else
+\bibliographystyleXS{unsrt}
+\fi
+\bibliographyXS{XS.bib}
+
+\endgroup
+\fi
+
 }
 
 %%% Hyperlink dotted line and extend it all the way to page number in ToC, LoT, and LoF.
@@ -1905,6 +2056,7 @@ ITEM \RefFile.bib NOT FOUND.
 \newcommand{\qabookmark}{}
 \newcommand{\synbookmark}{}
 \newcommand{\tocbookmark}{}
+\newcommand{\loabookmark}{}
 \newcommand{\glsbookmark}{}
 
 %%% Load elements of the R knitr package. Do not load the package itself in latex, since some elements cause issues with the setup of this template file.
@@ -1944,6 +2096,65 @@ ITEM \RefFile.bib NOT FOUND.
 %\usepackage{alltt}
 %%% KNITR SETUP END %%%
 
+%%% Load elements of the R Sweave package. Do not load the package itself in latex, since some elements cause issues with the setup of this template file.
+%%% SWEAVE SETUP START %%%
+\RequirePackage{ifthen}
+\newboolean{Sweave@gin}
+\setboolean{Sweave@gin}{true}
+\newboolean{Sweave@ae}
+\setboolean{Sweave@ae}{true}
+\newboolean{Sweave@inconsolata}
+\setboolean{Sweave@inconsolata}{false}
+
+\DeclareOption{nogin}{\setboolean{Sweave@gin}{false}}
+\DeclareOption{noae}{\setboolean{Sweave@ae}{false}}
+\DeclareOption{inconsolata}{\setboolean{Sweave@ae}{false}\setboolean{Sweave@inconsolata}{true}}
+\ProcessOptions
+
+\RequirePackage{graphicx,fancyvrb,textcomp}
+%% inspired by an earlier version of upquote.sty
+% \begingroup
+% \catcode`'=\active \catcode``=\active
+% \g@addto@macro\@noligs{\let`\textasciigrave \let'\textquotesingle}
+% \endgroup
+
+% \ifthenelse{\boolean{Sweave@gin}}{\setkeys{Gin}{width=0.8\textwidth}}{}%
+\ifthenelse{\boolean{Sweave@ae}}{%
+  %\RequirePackage[T1]{fontenc}
+  %\RequirePackage{ae}
+}{}%
+% see comment in Rd.sty
+\ifthenelse{\boolean{Sweave@inconsolata}}{%
+ \IfFileExists{zi4.sty}{\usepackage[noupquote]{zi4}}{\usepackage{inconsolata}}}{}
+
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{}
+\DefineVerbatimEnvironment{Scode}{Verbatim}{fontshape=sl}
+
+\ifdefined\Schunk%
+  \message{\string Environment Schunk is already defined, stay with former definition}%
+\else
+  \newenvironment{Schunk}{}{}%
+\fi
+
+\newcommand{\Sconcordance}[1]{%
+  \ifx\pdfoutput\undefined%
+  \csname newcount\endcsname\pdfoutput\fi%
+  \ifcase\pdfoutput\special{#1}%
+  \else%
+   \begingroup%
+     \pdfcompresslevel=0%
+     \immediate\pdfobj stream{#1}%
+     \pdfcatalog{/SweaveConcordance \the\pdflastobj\space 0 R}%
+   \endgroup%
+  \fi}
+%%% SWEAVE SETUP END %%%
+
+%%% Add a couple of commands to handle Sweave docs without R
+\let\pmxinput\input
+\let\SweaveInput\input
+\newcommand{\SweaveOpts}[1]{}
+
 % Function for putting in a bookmark without a number, can be used on approval page
 \newcommand\blfootnote[1]{%
   \begingroup
@@ -1952,11 +2163,90 @@ ITEM \RefFile.bib NOT FOUND.
   \endgroup
 }
 
-%%% Below is code to be executed at \begin{document}
+\catcode`\*=11
+\makeatletter
+\let\oricite\cite
+
+% \let\citet\undefined
+\let\citep\undefined
+\let\citet*\undefined
+\let\citep*\undefined
+% \let\Citet\undefined
+\let\Citep\undefined
+\let\Citet*\undefined
+\let\Citep*\undefined
+\let\citealt\undefined
+\let\citealt*\undefined
+\let\citealp\undefined
+\let\citealp*\undefined
+\let\Citealt\undefined
+\let\Citealt*\undefined
+\let\Citealp\undefined
+\let\Citealp*\undefined
+\let\citenum\undefined
+\let\citetext\undefined
+\let\citeauthor\undefined
+\let\citeauthor*\undefined
+\let\Citeauthor\undefined
+\let\Citeauthor*\undefined
+% \let\citeyear\undefined
+\let\citeyearpar\undefined
+\let\defcitealias\undefined
+\let\citetalias\undefined
+\let\citepalias\undefined
+
+\let\citen\cite
+\let\citea\citet
+\let\Citea\Citet
+\let\citey\citeyear
+\let\oriciteyear\citeyear\RenewDocumentCommand{\citey}{O{} O{} m}{\begin{NoHyper}\oriciteyear[#1][#2]{#3}\end{NoHyper}}
+
+\let\oriciten\citen
+\let\oricitet\citea
+\let\oriCitet\Citea
+\let\oricitey\citey
+
+\makeatother
+\catcode`\*=12
+
+\newcommand{\numappendix}{12}
+
+%%% Below is code to be executed at \begin{document}.
+%%% Note, however, that code in the \AtBeginDocument hook is part of the preamble. Thus, restrictions limit what can be put there; in particular, no typesetting can be done.
+%%% A better hook is provided as \AfterEndPreamble of package etoolbox, which is executed at the very end of \begin{document}, after the \AtBeginDocument stuff.
 \AtBeginDocument{
+
+\newcommand{\tmpcitearg}{}
+
+\newcites{XS}{References}
+\let\oriciteXS\citeXS\RenewDocumentCommand{\citeXS}{O{} O{} m}{\stepcounter{synrefcnt}\StrSubstitute{#3}{,}{-XS,}[\tmpcitearg]\renewcommand{\citenumfont}[1]{S##1}\oriciteXS[#1][#2]{\tmpcitearg-XS}\renewcommand{\citenumfont}[1]{##1}}
+\let\oricitetXS\citetXS\RenewDocumentCommand{\citetXS}{O{} O{} m}{\stepcounter{synrefcnt}\StrSubstitute{#3}{,}{-XS,}[\tmpcitearg]\renewcommand{\citenumfont}[1]{S##1}\oricitetXS[#1][#2]{\tmpcitearg-XS}\renewcommand{\citenumfont}[1]{##1}}
+\let\oriCitetXS\CitetXS\RenewDocumentCommand{\CitetXS}{O{} O{} m}{\stepcounter{synrefcnt}\StrSubstitute{#3}{,}{-XS,}[\tmpcitearg]\renewcommand{\citenumfont}[1]{S##1}\oriCitetXS[#1][#2]{\tmpcitearg-XS}\renewcommand{\citenumfont}[1]{##1}}
+\let\oriciteyearXS\citeyearXS\RenewDocumentCommand{\citeyearXS}{O{} O{} m}{\stepcounter{synrefcnt}\StrSubstitute{#3}{,}{-XS,}[\tmpcitearg]\renewcommand{\citenumfont}[1]{S##1}\begin{NoHyper}\oriciteyearXS[#1][#2]{\tmpcitearg-XS}\end{NoHyper}\renewcommand{\citenumfont}[1]{##1}}
+
+\addmultibib{\numappendix}
+
+}
+
+\AfterEndPreamble{
+
+%%% Remove citations in list of *
+\fixlistof{\jobname}
+
+% Portrait mode
+\useportrait
+
+% Run input files via a perl filter to harmonize encoding to utf8
+\let\pmxinput\fixinputfile
+\let\SweaveInput\fixinputfile
+
+% Check for location of PharmTeX directory
+\checkpharmtex
 
 % Settings to disable hyperlinks in batch mode
 \urlstyle{same} % used to be tt (typewriter)
+\DeclareUrlCommand\path{\urlstyle{same}}
+\appto\UrlNoBreaks{\do\:} % \do\.\do\_
 \ifwebhyper\else
 \let\oldhref\href
 \let\oldurl\url
@@ -2061,7 +2351,7 @@ ITEM \QAPage{} NOT FOUND
 \clearpage
 \ifglossary
 \renewcommand*{\glsclearpage}{}
-\renewcommand{\glossaryname}{ABBREVIATION AND DEFINITION OF TERMS}
+\renewcommand{\glossaryname}{\abbreviationname}
 \hypertarget{gls}{}
 \label{glossary}
 \addtocontents{toc}{\protect\contentsline {section}{\glossaryname}{\protect\pageref{glossary}}{gls}}
@@ -2081,9 +2371,9 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 
 \ifglossarypostdot
-\printglossary[title=\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist]
+\printglossary[title=\protect\centering\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist]
 \else
-\printglossary[title=\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist,nopostdot]
+\printglossary[title=\protect\centering\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist,nopostdot]
 \fi
 \ifnum\themycnt>0
 \nonemptyglossary
@@ -2091,7 +2381,7 @@ ITEM \GlsFile.tex NOT FOUND.
 % \phantomsection
 % \addcontentsline{toc}{section}{\glossaryname}
 \vspace{-1.7\baselineskip}
-\section*{\glossaryname}\textbf{No abbreviations in document.}
+\section*{\centering\glossaryname}\textbf{No abbreviations in document.}
 \fi
 \clearpage
 \else
@@ -2111,6 +2401,10 @@ ITEM \GlsFile.tex NOT FOUND.
 \hypertarget{syn}{}
 \ifdefined\insertsynopsis\ifsynopsis
 \section*{SYNOPSIS}
+\ifsynopsisfootfont
+\renewcommand{\secheadfont}{\footnotesize}
+\footnotesize
+\fi
 \ifdefined\synopsisintro
 \synopsisintro
 \else
@@ -2134,12 +2428,31 @@ ITEM \GlsFile.tex NOT FOUND.
 \ifsynonly\else
 \renewcommand{\synbookmark}{\bookmark[level=1,dest=syn]{SYNOPSIS}}
 \fi
-\insertsynopsis
+\let\citen\citeXS
+\let\citea\citetXS
+\let\Citea\CitetXS
+\let\citey\citeyearXS
+% \let\cite\citeXS
+\renewcommand{\citelocation}{S}
+\IfFileExists{\insertsynopsis}{\pmxinput{\insertsynopsis}}{}
+\ifsynopsisfootfont
+\par
+\renewcommand{\secheadfont}{\normalsize}
+\fi
 \fi\fi
 \normsecs
+\synreferences
+\renewcommand{\citelocation}{}
+\let\citen\oriciten
+\let\citea\oricitet
+\let\Citea\oriCitet
+\let\citey\oricitey
+% \let\cite\oricite
+\normalsize
 \mainbody
 \ifdefined\insertsynopsis\ifsynopsis
 \clearpage
+\glsresetall
 \fi\fi
 
 % Insert Table of Contents
@@ -2154,6 +2467,16 @@ ITEM \GlsFile.tex NOT FOUND.
 \clearpage
 \fi
 
+% Insert List of Appendices
+\ifloa\ifnum\totvalue{numberappendix}>2
+\hypertarget{loa}{}
+\renewcommand{\loabookmark}{\bookmark[level=1,dest=loa]{LIST OF APPENDICES}}
+\phantomsection\label{loalabel}
+\addtocontents{toc}{\protect\contentsline{section}{LIST OF APPENDICES}{\protect\pageref{loalabel}}{loa}}
+\listofappendix
+\clearpage
+\fi\fi
+
 \ifloftfirst\else
 \coverbookmark
 \sigbookmark
@@ -2162,6 +2485,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
 \tocbookmark
+\loabookmark
 \fi
 
 % Insert List of Tables
@@ -2210,6 +2534,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
 \tocbookmark
+\loabookmark
 \fi
 \ifsynonly\else\glsbookmark\fi
 
@@ -2232,6 +2557,7 @@ ITEM \GlsFile.tex NOT FOUND.
 
 % True false variables as well as perl script printing
 \ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{\jobname}\fi
+\printdocpdfname{\DocPDF}
 \newcommand{\doprintsig}{0}
 \ifprintsigpage\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
@@ -2243,6 +2569,6 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 
 % Compile mathimg
-\savemathfiles{\jobname}
+\savemathfiles{\jobname}{\eqnimgscalewin}{\eqnimgscalelin}
 
 }

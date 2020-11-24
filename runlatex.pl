@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# PharmTeX perl script, part of the PharmTeX platform.
+# PharmTeX perl start script, part of the PharmTeX platform.
 # Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 # This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
@@ -18,30 +18,46 @@ use English;
 use FileHandle;
 my $OS = "$^O";
 my $oldpath = $ENV{PATH};
+my $copyfile; my $domove; my $i;
+unlink "donotrunperl";
 
 # Get filename, extension, and mode
 my $fname = $ARGV[0];
-(my $name = $fname) =~ s/\.[^.]*$//;
+my ($name) = $fname =~ /(.+)\.[^.]+?$/;
+my ($ext) = $fname =~ /\.([^.]+?)$/;
 my $mode = $ARGV[1];
 if ( not defined $mode ) { $mode = 'batch'; }
 my $modeorig = $mode;
 
 # Check for supported modes
-if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear jabref > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
+if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear jabref guide > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
 
-# Defined processes to kill at the end to avoid hanging processes
-my $kill = 'taskkill /f /im pdflatex.exe >nul 2>&1 & taskkill /f /im bibtex.exe >nul 2>&1 & taskkill /f /im makeglossaries.exe >nul 2>&1';
+# PharmTeX directory
+my $ldir = $ENV{LDIR};
+my $pharmtexdir = $ENV{PHARMTEXDIR};
+
+# Copy PharmTeX class files to texfs
+my $clsdir = $ENV{CLSDIR};
+my $bstdir = $ENV{BSTDIR};
+my @clsfiles = <"$pharmtexdir/*.cls">;
+my @styfiles = <"$pharmtexdir/*.sty">;
+my @bstfiles = <"$pharmtexdir/*.bst">;
+for $copyfile (@clsfiles) { copy("$copyfile", "$clsdir"); };
+for $copyfile (@styfiles) { copy("$copyfile", "$clsdir"); };
+for $copyfile (@bstfiles) { copy("$copyfile", "$bstdir"); };
 
 # Determine bundle version if used
-my $file; my $fh; my $str; my $bver = ''; my $bbver = ''; my $bnum; my $btru; my $brnd; my $oss;
+my $file; my $fh; my $str; my $bver = ''; my $bbver = ''; my $bnum; my $btru; my $brnd; my $oss; my $inifile; my $die;
 if ( "$OS" eq 'MSWin32' ) {
-	$file = "$ENV{'USERPROFILE'}\\pharmtex\\version.txt";
+	$file = "$ldir\\version.txt";
+	$inifile = "$pharmtexdir\\PharmTeX.ini";
 	$oss = 'Windows';
 } else {
-	$file = "$ENV{'HOME'}/pharmtex/version.txt";
+	$file = "$ldir/version.txt";
+	$inifile = "$pharmtexdir/PharmTeX.ini";
 	$oss = 'Linux';
 }
-if (( -e "$file" ) && ( ! grep $_ eq $mode, < clear jabref > )) {
+if (( -e "$file" ) && ( ! grep $_ eq $mode, < clear jabref guide > )) {
 	open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
 	($bver) = $str =~ /PharmTeX software collection v\. ([0-9]+\.[0-9]+) created/;
 	open(FILE, '>', 'bundleversion.txt'); print FILE "$bver"; close(FILE);
@@ -58,7 +74,7 @@ my $cp = 0; my $save = 0; my $synctex = 1; my $knit = 0; my $finalize = 0; my $m
 my $logfile = "$name";
 my $fmtfile = 'PharmTeX';
 if ( $OS eq 'MSWin32' ) {
-	$pdflatex = 'pdflatex -extra-mem-top=50000000 -extra-mem-bot=50000000';
+	$pdflatex = 'pdflatex'; #  -extra-mem-top=50000000 -extra-mem-bot=50000000
 } else {
 	$pdflatex = 'pdflatex';
 }
@@ -79,24 +95,51 @@ if ( $mode eq 'sub' ) {
 }
 if ( $mode eq 'eqn' ) { $sub = 1; }
 
+# Set $domove = 1 for non-batch runs to enable moving most of the auxiliary files to the directory "auxfiles"
+if ( grep $_ eq $mode, < batch eqn sub clear jabref guide > ) {
+	$domove = 0;
+} else {
+	$domove = 1;
+	if ( ! -d 'auxfiles' ) { mkdir('auxfiles'); }
+}
+
 # Determine document PDF name
-$file = "$name.tex"; open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
-my $docname; ($docname) = $str =~ /\\docpdfname\{([^\}]+)\}/;
-if ( not defined $docname ) { $docname = "$name.pdf" }
+$file = "$name.$ext"; open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
+my $docname;
+if ( -e "docpdfname.txt" ) {
+	open $fh, '<:raw', "docpdfname.txt"; $docname = do { local $/; <$fh> }; close $fh;
+} else {
+	$docname = "$name.pdf";
+}
 "a" =~ /a/; # unset $1 for fix_latin lines further down
+
+# Move files to document root from auxfiles
+if ( $domove==1 ) {
+	my @auxfiles = <auxfiles/*>; my @herefiles = @auxfiles; my $nfiles = scalar @auxfiles;
+	foreach (@herefiles) {$_ =~ s/auxfiles\///g;}
+	for ($i=0; $i < $nfiles; $i++) { copy("$auxfiles[$i]", "$herefiles[$i]"); unlink "$auxfiles[$i]"; }
+}
 
 # Files to delete in cleanup
 unlink ('dodel.txt');
-my @delfiles = (("$name.aux", "$name.bbl", "$name.blg", "$name.glg", "$name.glo", "$name.gls", "$name.ist", "$name.loa", "$name.lof", "$name.lot", "$name.toc", "$name.lol", "$name.synctex.gz" , "$name.synctex.gz(busy)", "$name.mw", "$name.dat", "$name.topl", "$name.frpl", "$name.tfpl", "$name.ffpl", "$name.dfpl", "$name.lgpl", "$name.pipe", "$name.xtr", "$name.upa", "$name.upb", "texput.log", ".Rnw", ".lgpl", "finalize.pl", "missingartifacts.txt", "missingfiles.txt", "tmpinputfile.txt", "tmpsigpage.pdf", "tmpsigpage.pax", "tmpcoverpage.pdf", "tmpcoverpage.pax", "tmpqapage.pdf", "tmpqapage.pax", "references.bib.bak", "delauxitems.pl", "batch.txt", "dotwice", "eqnimg.txt", "mathimg.txt", "nonemptyglossary.txt", "rpath.txt", "file.tmp.txt", "PharmTeX.log", "PharmTeX.fmt", "fixfiles", "noperl.txt", "noperlfirst.txt", "noperltex.sty"), <*.bib.sav>, <*-tmpfixfile.*>, <*.pax>, <*.pay>, <noperltex-*.tex>, <RA*_*>, <"$name-eqn*">, <"$name-math*">, <"$name-tex.*">);
+my @delfiles = ('"$name.apx"', '"$name.aux"', '"$name.bbl"', '"$name.blg"', '"$name.glg"', '"$name.glo"', '"$name.gls"', '"$name.ist"', '"$name.loa"', '"$name.lof"', '"$name.lot"', '"$name.toc"', '"$name.lol"', '"$name.synctex.gz"', '"$name.synctex.gz(busy)"', '"$name.synctex(busy)"', '"$name.mw"', '"$name.dat"', '"$name.topl"', '"$name.frpl"', '"$name.tfpl"', '"$name.ffpl"', '"$name.dfpl"', '"$name.lgpl"', '"$name.pipe"', '"$name.$ext.lgpl"', '"$name.$ext.topl"', '"$name.$ext.frpl"', '"$name.$ext.tfpl"', '"$name.$ext.ffpl"', '"$name.$ext.dfpl"', '"$name.$ext.lgpl"', '"$name.$ext.pipe"', '"$name.xtr"', '"$name.upa"', '"$name.upb"', '"$name-concordance.tex"', '"run-counter"', '"texput.log"', '".Rnw"', '".lgpl"', '"finalize.pl"', '"missingartifacts.txt"', '"missingfiles.txt"', '"tmpinputfile.txt"', '"tmpsigpage.pdf"', '"tmpsigpage.pax"', '"tmpcoverpage.pdf"', '"tmpcoverpage.pax"', '"tmpqapage.pdf"', '"tmpqapage.pax"', '"references.bib.bak"', '"delauxitems.pl"', '"batch.txt"', '"die.txt"', '"dotwice"', '"eqnimg.txt"', '"mathimg.txt"', '"nonemptyglossary.txt"', '"rpath.txt"', '"PharmTeX.log"', '"PharmTeX.fmt"', '"fixfiles"', '"donotrunperl"', '"noperl.txt"', '"noperlfirst.txt"', '"noperltex.sty"', '"$name.fb.aux"', '"$name.fb.bbl"', '"$name.fb.blg"');
+if (uc $ext eq uc "Rnw") { @delfiles = (@delfiles, '"$name.tex"'); }
+my @movefiles = ('"$name.apx"', '"$name.aux"', '"$name.bbl"', '"$name.blg"', '"$name.glg"', '"$name.glo"', '"$name.gls"', '"$name.ist"', '"$name.loa"', '"$name.lof"', '"$name.lot"', '"$name.toc"', '"$name.lol"', '"$name.mw"', '"$name.dat"', '"$name.topl"', '"$name.frpl"', '"$name.tfpl"', '"$name.ffpl"', '"$name.dfpl"', '"$name.lgpl"', '"$name.pipe"', '"$name.$ext.lgpl"', '"$name.$ext.topl"', '"$name.$ext.frpl"', '"$name.$ext.tfpl"', '"$name.$ext.ffpl"', '"$name.$ext.dfpl"', '"$name.$ext.lgpl"', '"$name.$ext.pipe"', '"$name.xtr"', '"$name.upa"', '"$name.upb"', '"texput.log"', '".Rnw"', '".lgpl"', '"finalize.pl"', '"missingartifacts.txt"', '"missingfiles.txt"', '"tmpinputfile.txt"', '"tmpsigpage.pdf"', '"tmpsigpage.pax"', '"tmpcoverpage.pdf"', '"tmpcoverpage.pax"', '"tmpqapage.pdf"', '"tmpqapage.pax"', '"references.bib.bak"', '"delauxitems.pl"', '"batch.txt"', '"dotwice"', '"eqnimg.txt"', '"mathimg.txt"', '"nonemptyglossary.txt"', '"rpath.txt"', '"PharmTeX.log"', '"PharmTeX.fmt"', '"fixfiles"', '"donotrunperl"', '"noperl.txt"', '"noperlfirst.txt"', '"noperltex.sty"', '"sigpage.pdf"', '"$logfile.out"', '"fixedoptions.txt"', '"useroptions.txt"', '"useroptionscomp.txt"', '"useroptions-eqnbackup.txt"', '"useroptionscomp-eqnbackup.txt"', '"useroptions-subbackup.txt"', '"useroptionscomp-subbackup.txt"', '"PharmTeX-eqnbackup.log"', '"PharmTeX-eqnbackup.fmt"', '"PharmTeX-subbackup.log"', '"PharmTeX-subbackup.fmt"', '"$name.fb.aux"', '"$name.fb.bbl"', '"$name.fb.blg"');
+my @wildfiles = ('<*.bib.sav>', '<*-tmpfixfile.*>', '<*.pax>', '<*.pay>', '<*.tmppax.pdf>', '<noperltex-*.tex>', '<RA*_*>', '<"$name-eqn*">', '<"$name-math*">', '<"$name-tex.*">', '<*.tmp.txt>', '<X*.aux>', '<X*.bbl>', '<X*.bib>', '<X*.blg>');
+my @movefilesreg; eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");");
+my @delfilesreg; eval("\@delfilesreg = ((".join(", ", @delfiles)."), ".join(", ", @wildfiles).");");
+my @delfilesall = (@delfiles, @wildfiles);
+my @movefilesall = (@movefiles, @wildfiles);
 
 # Clear mode to clean out auxiliary files
 if ( $mode eq 'clear' ) {
 	print STDERR "\nClearing auxiliary files\n\n";
 	do './delauxitems.pl';
-	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "sigpage.pdf", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name.log", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log", "$logfile.out", @delfiles); #rmtree('pmxinputfiles');
+	eval("\@delfilesreg = ((".join(", ", @delfiles)."), ".join(", ", @wildfiles).");");
+	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "sigpage.pdf", "$name.pdf", "$docname.pdf", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name.log", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log", "$logfile.out", "docpdfname.txt", "bundleversion.txt", @delfilesreg); #rmtree('pmxinputfiles');
+	rmtree('auxfiles');
 	open(FILENEW, '>:utf8', 'dodel.txt'); close(FILENEW);
 	$ENV{PATH} = "$oldpath";
-	system($kill);
 	exit;
 }
 
@@ -105,14 +148,24 @@ if ( $mode eq 'jabref' ) {
 	print STDERR "Starting JabReF - may take a few seconds to open\n\n";
 	my @bibfiles = (<*.bib>); my $bibstr = "@bibfiles";
 	$bibstr =~ s/[^\s]+\.tmpfixfile\.bib//g; $bibstr =~ s/ +/ /g; $bibstr =~ s/ $//g; $bibstr =~ s/^ //g;
+	if ( -e "$ldir/jabref/jabref.xml" ) { copy "$ldir/jabref/jabref.xml", "jabref.xml"; }
 	if ( $OS eq 'MSWin32' ) { system("start /b jabref $bibstr"); } else { system("jabref $bibstr &"); }
+	exit;
+}
+
+# Open user guide if requested
+if ( $mode eq 'guide' ) {
+	print STDERR "Opening cheat sheet - may take a few seconds\n\n";
+	if ( $OS eq 'MSWin32' ) { system("start /b \"\" \"$pharmtexdir\\cheatsheet.pdf\"") } else { system("evince $pharmtexdir/cheatsheet.pdf"); }
 	exit;
 }
 
 # Batch mode initialization
 if ( $mode eq 'batch' ) {
 	do './delauxitems.pl';
-	unlink ("sigpage.pdf", "$docname.pdf", "$name.pdf", "$name.log", "$logfile.out", @delfiles); #rmtree('pmxinputfiles');
+	eval("\@delfilesreg = ((".join(", ", @delfiles)."), ".join(", ", @wildfiles).");");
+	unlink ("sigpage.pdf", "$docname.pdf", "$name.pdf", "$name.log", "$logfile.out", "docpdfname.txt", @delfilesreg); #rmtree('pmxinputfiles');
+	rmtree('auxfiles');
 	if ( $sub == 0 ) { unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", "useroptions-eqnbackup.txt", "useroptionscomp-eqnbackup.txt", "useroptions-subbackup.txt", "useroptionscomp-subbackup.txt", "PharmTeX-eqnbackup.log", "PharmTeX-eqnbackup.fmt", "PharmTeX-subbackup.log", "PharmTeX-subbackup.fmt", "$docname-synopsis.pdf", "$docname-word.pdf", "$docname-synopsis-word.pdf", "$name-synopsis.log", "$name-word.log", "$name-synopsis-word.log"); }
 }
 
@@ -158,7 +211,7 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Word compatibility enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$word"; } else { $opt = "$opt,$word"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 1\n\n";
-					if ( $OS eq 'MSWin32' ) { system("executex \"$name\" sub"); } else { system("bash executex \"$name\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-word.log";
 					$opt = $opto;
 				}
@@ -166,7 +219,7 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Synopsis printing enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$syn"; } else { $opt = "$opt,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 1\n\n";
-					if ( $OS eq 'MSWin32' ) { system("executex \"$name\" sub"); } else { system("bash executex \"$name\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis.log";
 					$opt = $opto;
 				}
@@ -174,17 +227,17 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Word compatibility and synopsis printing enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$word"; } else { $opt = "$opt,$word"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("executex \"$name\" sub"); } else { system("bash executex \"$name\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-word.log";
 					$opt = $opto;
 					if ( "$opt" eq "" ) { $opt = "$syn"; } else { $opt = "$opt,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 2 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("executex \"$name\" sub"); } else { system("bash executex \"$name\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis.log";
 					$opt = $opto;
 					if ( "$opt" eq "" ) { $opt = "$word,$syn"; } else { $opt = "$opt,$word,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 3 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("executex \"$name\" sub"); } else { system("bash executex \"$name\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis-word.log";
 					$opt = $opto;
 				}
@@ -222,7 +275,7 @@ if ( $mode eq 'batch' ) {
 	open(FILE, '>', 'batch.txt'); close(FILE);
 	if ( $cp == 0 ) {
 		$nametex = "$name-tex";
-		copy "$name.tex", "$nametex.tex";
+		copy "$name.$ext", "$nametex.$ext";
 	}
 	$finalize = 1; $cp = 1; $synctex = 0;
 }
@@ -240,10 +293,10 @@ if ( $mode ne 'fmt' ) {
 	if ( $mkfile == 1 ) {
 		if (( $cp == 0 ) && ( $mode ne 'noperl' )) {
 			$namesave = "$name-save"; $save = 1;
-			if ( -e "$namesave.tex" ) { $txt = "LaTeX Warning: Old backup file $namesave.tex exists. Please check contents against $name.tex.\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; sleep 3; exit; system($kill); }
-			copy "$name.tex", "$namesave.tex";
+			if ( -e "$namesave.$ext" ) { $txt = "LaTeX Warning: Old backup file $namesave.$ext exists. Please check contents against $name.$ext.\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; sleep 3; if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }; exit; }
+			copy "$name.$ext", "$namesave.$ext";
 		}
-		open $fh, '>:utf8', "$nametex.tex"; print $fh "$str"; close($fh);
+		open $fh, '>:utf8', "$nametex.$ext"; print $fh "$str"; close($fh);
 	}
 }
 my ($rpath) = $str =~ / *%%* *rpath *= *(.+)\n/;
@@ -254,7 +307,7 @@ if ( defined $rpath ) {
 	$knit = 1; $cp = 1;	$synctex = 0;
 	if ( $nametex eq $name ) {
 		$nametex = "$name-tex";
-		copy "$name.tex", "$nametex.tex";
+		copy "$name.$ext", "$nametex.$ext";
 	}
 }
 
@@ -262,8 +315,8 @@ if ( defined $rpath ) {
 if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("useroptionscomp.txt", "useroptions.txt") != 0) || ( $mode eq 'fmt' )) {
 	if ( $mode ne 'eqn' ) {	$txt = "Compiling PharmTeX class\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
 	copy 'useroptions.txt', 'useroptionscomp.txt';
-	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" PharmTeX.ini");
-	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; system($kill); exit; }
+	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" $inifile");
+	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }; exit; }
 }
 
 # If knitr insert R settings and clean out knitr generated preamble
@@ -283,7 +336,7 @@ if ( $knit == 1 ) {
 # Check for and run noperl mode
 if ( $mode eq 'noperl' ) {
 	$txt = "\nDetaching PharmTeX from Perl\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
-	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex\"");
+	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode \"$nametex.$ext\"");
 	open(FILE, '>', 'noperlfirst.txt'); close(FILE);
 	open(FILE, '>', 'noperl.txt'); close(FILE);
 	$mode = 'fast';
@@ -297,7 +350,7 @@ if ( $mode eq 'fast' ) {
 	$txt = "\nFast compile started\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	$txt = "Compiling document using Perltex\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex.$ext\"");
 	unlink "fixfiles";
 	
 	# If artifacts and/or other input files are missing, print warning
@@ -307,7 +360,7 @@ if ( $mode eq 'fast' ) {
 # Check for and run eqn mode
 if ( $mode eq 'eqn' ) {
 	restore_streams();
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex.$ext\"");
 	redirect_streams();
 }
 
@@ -315,37 +368,51 @@ if ( $mode eq 'eqn' ) {
 if ( $mode eq 'err' ) {
 	restore_streams();
 	open(FILE, '>', 'fixfiles'); close(FILE);
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex.$ext\"");
 	unlink "fixfiles";
 	redirect_streams();
 }
 
 # Check for and run full mode
 if ( $mode eq 'full' ) {
+	# Start run sequence
+	unlink "$name.blg";
 	$txt = "Full compile started\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; system("");
 	$txt = "Compiling document using Perltex (step 1/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
 	unlink "fixfiles";
+	
 	## Download artifacts at this point
 	# if ( -e 'dotwice' ) {
-		# system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+		# system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
 		# ## Download artifacts at this point
 		# unlink 'dotwice';
 	# }
+	
+	# Stop run sequence if requested by PharmTeX
+	if (-e 'die.txt') {
+		$finalize = 0; $domove = 1; unlink 'die.txt';
+		last EXIT_IF;
+	}
+	
+	# Continue run sequence
+	open(FILE, '>', 'donotrunperl'); close(FILE);
 	$txt = "\nCompiling glossaries (step 2/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	if ( -e "$name.glo" ) { system("makeglossaries -q \"$name\"");}
 	$txt = "\nCompiling citations (step 3/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
-	system("bibtex \"$name\"");
+	system("bibtex \"$name\""); my @aux = <X*.aux>;	foreach (@aux) {$_ =~ s/(.+)\.[^.]+?$/$1/g; system("bibtex $_");}
 	$txt = "\nCompiling document using Perltex (step 4/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
 	$txt = "\nCompiling document using Perltex (step 5/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
 	$txt = "\nCompiling document using Perltex (step 6/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
-	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -synctex=$synctex \"$nametex\"");
+	system("$perltex -fmt=$fmtfile -jobname=\"$name\" -shell-escape -interaction=batchmode -synctex=$synctex \"$nametex.$ext\"");
+	unlink "donotrunperl";
 	
 	# If artifacts and/or other input files are missing, print warning
-	if (( -e 'missingartifacts.txt' ) || ( -e 'missingfiles.txt' )) { print STDERR "\nLaTeX Warning: There are missing input files. Check LIST OF ITEMS.\n\n"; } 
+	if (( -e 'missingartifacts.txt' ) || ( -e 'missingfiles.txt' )) { print STDERR "\nLaTeX Warning: There are missing input files. Check LIST OF ITEMS.\n\n"; }
+
 }
 
 # Rename all files back to original name
@@ -363,7 +430,10 @@ if ( $finalize == 1 ) {
 		unlink "batch.txt";
 	}
 	do './delauxitems.pl';
-	unlink (@delfiles, "fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt"); #rmtree('pmxinputfiles');
+	eval("\@delfilesreg = ((".join(", ", @delfiles)."), ".join(", ", @wildfiles).");");
+	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt", @delfilesreg);
+	unlink ("fixedoptions.txt", "useroptions.txt", "useroptionscomp.txt"); #rmtree('pmxinputfiles');
+	rmtree('auxfiles');
 }
 $txt = "\nDone. Please check $name.log for error messages and warnings.\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 
@@ -373,9 +443,9 @@ if ( $doword == 1 ) {
 }
 
 # Move original file back if needed
-if (( $save == 1 ) && ( -e "$namesave.tex" )) {
-	copy "$namesave.tex", "$name.tex";
-	unlink "$namesave.tex";
+if (( $save == 1 ) && ( -e "$namesave.$ext" )) {
+	copy "$namesave.$ext", "$name.$ext";
+	unlink "$namesave.$ext";
 }
 
 # Remove a few pointless warnings from log file and add output from PharmTeX run sequence
@@ -400,9 +470,16 @@ if (( grep $_ eq $mode, < batch full fast err syn fmt noperl > ) && ( -e "$name.
 	# Remove warning caused by bug in Linux perl v. 5.26.1
 	$out =~ s/Filehandle STDERR reopened as \$from_h only for input at [^\n]+\/File\/Copy\.pm line [0-9]+\.\n//g;
 	
-	# Ignore warning caused by hyperref
+	# Ignore some specific warnings
 	$log =~ s/pdfTeX warning \(ext4\):/Ignored by PharmTeX:/g;
 	$log =~ s/Package hyperref Warning:( Option `pdftex' has already been used)/Ignored by PharmTeX:$1/g;
+	$log =~ s/Package hyperref Warning:( Token not allowed in a PDF string)/Ignored by PharmTeX:$1/g;
+	$log =~ s/LaTeX Warning:( Writing file)/Ignored by PharmTeX:$1/g;
+	$log =~ s/pdfTeX warning \(dest\):( name\{itemnumber1\} has been referenced)/Ignored by PharmTeX:$1/g;
+	$log =~ s/Package typearea Warning:( Bad type area settings!\n\(typearea\) *The detected line width is about [0-9\.]+%\n\(typearea\) *larger than the heuristically estimated maximum)/Ignored by PharmTeX:$1/g;
+	$log =~ s/Package typearea Warning:( \\typearea used at group level 2.)/Ignored by PharmTeX:$1/g;
+	$log =~ s/Package geometry Warning:( Over-specification in `[hv]'-direction.)/Ignored by PharmTeX:$1/g;
+	$log =~ s/Package footnotehyper Warning:( \n The footnote environment will not be fully functional, sorry.)/Ignored by PharmTeX:$1/g;
 	
 	# Save log file
 	my ($ver)  = $log =~ /Package: PharmTeX [0-9]{4}\/[0-9]{2}\/[0-9]{2} v([0-9]+\.[0-9]+) PharmTeX Package/;
@@ -421,8 +498,8 @@ if ( $sub == 0 ) { unlink (("bundleversion.txt"), (<*-tmpfixfile.*>)) }
 $ENV{PATH} = "$oldpath";
 if ( -e "noperlfirst.txt" ) { unlink "noperlfirst.txt"; }
 
-# Kill hanging commands
-if ( grep $_ eq $mode, < batch full fast err fmt noperl clear > ) {	if ( "$OS" eq 'MSWin32' ) { system($kill); } }
+# Move files to auxfiles directory
+if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }
 
 ##############################################################
 sub restore_streams
