@@ -298,8 +298,13 @@ my $cuschar = '';
 
 my $mkfile = 0;
 open my $lines, '<:raw', "$file.bib"; my $str = do { local $/; <$lines> }; close $lines;
-$str =~ s/abstract *=[^\n]+\n\t* *//g;
-$str =~ s/keywords *=[^\n]+\n\t* *//g;
+if (($str =~ /[^\\] *\&/) | ($str =~ /[^\\] *\_/)) {
+	$mkfile = 1;
+	# $str =~ s/abstract *=[^\n]+\n\t* *//g;
+	# $str =~ s/keywords *=[^\n]+\n\t* *//g;
+	$str =~ s/\\\&/\&/g;
+	$str =~ s/\&/\\\&/g;
+}
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
 $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file.bib. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
@@ -937,14 +942,23 @@ use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
+my $str = $_[0];
 
-my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >;
-my $str = $_[0]; my $i = 0;
-$str =~ s/\|/ /g;
-$str =~ s/(\s{0,}&\s{0,})/ /g;
-$str =~ s/\[/$i++ >= 28 ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
-$str =~ s/]/}/g;
-return "$str";
+my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z A B C D E F G H I J K L M N O P Q R S T U V X Y Z >;
+my $i = 0; my $outstr = "";
+if ( $str =~ /^[\n ]*$/ ) {
+	for ($i = 0; $i < @letters; $i++) { $outstr = "$outstr\\edef\\optsubfig$letters[$i]\{scale\=1\}";	}
+} elsif ($str =~ /[\[\|]+/) {
+	$str =~ s/(\|)+/ /g;
+	$str =~ s/(\s{0,}&\s{0,})/ /g;
+	$str =~ s/\[/$i++ >= @letters ? "[": "\\edef\\optsubfig$letters[$i-1]\{"/eg;
+	$str =~ s/]/}/g;
+	$outstr = $str;
+} else {
+	for ($i = 0; $i < @letters; $i++) { $outstr = "$outstr\\edef\\optsubfig$letters[$i]\{$str\}"; }
+}
+
+return "$outstr";
 }
 \perlnewcommand{\makesubfig}[4]{
 use strict;
@@ -968,11 +982,11 @@ $str =~ s/\.\./myveryuniquedoubledot/g;
 $lbl =~ s/^ *//g;
 $lbl =~ s/ *\[ */\[/g;
 $lbl =~ s/ *\] /\]/g;
-my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z >; my $i = 0; my @lbllst; 
+my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z A B C D E F G H I J K L M N O P Q R S T U V X Y Z >; my $i = 0; my @lbllst; 
 if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	$lbl =~ /^ *([^\[]{1,}) *\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
 	@lbllst = ($lbl =~ /\[ *([^\[\]]{1,}) *\]/g);
-	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi} myveryuniquemarker$letters[$i-1]"/eg;
+	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
 	if ($figcapbelow == 1) {
 		$str =~ s/\|\|/\\pagebreak\\end{figure} \\clearpage \\begin{figure}[H] \\ContinuedFloat/g;
@@ -989,7 +1003,7 @@ if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	}
 }
 else {
-	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= 28 ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi} myveryuniquemarker$letters[$i-1]"/eg;
+	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
 	if ($figcapbelow == 1) {
 		$str =~ s/\|\|/\\pagebreak\\end{figure} \\clearpage \\begin{figure}[H] \\ContinuedFloat/g;
@@ -1557,108 +1571,87 @@ my @lines = split "\n", $str;
 @lines = @lines[ 1 .. $#lines ];
 my $nline = scalar @lines; my $ncol;
 
-my @names = ("") x $nline; my @nums = @names; my @paths = @names; my @vars = @names; my @times = @names;
+my @nums = ("") x $nline; my @paths = @nums; my @vars = @nums; my @times = @nums;
 
 for (my $i = 0; $i < $nline; $i++){
 	my @cells = split "\t", $lines[$i];
 	$ncol = scalar @cells;
-	$names[$i] = $cells[0];
-	$nums[$i] = $cells[1];
-	$paths[$i] = $cells[2];
-	$vars[$i] = $cells[3];
-	$times[$i] = $cells[4];
+	$nums[$i] = $cells[0];
+	$paths[$i] = $cells[1];
+	$vars[$i] = $cells[2];
+	$times[$i] = $cells[3];
 }
 
-my $name = join('¤', @names);
 my $num = join('¤', @nums);
 my $path = join('¤', @paths);
 my $var = join('¤', @vars);
 my $time = join('¤', @times);
 
 $path =~ s/\\/\//g;
-# $path =~ s/\\/\\textbackslash{}/g;
-# $path =~ s/\#/\\\#/g;
-# $path =~ s/\%/\\\%/g;
-# $path =~ s/\_/\\\_/g;
-# $path =~ s/\^/\\\^{}/g;
-# $path =~ s/\&/\\&/g;
-# $path =~ s/\{/\\\{/g;
-# $path =~ s/\}/\\\}/g;
-# $path =~ s/\$/\\\$/g;
-# $path =~ s/\~/\\string\~/g;
 
-return "\\newcommand{\\pmxlonallname}{$name}\\newcommand{\\pmxlonallnum}{$num}\\newcommand{\\pmxlonallpath}{$path}\\newcommand{\\pmxlonallvar}{$var}\\newcommand{\\pmxlonalltime}{$time}";
+return "\\newcommand{\\pmxlonallnum}{$num}\\newcommand{\\pmxlonallpath}{$path}\\newcommand{\\pmxlonallvar}{$var}\\newcommand{\\pmxlonalltime}{$time}";
 }
-\perlnewcommand{\loadlistofnumbersvalue}[7]{
+\perlnewcommand{\loadlistofnumbersvalue}[6]{
 use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 
-my $name = $_[0];
-my $num = $_[1];
-my $path = $_[2];
-my $var = $_[3];
-my $time = $_[4];
-my $namei = $_[5];
-my $cnt = $_[6];
+my $num = $_[0];
+my $path = $_[1];
+my $var = $_[2];
+my $time = $_[3];
+my $namei = $_[4];
+my $cnt = $_[5];
 
-my @names = split '¤', $name;
 my @nums = split '¤', $num;
 my @paths = split '¤', $path;
 my @vars = split '¤', $var;
 my @times = split '¤', $time;
 
 my $rout; my $idx;
-if ( grep( /^$namei$/, @names ) ) {
-	($idx) = grep { $names[$_] ~~ $namei } 0 .. $#names;
-	# $rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}$nums[$idx]\\iflon\\hyperlink{listofnumbersrow$cnt}{\\textsuperscript{\\detokenize{$vars[$idx]}}}\\fi\\makeatletter\\g\@addto\@macro\\pmxlonname{$names[$idx]¤}\\g\@addto\@macro\\pmxlonnum{$nums[$idx]¤}\\g\@addto\@macro\\pmxlonpath{$paths[$idx]¤}\\g\@addto\@macro\\pmxlonvar{$vars[$idx]¤}\\g\@addto\@macro\\pmxlontime{$times[$idx]¤}\\makeatother";
-	$rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}\\iflon\\hyperlink{listofnumbersrow$cnt}{$nums[$idx]}\\else $nums[$idx]\\fi\\makeatletter\\g\@addto\@macro\\pmxlonname{$names[$idx]¤}\\g\@addto\@macro\\pmxlonnum{$nums[$idx]¤}\\g\@addto\@macro\\pmxlonpath{$paths[$idx]¤}\\g\@addto\@macro\\pmxlonvar{$vars[$idx]¤}\\g\@addto\@macro\\pmxlontime{$times[$idx]¤}\\makeatother";
+if ( grep( /^$namei$/, @vars ) ) {
+	($idx) = grep { $vars[$_] ~~ $namei } 0 .. $#vars;
+	$rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}\\iflon\\hyperlink{listofnumbersrow$cnt}{$nums[$idx]}\\else $nums[$idx]\\fi\\makeatletter\\g\@addto\@macro\\pmxlonnum{$nums[$idx]¤}\\g\@addto\@macro\\pmxlonpath{$paths[$idx]¤}\\g\@addto\@macro\\pmxlonvar{$vars[$idx]¤}\\g\@addto\@macro\\pmxlontime{$times[$idx]¤}\\makeatother";
 } else {
-	# $rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}R OUTPUT MISSING\\iflon\\hyperlink{listofnumbersrow$cnt}{\\textsuperscript{\\detokenize{$vars[$idx]}}}\\fi\\makeatletter\\g\@addto\@macro\\pmxlonname{$names[$idx]¤}\\g\@addto\@macro\\pmxlonnum{MISSING¤}\\g\@addto\@macro\\pmxlonpath{MISSING¤}\\g\@addto\@macro\\pmxlonvar{MISSING¤}\\g\@addto\@macro\\pmxlontime{MISSING¤}\\makeatother";
-	$rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}\\iflon\\hyperlink{listofnumbersrow$cnt}{R OUTPUT MISSING}\\else R OUTPUT MISSING\\fi\\makeatletter\\g\@addto\@macro\\pmxlonname{$names[$idx]¤}\\g\@addto\@macro\\pmxlonnum{MISSING¤}\\g\@addto\@macro\\pmxlonpath{MISSING¤}\\g\@addto\@macro\\pmxlonvar{MISSING¤}\\g\@addto\@macro\\pmxlontime{MISSING¤}\\makeatother";
+	$rout = "\\label{listofnumberslabel$cnt}\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersvalue$cnt}{}}\\iflon\\hyperlink{listofnumbersrow$cnt}{R OUTPUT MISSING}\\else R OUTPUT MISSING\\fi\\makeatletter\\g\@addto\@macro\\pmxlonnum{MISSING¤}\\g\@addto\@macro\\pmxlonpath{MISSING¤}\\g\@addto\@macro\\pmxlonvar{MISSING¤}\\g\@addto\@macro\\pmxlontime{MISSING¤}\\makeatother";
 }
+
+
 
 return "$rout";
 }
-\perlnewcommand{\printlistofnumbers}[5]{
+\perlnewcommand{\printlistofnumbers}[4]{
 use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 
-my $name = $_[0];
-my $num = $_[1];
-my $path = $_[2];
-my $var = $_[3];
-my $time = $_[4];
+my $num = $_[0];
+my $path = $_[1];
+my $var = $_[2];
+my $time = $_[3];
 
-$name =~ s/¤$//g;
 $num =~ s/¤$//g;
 $path =~ s/¤$//g;
 $var =~ s/¤$//g;
 $time =~ s/¤$//g;
 
-# $path =~ s/\//\/\\allowbreak{}/g;
-
-my @names = split '¤', $name;
 my @nums = split '¤', $num;
 my @paths = split '¤', $path;
 my @vars = split '¤', $var;
 my @times = split '¤', $time;
 
-my $nrow = scalar @names; my @lines; my $i;
+my $nrow = scalar @nums; my @lines; my $i;
 for ($i = 0; $i < $nrow; $i++){
 	$lines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersrow$i}{}}\\hyperlink{listofnumbersvalue$i}{\\pageref*{listofnumberslabel$i}} & $nums[$i] & \\detokenize{$vars[$i]} & \\path{$paths[$i]} & $times[$i]";
-	# $lines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{listofnumbersrow$i}{}}\\detokenize{$names[$i]} & $nums[$i] & \\hyperlink{listofnumbersvalue$i}{\\pageref*{listofnumberslabel$i}} & \\path{$paths[$i]} & \\detokenize{$vars[$i]} & $times[$i]";
 }
 my $header = 'PAGE & VALUE & VARIABLE & SOURCE & UPDATE (GMT)';
-# my $header = 'KEY & VALUE & PAGE & SOURCE & VARIABLE & UPDATE (GMT)';
 my $body = join(" \\\\ ", @lines);
 
 my $retstr = "
 \\catcode`\\%=12 \\catcode`\\#=12
-\\begin{tabularx}{\\maxwidth}{\@{}l\@{\\mysp}L{0.2}\@{\\mysp}L{0.2}\@{\\mysp}L{0.6}\@{\\mysp}r\@{}}
+\\begin{tabularx}{\\maxwidth}{\@{}l\@{\\mysp}l\@{\\mysp}l\@{\\mysp}L{0.6}\@{\\mysp}r\@{}}
 	\\toprule $header \\\\\\toprule\\endfirsthead
 	\\toprule $header \\\\\\toprule\\endhead
 	\\endfoot\\bottomrule\\endlastfoot
@@ -1933,7 +1926,7 @@ return;
 \newcommand{\getpmxcolspec}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\copytmppdffile}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\loadlistofnumbers}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\loadlistofnumbersvalue}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
+\newcommand{\loadlistofnumbersvalue}[6]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\printlistofnumbers}[4]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\checkpharmtex}{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\printdocpdfname}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
