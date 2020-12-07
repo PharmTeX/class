@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2020/10/31}
-\def\pharmtexversion{2.0}
+\def\pharmtexdate{2020/12/07}
+\def\pharmtexversion{2.1}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -79,7 +79,13 @@
 \DeclareOption{noglossary}{\glossaryfalse\cglossarytrue}
 \DeclareOption{glossary}{\glossarytrue\cglossarytrue}
 
-%%% Option to synopsis
+%%% Option to reset glossary for each appendix
+\newif\ifappgls\appglstrue
+\newif\ifcappgls\cappglsfalse
+\DeclareOption{noappgls}{\appglsfalse\cappglstrue}
+\DeclareOption{appgls}{\appglstrue\cappglstrue}
+
+%%% Option to show synopsis
 \newif\ifsynopsis\synopsistrue
 \newif\ifcsynopsis\csynopsisfalse
 \DeclareOption{nosynopsis}{\synopsisfalse\csynopsistrue}
@@ -937,8 +943,7 @@ ITEM \newunderscorename{} NOT FOUND%
 %%% List of Numbers
 \newcommand{\numberlistname}{LIST OF NUMBERS}
 \newcounter{listofnumbersvalue}
-\newcommand{\rout}[1]{\ifdefined\LonFile\loadlistofnumbersvalue{\pmxlonallname}{\pmxlonallnum}{\pmxlonallpath}{\pmxlonallvar}{\pmxlonalltime}{\detokenize{#1}}{\thelistofnumbersvalue}\addtocounter{listofnumbersvalue}{1}\else\PackageError{PharmTeX}{\@backslashchar lonfile needs to be defined for \@backslashchar rout to work.}{}\fi}
-\newcommand{\pmxlonname}{}
+\newcommand{\rout}[1]{\ifdefined\LonFile\loadlistofnumbersvalue{\pmxlonallnum}{\pmxlonallpath}{\pmxlonallvar}{\pmxlonalltime}{\detokenize{#1}}{\thelistofnumbersvalue}\addtocounter{listofnumbersvalue}{1}\else\PackageError{PharmTeX}{\@backslashchar lonfile needs to be defined for \@backslashchar rout to work.}{}\fi}
 \newcommand{\pmxlonnum}{}
 \newcommand{\pmxlonpath}{}
 \newcommand{\pmxlonvar}{}
@@ -960,7 +965,7 @@ ITEM \newunderscorename{} NOT FOUND%
 {10.95}{\footnotesize}
 {12}{\scriptsize}
 }[]
-\printlistofnumbers{\pmxlonname}{\pmxlonnum}{\pmxlonpath}{\pmxlonvar}{\pmxlontime}
+\printlistofnumbers{\pmxlonnum}{\pmxlonpath}{\pmxlonvar}{\pmxlontime}
 \addtocounter{table}{-1}
 \normalsize
 
@@ -1451,7 +1456,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \crefalias{paragraph}{apppar}
 \crefalias{subparagraph}{appsubpar}
 \let\stdsection\section
-\renewcommand\section{\ifnum\thenumberappendix>0\ifnum\theappcitenum>0\fixmultibib{\RefFile}{XA\alph{numberappendix}}\csname bibliographyXA\alph{numberappendix}\endcsname{XA\alph{numberappendix}.bib}\fi\fi\setcounter{appcitenum}{0}\stepcounter{numberappendix}\expandafter\let\csname citen\expandafter\endcsname\csname citeXA\alph{numberappendix}\endcsname\let\oriciten\citen\renewcommand\citen{\stepcounter{appcitenum}\oriciten}\expandafter\let\csname citea\expandafter\endcsname\csname citetXA\alph{numberappendix}\endcsname\let\oricitea\citea\renewcommand\citea{\stepcounter{appcitenum}\oricitea}\expandafter\let\csname Citea\expandafter\endcsname\csname CitetXA\alph{numberappendix}\endcsname\let\oriCitet\Citet\renewcommand\Citet{\stepcounter{appcitenum}\oriCitet}\expandafter\let\csname citey\expandafter\endcsname\csname citeyearXA\alph{numberappendix}\endcsname\let\oricitey\citey\renewcommand\citey{\stepcounter{appcitenum}\oricitey}\clearpage\glsresetall\ifnum\thenumberappendix=1\hypertarget{app}{}\fi\stdsection}
+\renewcommand\section{\ifnum\thenumberappendix>0\ifnum\theappcitenum>0\fixmultibib{\RefFile}{XA\alph{numberappendix}}\csname bibliographyXA\alph{numberappendix}\endcsname{XA\alph{numberappendix}.bib}\fi\fi\setcounter{appcitenum}{0}\stepcounter{numberappendix}\expandafter\let\csname citen\expandafter\endcsname\csname citeXA\alph{numberappendix}\endcsname\let\oriciten\citen\renewcommand\citen{\stepcounter{appcitenum}\oriciten}\expandafter\let\csname citea\expandafter\endcsname\csname citetXA\alph{numberappendix}\endcsname\let\oricitea\citea\renewcommand\citea{\stepcounter{appcitenum}\oricitea}\expandafter\let\csname Citea\expandafter\endcsname\csname CitetXA\alph{numberappendix}\endcsname\let\oriCitet\Citet\renewcommand\Citet{\stepcounter{appcitenum}\oriCitet}\expandafter\let\csname citey\expandafter\endcsname\csname citeyearXA\alph{numberappendix}\endcsname\let\oricitey\citey\renewcommand\citey{\stepcounter{appcitenum}\oricitey}\clearpage\ifappgls\glsresetall\fi\ifnum\thenumberappendix=1\hypertarget{app}{}\fi\stdsection}
 }
 \makeatother
 \else
