@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
-%%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2020/12/07}
-\def\pharmtexversion{2.1}
+\def\pharmtexdate{2021/02/25}
+\def\pharmtexversion{2.2}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -91,7 +91,13 @@
 \DeclareOption{nosynopsis}{\synopsisfalse\csynopsistrue}
 \DeclareOption{synopsis}{\synopsistrue\csynopsistrue}
 
-%%% Option to signature page
+%%% Option to print signature page as a separate file
+\newif\ifprintsigpage\printsigpagetrue
+\newif\ifcprintsigpage\cprintsigpagefalse
+\DeclareOption{noprintsigpage}{\printsigpagefalse\cprintsigpagetrue}
+\DeclareOption{printsigpage}{\printsigpagetrue\cprintsigpagetrue}
+
+%%% Option to show signature page
 \newif\ifprintsigpage\printsigpagetrue
 \newif\ifsigpage\sigpagetrue
 \newif\ifcsigpage\csigpagefalse
@@ -1343,6 +1349,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \addtocontents{toc}{\string\contentsline {section}{\appendixname\space\string\numberline{\thesection}#1 (not applicable)}{}{}}
 \addtocontents{toc}{\cftpagenumberson{section}}
 }
+\newtotcounter{numberappendix}
 \ifappendix\nl
 \makeatletter
 \renewcommand\appendix{\par
@@ -1436,8 +1443,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand\thelstlisting{A\arabic{section}.\arabic{lstlisting}}
 \renewcommand{\citelocation}{A\arabic{section}.}
 
-\newtotcounter{numberappendix}
-\ifnum\totvalue{numberappendix}>2
+\ifnum\totvalue{numberappendix}>1
 \bookmark[level=0,dest=app]{APPENDICES}
 \fi
 
@@ -1907,6 +1913,7 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 
 \newcommand{\insertsigpage}{
 
+\label{sigpagestart}
 \ifdefined\DocApprovera
 \quad\vspace{-1.5\myspacer}
 \renewcommand{\arraystretch}{1.2}
@@ -1941,6 +1948,7 @@ Date Issued: & \DocDate \\ \hline
 \renewcommand{\arraystretch}{1.2}
 \addtocounter{table}{-1}
 \normalsize
+\label{sigpageend}
 
 \fi
 }
@@ -2473,7 +2481,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 
 % Insert List of Appendices
-\ifloa\ifnum\totvalue{numberappendix}>2
+\ifloa\ifnum\totvalue{numberappendix}>1
 \hypertarget{loa}{}
 \renewcommand{\loabookmark}{\bookmark[level=1,dest=loa]{LIST OF APPENDICES}}
 \phantomsection\label{loalabel}
@@ -2561,16 +2569,17 @@ ITEM \GlsFile.tex NOT FOUND.
 \StrGobbleLeft{\missingrfiles}{21}[\missingrfiles]
 
 % True false variables as well as perl script printing
+\edef\sigpagenumbers{\getpagerefnumber{sigpagestart}-\getpagerefnumber{sigpageend}}
 \ifdefined\DocPDFName\newcommand{\DocPDF}{\DocPDFName}\else\newcommand{\DocPDF}{\jobname}\fi
 \printdocpdfname{\DocPDF}
 \newcommand{\doprintsig}{0}
 \ifprintsigpage\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
 \ifdraftmode
-\createfiles{\jobname}{\DocPDF\DocPDFWord}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
-%\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig} % DRAFT MODE: download ALL artifacts (possibly again) when at least 1 artifact is missing
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
+%\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % DRAFT MODE: download ALL artifacts (possibly again) when at least 1 artifact is missing
 \else
-\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles} % BATCH MODE: download ALL artifacts
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % BATCH MODE: download ALL artifacts
 \fi
 
 % Compile mathimg

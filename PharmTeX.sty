@@ -1,5 +1,5 @@
 %%% PharmTeX Package, part of the PharmTeX platform.
-%%% Copyright (C) 2020 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 %%% Define PharmTeX Package for LaTeX
@@ -57,6 +57,30 @@
 \else
 \glsdisablehyper
 \fi
+
+%%% Define \ACRLONG command to allow uppercase of all first letters
+\let\oldmakefirstuc\makefirstuc
+\newcommand{\ACRLONG}[1]{%
+\renewcommand*{\makefirstuc}[1]{%
+  \def\gls@add@space{}%
+  \mfu@capitalisewords##1 \@nil\mfu@endcap%
+}%
+\def\mfu@capitalisewords##1 ##2\mfu@endcap{%
+  \def\mfu@cap@first{##1}%
+  \def\mfu@cap@second{##2}%
+  \gls@add@space%
+  \oldmakefirstuc{##1}%
+  \def\gls@add@space{ }%
+  \ifx\mfu@cap@second\@nnil%
+    \let\next@mfu@cap\mfu@noop%
+  \else%
+    \let\next@mfu@cap\mfu@capitalisewords%
+  \fi%
+  \next@mfu@cap##2\mfu@endcap%
+}%
+\Acrlong{#1}%
+\let\makefirstuc\oldmakefirstuc%
+}%
 
 %%% Settings for eqnimg option
 \newcommand{\eqnimgscalewin}{1}
@@ -309,6 +333,7 @@ if (($str =~ /[^\\] *\&/) | ($str =~ /[^\\] *\_/)) {
 my $tmpstr = fix_latin($str); my $teststr = $str;
 $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file.bib. Look for <?> in PDF.\n";} $mkfile = 1; $str = $tmpstr; }
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
+if ($mkfile==1) { $str = $tmpstr; }
 
 if ( $mkfile == 1 ) {
 	open(FILE, '>:utf8', "$file-tmpfixfile.bib");
@@ -1184,7 +1209,7 @@ if ($mysyncnt eq "none") {$mysyncmd = "$mysyncmd"}
 else {$mysyncmd = "$mysyncmd\\bookmark[level=$mysynlev,dest=mysynhyper$mysyncnt]{$mysynstr}\n";}
 return "\\renewcommand{\\cussyncmd}{$mysyncmd}"
 }
-\perlnewcommand{\createfiles}[6]{
+\perlnewcommand{\createfiles}[7]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -1197,6 +1222,7 @@ my $artifacts = $_[2];
 my $dogetartifacts = $_[3];
 my $doprintsig = $_[4];
 my $missingrfiles = $_[5];
+my $sigpages = $_[6];
 
 my $narti = () = $artifacts =~ /,/gi; $narti = $narti + 1;
 $docname =~ s/\\xspace *//g;
@@ -1225,7 +1251,7 @@ my $noerr;
 if ( $OS eq 'MSWin32' ) { $noerr = '>nul 2>&1'; } else { $noerr = '2>/dev/null'; }
 open(FILE, '>:utf8', 'finalize.pl');
 print FILE "use strict;\nuse warnings;\nuse File::Copy qw(copy);\n";
-if ($doprintsig == 1) {print FILE "system('pdftk A=\"$name.pdf\" cat A2 output sigpage.pdf');\n";}
+if ($doprintsig == 1) {print FILE "system('pdftk A=\"$name.pdf\" cat A$sigpages output sigpage.pdf');\n";}
 if (-e "$name.pdf") {
 	print FILE "if ( system('qpdf --linearize \"$name.pdf\" \"tmp$name.pdf\" $noerr') ) \{ print STDERR \"LaTeX Warning: Program qpdf not found or not installed. Web optimization of PDF skipped...\\n\" \}\n";
 	print FILE "if ( -e \"tmp$name.pdf\") \{ copy \"tmp$name.pdf\", \"$name.pdf\"; copy \"tmp$name.pdf\", \"$docname.pdf\"; unlink \"tmp$name.pdf\"; \}\n";
@@ -1915,7 +1941,7 @@ return;
 \newcommand{\pdfloadfile}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\fixpax}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\addsynsec}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\createfiles}[6]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
+\newcommand{\createfiles}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\fixnewline}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 \newcommand{\nlmixr}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
 \newcommand{\saveeqnfile}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
