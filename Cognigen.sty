@@ -1,0 +1,1578 @@
+%%% Cognigen Package, developed for the PharmTeX platform.
+\def\cognigendate{2021/04/28}
+\def\cognigenversion{1.7}
+
+%%% Define Cognigen Package for PharmTeX
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{Cognigen}[\cognigendate\space v\cognigenversion\space Cognigen Package for PharmTeX]
+
+%%%%%%%%%%%%%%% Settings for SoW option %%%%%%%%%%%%%%%
+
+%%% General settings
+\IfFileExists{/rsp-build-info}{\renewcommand{\eqnimgscalelin}{0.121}}{}
+\ifcletterpaper\else\KOMAoptions{paper=letter}\recalctypearea\letterpapertrue\fi
+\ifsow
+	\ifctoc\else\tocfalse\fi
+	\ifclot\else\lotfalse\fi
+	\ifclof\else\loffalse\fi
+	\ifcloa\else\loafalse\fi
+	\ifcitemid\else\itemidfalse\fi
+	\ifcglossary\else\glossaryfalse\fi
+	\renewcommand{\familydefault}{\sfdefault} % change to sand serif text font for SoW's
+	%\sansmath % change to sand serif math font for SoW's
+\fi
+
+%%% Settings for definition of Tasks in SoW
+\newlist{task}{enumerate}{4}
+\ifsow
+\setlist[task,1]{label=\arabic*.,ref=\arabic*,left=0.3in..0.6in}
+\setlist[enumerate,1]{left=0.3in..0.6in}
+\setlist[itemize,1]{left=0.3in..0.6in}
+\else
+\setlist[task,1]{label=\arabic*.,ref=\arabic*,left=0in..0.3in}
+\fi
+\setlist[task,2]{label=\alph*.,ref=\thetaski.\alph*}
+\setlist[task,3]{label=\roman*.,ref=\thetaskii.\roman*}
+\setlist[task,4]{label=\greek*.,ref=\thetaskiii.\greek*}
+\crefname{taski}{Task}{Tasks}
+\crefname{taskii}{Task}{Tasks}
+\crefname{taskiii}{Task}{Tasks}
+\crefname{taskiiii}{Task}{Tasks}
+
+%%%%%%%%%%%%%%% General settings %%%%%%%%%%%%%%%
+
+\usepackage[en-US]{datetime2} % provide \todayiso date format
+\usepackage{pdfcomment} % source code-generated PDF comments
+\lofcltrue % clear page between List of Tables and List of Figures
+\loftfirstfalse % do not put LoT and LoF PDF bookmarks before all other PDF bookmarks
+\tocintoctrue % show Table of Contents label in Table of Contents
+\glossaryupperfalse % lowercase glossary entries in abbreviation list
+\glossarypostdotfalse % not glossary postdot
+\ifcprintsigpage\else\printsigpagefalse\fi % do not print signature page as a separate file unless overridden by user
+\showinlinetabletrue % set to false to not print "Inline table" as item ID for \pmxtextable
+\synopsisfootfonttrue % \footnotesize in synopsis
+\renewcommand{\abbreviationname}{ABBREVIATIONS, TERMS, AND SYMBOLS}
+\renewcommand{\approvalpagename}{APPROVALS}
+\newcommand{\acrsl}[1]{\acrshort{#1}, \acrlong{#1}}
+\newcommand{\glsaddunset}[1]{\glsadd{#1}\glsunset{#1}}
+\newcommand*{\glsq}[2][]{\ifglsused{#2}{\acrshort[#1]{#2}}{%
+ \glsunset{#2}%
+ \acrlong*[#1]{#2} [\acrshort*[#1]{#2}]}}
+\newcommand*{\glsqpl}[2][]{\ifglsused{#2}{\acrshortpl[#1]{#2}}{%
+ \glsunset{#2}%
+ \acrlongpl*[#1]{#2} [\acrshortpl*[#1]{#2}]}}
+% \renewcommand*\descriptionlabel[1]{\hspace\leftmargin$#1$}
+\setlist[description]{itemsep=5pt,labelsep=0pt,labelindent=0.3in,leftmargin=0.6in}
+\usepackage[en-US]{datetime2}
+\setcitestyle{super,open={},close={}}
+\renewcommand\@biblabel[1]{#1.\hfill}
+\crefname{plfigure}{Figure}{Figures}
+\crefname{plequation}{Equation}{Equations}
+\def\twodigits#1{\ifnum#1<10 0\fi\the#1}
+\def\todayiso{\the\year-\twodigits\month-\twodigits\day}
+\hypersetup{pdfcreator={Cognigen-Package-\cognigenversion-PharmTeX-Class-\pharmtexversion}}
+\newenvironment{z}{\nl\tablefont}{\normalsize}
+\newenvironment{nocounter}{
+\captionsetup{labelformat=empty}
+\renewcommand{\tablabel}[2]{\caption[]{##1}}
+\renewcommand{\figlabel}[2]{\caption[]{##1}}
+\renewcommand{\figlabelpl}[2]{\caption[]{##1}}
+}{
+\ifnum\istable=1\addtocounter{table}{-1}\fi
+\renewcommand{\tablabel}[2]{\caption{##1}\label{##2}\raisebox{\ht\strutbox}{\hypertarget{##2}{}}\addtocontents{lot}{\protect{\bookmark[rellevel=1,keeplevel,dest=##2]{\tablename~\thetable. ##1}}}}
+\ifnum\isfigure=1\addtocounter{figure}{-1}\fi
+\renewcommand{\figlabel}[2]{\hypertarget{##2}{}\caption{##1}\label{##2}\addtocontents{lof}{\protect{\bookmark[rellevel=1,keeplevel,dest=##2]{\figurename~\thefigure. ##1}}}}
+\renewcommand{\figlabelpl}[2]{\hypertarget{##2}{}\caption{##1}\label[plfigure]{##2}\addtocontents{lof}{\protect{\bookmark[rellevel=1,keeplevel,dest=##2]{\figurename~\thefigure. ##1}}}}
+\captionsetup{labelformat=simple}
+\renewcommand{\istable}{0}
+\renewcommand{\isfigure}{0}
+}
+
+%%% Synopsis references
+\renewcommand{\synrefname}{References:}
+
+%%% Font sizes
+\ifsow
+	\captionsetup[table]{font={normal,bf}}
+	\captionsetup[figure]{font={normal,bf}}
+	\captionsetup[lstlisting]{font={normal,bf}}
+	\renewcommand{\tabledeffont}{\normalsize}
+	\renewcommand{\listingdeffont}{\normalsize}
+	\renewcommand{\descfont}{\normalsize}
+	\substnotefalse
+\else
+	\captionsetup[table]{font={small,bf}}
+	\captionsetup[figure]{font={small,bf}}
+	\captionsetup[lstlisting]{font={small,bf}}
+\fi
+
+%%%%%%%%%%%%%%% Initialize command for Cognigen cover, signature, and QA pages %%%%%%%%%%%%%%%
+
+\newlength{\hanglength}
+\IfStrEqCase{\thefontsize}{
+{10}{\setlength{\hanglength}{0.79cm}}
+{10.95}{\setlength{\hanglength}{0.83cm}}
+{12}{\setlength{\hanglength}{0.86cm}}
+}[]
+\newcommand{\thesimsplusscale}{0.216}
+\newcommand{\simsplus}{\pgfmathsetmacro{\thesimsplusscale}{0.216*\thefontsize/12}\includegraphics[scale=\thesimsplusscale]{\pharmtexdir/simstext.png}\xspace}
+
+\newcommand{\brand}[1]{\newcommand{\CgnBrand}{#1\xspace}\newcommand{\Brand}{#1\xspace}}
+\newcommand{\drug}[1]{\newcommand{\CgnDrug}{#1\xspace}\newcommand{\Drug}{#1\xspace}}
+\newcommand{\indication}[1]{\newcommand{\CgnIndication}{#1\xspace}\newcommand{\Indication}{#1\xspace}}
+\newcommand{\submitto}[1]{\newcommand{\CgnSubmitTo}{#1}\newcommand{\SubmitTo}{#1}}
+\newcommand{\submitby}[1]{\newcommand{\CgnSubmitBy}{#1}\newcommand{\SubmitBy}{#1}}
+\newcommand{\projno}[1]{\newcommand{\CgnProjNo}{#1\xspace}\newcommand{\ProjNo}{#1\xspace}}
+\newcommand{\clientno}[1]{\newcommand{\CgnClientNo}{#1\xspace}\newcommand{\ClientNo}{#1\xspace}}
+\newcommand{\client}[1]{\newcommand{\CgnClient}{#1\xspace}\newcommand{\Client}{#1\xspace}}
+\newcommand{\clientlong}[1]{\newcommand{\CgnClientLong}{#1\xspace}\newcommand{\ClientLong}{#1\xspace}}
+\newcommand{\refmsa}[1]{\newcommand{\CgnRefMSA}{#1\xspace}\newcommand{\RefMSA}{#1\xspace}}
+
+\newcommand{\workorder}[7]{
+\newcommand{\WorkorderExhibit}{#1\xspace}
+\newcommand{\WorkorderNumber}{#2\xspace}
+\projno{#3}
+\newcommand{\DateMSA}{#4\xspace}
+\newcommand{\WorkorderSigName}{#5\xspace}
+\newcommand{\WorkorderSigTitle}{#6\xspace}
+\newcommand{\WorkorderSigDate}{#7\xspace}
+}
+
+\newcommand{\cgnbrand}[1]{\newcommand{\CgnBrand}{#1\xspace}\newcommand{\Brand}{#1\xspace}}
+\newcommand{\cgndrug}[1]{\newcommand{\CgnDrug}{#1\xspace}\newcommand{\Drug}{#1\xspace}}
+\newcommand{\cgnindication}[1]{\newcommand{\CgnIndication}{#1\xspace}\newcommand{\Indication}{#1\xspace}}
+\newcommand{\cgnstate}[1]{\newcommand{\CgnState}{#1\xspace}\newcommand{\DocState}{#1\xspace}}
+\newcommand{\cgnsubmitto}[1]{\newcommand{\CgnSubmitTo}{#1}\newcommand{\SubmitTo}{#1}}
+\newcommand{\cgnsubmitby}[1]{\newcommand{\CgnSubmitBy}{#1}\newcommand{\SubmitBy}{#1}}
+\newcommand{\cgnprojno}[1]{\newcommand{\CgnProjNo}{#1\xspace}\newcommand{\ProjNo}{#1\xspace}}
+\newcommand{\cgnclientno}[1]{\newcommand{\CgnClientNo}{#1\xspace}\newcommand{\ClientNo}{#1\xspace}}
+\newcommand{\cgnclient}[1]{\newcommand{\CgnClient}{#1\xspace}\newcommand{\Client}{#1\xspace}}
+\newcommand{\cgnclientlong}[1]{\newcommand{\CgnClientLong}{#1\xspace}\newcommand{\ClientLong}{#1\xspace}}
+\newcommand{\cgnrefmsa}[1]{\newcommand{\CgnRefMSA}{#1\xspace}\newcommand{\RefMSA}{#1\xspace}}
+
+\newcommand{\sowkeys}{}
+\newcommand{\sowdescriptionkeys}{}
+\newcommand{\sowdescriptionfiles}{}
+\newcounter{sowdesc}\setcounter{sowdesc}{0}
+\newcommand{\sowdesc}[2]{\addtocounter{sowdesc}{1}\sowdescinput{\detokenize{#1}}{\detokenize{#2}}{\thesowdesc}}
+
+\newcounter{nclauthor}
+\setcounter{nclauthor}{1}
+\newcommand{\ClientAuthor}{}
+\newcommand{\clientauthor}[1]{\expandafter\def\csname ClientAuthor\alph{nclauthor}\endcsname{#1}\addtocounter{nclauthor}{1}}
+\newcommand{\clientlogo}[2][scale=1]{\newcommand{\ClientLogo}{\includegraphics[#1]{#2}}}
+\definecolor{cognigen}{RGB}{123, 46, 145}
+\newcommand{\sqdiamond}[1][fill=cognigen,draw=cognigen,scale=0.6]{\tikz [x=1.2ex,y=1.85ex,line width=.1ex,line join=round, yshift=-0.285ex] \draw  [#1]  (0,.5) -- (.5,1) -- (1,.5) -- (.5,0) -- (0,.5) -- cycle;\xspace}
+\renewcommand{\headertext}[4]{\newcommand{\HeaderTextLeft}{#1\ifthenelse{\equal{#2}{}}{}{~\\#2}}\newcommand{\HeaderTextRight}{\ifthenelse{\equal{#3}{}}{#4}{#3\unskip\ifthenelse{\equal{#4}{}}{}{\\#4\unskip}}}\ihead{\HeaderTextLeft}\ohead{\HeaderTextRight}\chead{}}
+\renewcommand{\footertext}[1]{\newcommand{\FooterTextLeft}{#1}\ifoot{\FooterTextLeft}\ofoot{Page \thepage~of~\pageref*{LastPage}\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi}}
+
+%%%%%%%%%%%%%%% Cognigen cover page %%%%%%%%%%%%%%%
+
+\ifsow
+
+\warningbox{The information contained within this document is considered confidential by Cognigen Corporation and should not be made available, in part or whole, to any third party at any time.}
+
+\renewcommand{\insertcoverpage}{
+
+\ifdefined\WorkorderNumber
+
+\addtocounter{page}{-1}
+
+\thispagestyle{empty}
+
+\begin{center}
+
+\textbf{\large{}EXHIBIT \WorkorderExhibit}
+
+\textbf{\large{}WORK ORDER \# \WorkorderNumber}
+
+\textbf{\large{}COGNIGEN PROJECT \# \ProjNo}
+
+\end{center}
+
+\vspace{0.5cm}
+
+{
+\doublespacing
+
+To the MASTER SERVICES AGREEMENT ("Agreement") effective as of \DateMSA by and between \ClientLong ("\textbf{SPONSOR}"), and COGNIGEN CORPORATION, a wholly owned subsidiary of Simulations Plus, Inc. with offices at 1780 Wehrle Drive, Suite 110, Buffalo, New York 14221, United States of America (collectively "\textbf{COMPANY}").
+
+This Work Order \# \WorkorderNumber is subject to the terms and conditions of the Agreement, except as provided herein. All capitalized terms used herein shall have the same meaning as ascribed to them in the Agreement, unless otherwise expressly provided herein. In all other respects, the Agreement shall remain unchanged and in full force and effect, except as revised by this Work Order.
+
+\begin{enumerate}
+\item Services: COMPANY shall perform the Services as described in Attachment 1.
+\item Deliverables, timelines, and payment schedule are in accordance with Attachment 1.
+\end{enumerate}
+
+\textbf{IN WITNESS WHEREOF}, the parties have caused this Agreement to be executed by their respective duly authorized representatives as of the last date of signature below.
+
+\begin{tabularx}{\maxwidth}{@{}L{0.5}@{\phantom{.........}}L{0.5}@{}}
+\textbf{Cognigen Corporation}\newline a \simsplus Company & \textbf{\ClientLong} \\
+ & \\
+By: \hrulefill & By: \hrulefill \\
+ & \\
+Name: \WorkorderSigName & Name: \hrulefill \\
+ & \\
+Title: \WorkorderSigTitle & Title: \hrulefill \\
+ & \\
+Date: \WorkorderSigDate & Date: \hrulefill
+\end{tabularx}
+\addtocounter{table}{-1}
+
+}
+
+\clearpage
+
+\fi
+
+\thispagestyle{empty}
+
+\par
+\raisebox{-.5\height}{\ClientLogo}%
+\hfill
+\raisebox{-.5\height}{\includegraphics[scale=0.8]{\pharmtexdir/simsplus.png}}%
+\par
+
+\vspace{0.5cm}
+
+\begin{center}
+
+\ifdefined\DocType\textbf{\Large\DocType}\vspace{0.5cm}\fi
+
+\ifdefined\DocTitle\textbf{\LARGE\DocTitle}\vspace{0.5cm}\fi
+
+\ifdefined\DocState\textbf{\large\MakeUppercase{\DocState}}\vspace{0.5cm}\fi
+
+\ifdefined\DocDate\textbf{\large\DocDate}\vspace{0.5cm}\fi
+
+\ifdefined\DateMSA
+\textbf{\large Reference Master Services Agreement Dated \DateMSA}\vspace{0.5cm}
+\else
+\ifdefined\RefMSA\textbf{\large\RefMSA}\vspace{0.5cm}\fi
+\fi
+
+\end{center}
+
+\ifdefined\ClientAuthora
+\textbf{\ClientLong Contact(s):}\nl
+\begin{tabularx}{\maxwidth}{@{}L{0.5}L{0.5}@{}}
+\ifdefined\ClientAuthora \ClientAuthora & \ifdefined\ClientAuthorb\ClientAuthorb\fi \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\fi
+
+\ifdefined\DocAuthora
+\textbf{Cognigen Corporation Contact(s):}\nl
+\begin{tabularx}{\maxwidth}{@{}L{0.5}L{0.5}@{}}
+\ifdefined\DocAuthora \DocAuthora & \ifdefined\DocAuthorb\DocAuthorb\fi \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\fi
+
+\ifdefined\WarningBox\vspace{0.3cm}\begin{center}\WarningBox\end{center}\par\fi
+
+\ifdefined\WorkorderNumber\begin{tikzpicture}[remember picture,overlay]\node[rotate = 0, align=left, anchor=north] at ([xshift=0cm, yshift=-0.5cm]current page.north) {\footnotesize{\textbf{\large Attachment 1}}};\end{tikzpicture}\fi\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi
+
+\clearpage
+
+}
+
+\else
+
+\warningbox{This document contains confidential information. Any use, distribution, or disclosure without the prior written consent of \ifdefined\ClientLong\ClientLong\else COMPANY\fi{} is strictly prohibited except to the extent required under applicable laws or regulations. Persons to whom the information is disclosed must be informed that the information is confidential and may not be further disclosed by them.}
+
+\renewcommand{\insertcoverpage}{
+
+\thispagestyle{empty}
+
+\begin{center}
+\includegraphics{\pharmtexdir/simsplus.png}\vspace{0.5cm}
+
+\ifdefined\DocTitle\textbf{\DocTitle}\vspace{0.5cm}\fi
+
+\ifdefined\DocState\textbf{\MakeUppercase{\DocState}}\vspace{0.5cm}\fi
+
+\ifdefined\DocState\textbf{\MakeUppercase{\DocType}}\vspace{0.5cm}\fi
+
+\ifdefined\DocDate\textbf{\DocDate}\vspace{0.5cm}\fi
+
+\footnotesize
+\begin{tabularx}{\maxwidth}{@{}R{1}L{1}@{}}
+\ifdefined\SubmitTo\textbf{Submitted to} & \SubmitTo \\ \fi
+ & \\
+\ifdefined\SubmitBy\textbf{Submitted by} & \SubmitBy \\ \fi
+ & \\
+\ifdefined\ProjNo\textbf{Cognigen Project Number} & \ProjNo \\ \fi
+\ifdefined\ClientNo\textbf{\ifdefined\ClientLong\ClientLong\fi Report Number} & \ClientNo \fi
+\end{tabularx}
+\vspace{1cm}
+\textbf{CONFIDENTIAL INFORMATION}
+\ifdefined\WarningBox\\ \WarningBox\par\fi
+\normalsize
+\end{center}
+
+\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi
+
+\clearpage
+
+\ifsynonly\else
+\ifdefined\DocAuthora
+Cognigen Corporation personnel involved in the analysis and/or preparation of this report:
+
+\footnotesize
+\begin{center}
+\begin{tabularx}{\maxwidth}{@{}L{0.5}L{0.5}@{}}
+\ifdefined\DocAuthora \DocAuthora & \ifdefined\DocAuthore\DocAuthore\fi \\ \fi
+\ifdefined\DocAuthorb ~\newline\DocAuthorb & \ifdefined\DocAuthorf~\newline\DocAuthorf\fi \\ \fi
+\ifdefined\DocAuthorc ~\newline\DocAuthorc & \ifdefined\DocAuthorg~\newline\DocAuthorg\fi \\ \fi
+\ifdefined\DocAuthord ~\newline\DocAuthord & \ifdefined\DocAuthorh~\newline\DocAuthorh\fi \\ \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\end{center}
+\normalsize
+
+\clearpage
+\fi
+
+\ifdefined\ClientAuthora
+\ifdefined\ClientLong\ClientLong\else COMPANY\fi personnel involved in the analysis and/or preparation of this report:
+
+\footnotesize
+\begin{center}
+\begin{tabularx}{\maxwidth}{@{}L{0.5}L{0.5}@{}}
+\ifdefined\ClientAuthora \ClientAuthora & \ifdefined\ClientAuthore\ClientAuthore\fi \\ \fi
+\ifdefined\ClientAuthorb ~\newline\ClientAuthorb & \ifdefined\ClientAuthorf~\newline\ClientAuthorf\fi \\ \fi
+\ifdefined\ClientAuthorc ~\newline\ClientAuthorc & \ifdefined\ClientAuthorg~\newline\ClientAuthorg\fi \\ \fi
+\ifdefined\ClientAuthord ~\newline\ClientAuthord & \ifdefined\ClientAuthorh~\newline\ClientAuthorh\fi \\ \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\end{center}
+\normalsize
+
+\fi
+
+\fi
+
+}
+
+\fi
+
+%%%%%%%%%%%%%%% Cognigen signature page for report-type document %%%%%%%%%%%%%%%
+
+\newcounter{nclapprover}
+\setcounter{nclapprover}{1}
+\newcommand{\ClientApprover}{}
+\newcommand{\clientapprover}[1]{\expandafter\def\csname ClientApprover\alph{nclapprover}\endcsname{#1}\addtocounter{nclapprover}{1}}
+\renewcommand{\insertsigpage}{
+
+\ifdefined\DocApprovera
+\label{sigpagestart}
+\textbf{\approvalpagename}
+
+\begin{center}
+\textbf{\DocTitle}\vspace{0.5cm}
+
+\textbf{\DocDate}\vspace{0.7cm}
+
+\begin{tabularx}{\maxwidth}{L{0.26}L{1}R{0.6}}
+\multicolumn{2}{@{}>{\hsize=\dimexpr1.26\hsize+2\tabcolsep\raggedright\arraybackslash}X}{Approved by:} & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\
+\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApprovera} \\ \ifdefined\DocApproverb & & \\ & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\ \fi
+\ifdefined\DocApproverb\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverb} \\ \fi \ifdefined\DocApproverc & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApproverc\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverc} \\ \fi \ifdefined\DocApproverd & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApproverd\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverd} \\ \fi \ifdefined\DocApprovere & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApprovere\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApprovere} \\ \fi \ifdefined\DocApproverf & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApproverf\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverf} \\ \fi \ifdefined\DocApproverg & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApproverg\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverg} \\ \fi \ifdefined\DocApproverh & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\DocApproverh\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\DocApproverh} \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\end{center}
+
+\clearpage
+\fi
+
+\ifdefined\ClientApprovera
+\begin{center}
+\textbf{\DocTitle}\vspace{0.5cm}
+
+\textbf{\DocDate}\vspace{0.7cm}
+
+\begin{tabularx}{\maxwidth}{L{0.26}L{1}R{0.6}}
+\multicolumn{2}{@{}>{\hsize=\dimexpr1.26\hsize+2\tabcolsep\raggedright\arraybackslash}X}{Approved by:} & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\
+\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApprovera} \\ \ifdefined\ClientApproverb & & \\ & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\ \fi
+\ifdefined\ClientApproverb\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverb} \\ \fi \ifdefined\ClientApproverc & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApproverc\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverc} \\ \fi \ifdefined\ClientApproverd & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApproverd\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverd} \\ \fi \ifdefined\ClientApprovere & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApprovere\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApprovere} \\ \fi \ifdefined\ClientApproverf & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApproverf\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverf} \\ \fi \ifdefined\ClientApproverg & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApproverg\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverg} \\ \fi \ifdefined\ClientApproverh & & \\* & & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\ClientApproverh\cline{2-3} & \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\ClientApproverh} \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\end{center}
+
+\fi
+\ifdefined\QaApprovera\else\label{sigpageend}\fi
+}
+
+%%%%%%%%%%%%%%% Cognigen QA page for report-type document %%%%%%%%%%%%%%%
+
+\newcommand{\insertqapage}{
+
+\ifdefined\QaApprovera
+\textbf{QUALITY ASSURANCE STATEMENT}
+
+This report has been reviewed for quality assurance in accordance with Cognigen Corporation’s standard operating procedures.\vspace{0.5cm}
+
+\begin{center}
+\begin{tabularx}{\maxwidth}{L{1}R{0.6}}
+& \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\
+\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApprovera} \\ \ifdefined\QaApproverb & \\ & \multirow{1}{*}[-3pt]{Date (YYYY-MM-DD)} \\ \fi
+\ifdefined\QaApproverb\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverb} \\ \fi \ifdefined\QaApproverc & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApproverc\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverc} \\ \fi \ifdefined\QaApproverd & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApproverd\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverd} \\ \fi \ifdefined\QaApprovere & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApprovere\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApprovere} \\ \fi \ifdefined\QaApproverf & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApproverf\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverf} \\ \fi \ifdefined\QaApproverg & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApproverg\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverg} \\ \fi \ifdefined\QaApproverh & \\* & \multirow{1}{*}[-32.5pt]{Date (YYYY-MM-DD)} \\* \fi
+\ifdefined\QaApproverh\cline{1-2} \multicolumn{2}{>{\hsize=\dimexpr1.6\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\quad\newline\QaApproverh} \fi
+\end{tabularx}
+\addtocounter{table}{-1}
+\end{center}
+\label{sigpageend}
+\fi
+
+}
+
+%%%%%%%%%%%%%%% Cognigen synopsis top table for report-type document %%%%%%%%%%%%%%%
+
+\newcommand{\synopsisheader}[3]{\newcommand{\Sponsor}{#1}\newcommand{\DossierRef}{#2}\newcommand{\Ingredient}{#3}}
+\newcommand{\synopsisintro}{
+%\footnotesize
+\ifdefined\Sponsor
+\begin{tabularx}{\maxwidth}{||L{0.33333}|L{0.33333}|L{0.33333}||} \hhline{|t:=:=:=:t|}
+\textbf{Name of Sponsor/Company:}\newline\Sponsor & \textbf{<Individual study table referring to part of dossier in which the individual study or study table is presented>} & \emph{(For National Authority Use Only)} \\ \hhline{||-|~|~||}
+\textbf{Name of Active Ingredient:} \Ingredient & \DossierRef & \\ \hhline{|b:=:=:=:b|}
+\end{tabularx}
+\addtocounter{table}{-1} \nl
+\fi
+\textbf{Report Title:} \DocTitle
+%\normalsize
+}
+
+%%%%%%%%%%%%%%% Cognigen page settings %%%%%%%%%%%%%%%
+
+%%% Page margins
+\ifsow
+\pmxtop{1 in}
+\pmxbottom{1.25 in}
+\pmxleft{1 in}
+\pmxright{1 in}
+\pmxhead{0.5 in}
+\pmxfoot{0.4 in}
+\pmxheadheight{12 pt}
+\KOMAoptions{footheight=51.05pt}
+\else
+\pmxtop{1.25 in}
+\pmxbottom{1.25 in}
+\pmxleft{1.5 in}
+\pmxright{1 in}
+\pmxhead{0.75 in}
+\pmxfoot{0.75 in}
+\pmxheadheight{24 pt}
+\fi
+
+%%%%%%%%%%%%%%% Cognigen page settings %%%%%%%%%%%%%%%
+
+\newcommand{\SowFooterPortrait}{\scriptsize{\noindent\textcolor{cognigen}{\rule{370pt}{0.5mm}}\\[5pt]The information contained within this document is considered Confidential by Cognigen Corporation\\ and should not be made available, in part or whole, to any third party at any time.\\[5pt]\textcolor{cognigen}{\copyright{}}2020, \textcolor{cognigen}{Cognigen}, a \emph{Simulations Plus} company\\ 1780 Wehrle Drive, Suite 110 \sqdiamond Buffalo, NY 14221-7000 \sqdiamond (716) 633-3463 \sqdiamond cognigencorp.com}}
+\newcommand{\SowFooterLandscape}{\scriptsize{\noindent\textcolor{cognigen}{\rule{370pt}{0.5mm}}\\[5pt]The information contained within this document is considered Confidential by Cognigen Corporation\\ and should not be made available, in part or whole, to any third party at any time.\\[5pt]\textcolor{cognigen}{\copyright{}}2020, \textcolor{cognigen}{Cognigen}, a \emph{Simulations Plus} company\\[-3pt] 1780 Wehrle Drive, Suite 110 \sqdiamond Buffalo, NY 14221-7000 \sqdiamond (716) 633-3463 \sqdiamond cognigencorp.com}}
+
+\ifdefined\WorkorderNumber\begin{tikzpicture}[remember picture,overlay]\node[rotate = 0, align=left, anchor=north] at ([xshift=0cm, yshift=-0.5cm]current page.north) {\footnotesize{\textbf{\large Attachment 1}}};\end{tikzpicture}
+\fi
+
+% Add header and footer text
+\ifsow
+\ohead{Page \thepage~of~\pageref*{LastPage}\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi\ifdefined\WorkorderNumber\begin{tikzpicture}[remember picture,overlay]\node[rotate = 0, align=left, anchor=north] at ([xshift=0cm, yshift=-0.5cm]current page.north) {\footnotesize{\textbf{\large Attachment 1}}};\end{tikzpicture}
+\fi}
+\cfoot{\SowFooterPortrait}
+\else
+\ifdefined\HeaderTextLeft\else
+\ihead{\ifdefined\Drug\Drug\else \fi\\\ifdefined\Brand\Brand\else \fi}
+\chead{\ifdefined\DocState\MakeUppercase{\DocState}\else \fi\\\ifdefined\DocType\DocType\else \fi}
+\ohead{\ifdefined\ClientLong\ClientLong\else \fi\\\ifdefined\DocDate\DocDate\unskip\else \fi}
+\fi
+\ifdefined\FooterTextLeft\else
+\ifoot{Confidential Information}
+\cfoot{}
+\ofoot{Page \thepage~of~\pageref*{LastPage}\ifwatermark\begin{tikzpicture}[remember picture,overlay,opacity=\WatermarkOpacity,scale=\WatermarkScale,every node/.style={scale=\WatermarkScale}]\node[rotate = 45] at (current page.center) {\Huge{\Watermark}};\end{tikzpicture}\fi}
+\fi
+\fi
+
+%%%%%%%%%%%%%%% Cognigen section settings %%%%%%%%%%%%%%%
+
+\ifsow
+\titleformat{\section}{\color{cognigen}\normalsize\bfseries}{\thesection}{0.63in}{#1}
+\titleformat{\subsection}{\color{cognigen}\normalsize\bfseries}{\thesubsection}{0.63in}{#1}
+\titleformat{\subsubsection}{\color{cognigen}\normalsize\bfseries\itshape}{\thesubsubsection}{0.63in}{#1}
+\titleformat{\paragraph}{\color{cognigen}\normalsize}{\theparagraph}{0.63in}{#1}
+\titleformat{\subparagraph}{\color{cognigen}\normalsize\itshape}{\thesubparagraph}{0.63in}{#1}
+\else
+\titleformat{\section}{\normalsize\bfseries}{\thesection}{0.63in}{#1}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.63in}{#1}
+\titleformat{\subsubsection}{\normalsize\bfseries\itshape}{\thesubsubsection}{0.63in}{#1}
+\titleformat{\paragraph}{\normalsize}{\theparagraph}{0.63in}{#1}
+\titleformat{\subparagraph}{\normalsize\itshape}{\thesubparagraph}{0.63in}{#1}
+\fi
+
+%%%%%%%%%%%%%%% LaTeX custom commands %%%%%%%%%%%%%%%
+
+%%% Function for making tables from a KIWI html file
+%%% RETAIN empty lines in the beginning and end of \kiwihtmltable to make sure line spacing before and after tables is correct.
+% \newcounter{htmltable}\setcounter{htmltable}{0}
+\newcommand{\htmlfootnote}{}
+\newcommand{\htmlcommand}{}
+\newcommand{\csvtablelabel}{}
+\newcommand{\csvtablecaption}{}
+\let\oldnewline\newline
+\newcommand{\kiwihtmltable}[6]{
+
+\renewcommand{\istable}{1}
+\renewcommand{\myfloatdescription}{}
+\renewcommand{\mytableitemnumber}{}
+\renewcommand{\htmlfootnote}{}
+\renewcommand{\newunderscorename}{}
+\renewcommand{\dodescription}{0}
+\renewcommand{\syntab}{1}
+\renewcommand{\csvtable}{}
+\renewcommand{\csvtablelabel}{}
+\renewcommand{\csvtablecaption}{}
+\renewcommand{\htmlcommand}{}
+\renewcommand{\tmpsubstnote}{}
+\setcounter{tnote}{0}
+% \addtocounter{htmltable}{1}
+
+\checkartifact{#1}
+\tablefont
+\fixunderscore{#1}
+\ifx\fname\empty
+\begin{tabularx}{\maxwidth}{C{1}} \tablabel{CAPTION MISSING}{#4}
+	\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{CAPTION MISSING}\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endhead
+	\endfoot\bottomrule\endlastfoot
+\end{tabularx}
+\else
+\readhtmllabel{#1}{#2}
+%\fixnewline{\detokenize{#6}}
+\renewcommand{\mytableitemnumber}{\linespread{0.85}\selectfont\itemid{#1}, element #2}
+%\renewcommand{\myfloatdescription}{\linespread{0.85}\selectfont\htmlfootnote{}#6}
+\renewcommand{\myfloatdescription}{#6}
+%\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\htmlfootnote{}\detokenize{#6}}{}}{}{\renewcommand{\dodescription}{1}}\ifthenelse{\equal{\detokenize{#6}}{}}{}{\renewcommand{\dodescription}{1}}
+\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#6}}{}}{}{\renewcommand{\dodescription}{1}}\ifthenelse{\equal{\detokenize{#6}}{}}{}{\renewcommand{\dodescription}{1}}
+\readhtmlinfo{\fname}{#2}{#3}{#4}{#5}
+% \renewcommand{\newline}{\\[-0.35\baselineskip]}
+\htmlcommand
+\csvtable
+% \vspace{-0.5\baselineskip}
+\fi
+%\ifnum\dodescription=1\ifitemid\mytableitemnumber.\fi\tmpsubstnote\xspace\myfloatdescription\fi
+\normalsize
+% \renewcommand{\newline}{\oldnewline}
+\renewcommand{\tablefont}{\tabledeffont}
+\renewcommand{\listingfont}{\listingdeffont}
+\renewcommand{\dotight}{0}
+% \linespread{1}\selectfont
+\quad\\
+
+}
+
+%%% Function for making tables from a KIWI tex file
+%%% RETAIN empty lines in the beginning and end of \kiwihtmltable to make sure line spacing before and after tables is correct.
+\newcommand{\kiwinotes}{}
+\newcommand{\kiwiabbreviations}{}
+\newcommand{\kiwitable}[6]{
+
+\renewcommand{\newunderscorename}{}
+\checkartifact{#1}
+\ifx\fname\empty
+\begin{tabularx}{\maxwidth}{C{1}} \tablabel{\mypmxcaption}{fig:emptycaption}
+	\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{\mypmxcaption}\\\toprule
+	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endhead
+	\endfoot\bottomrule\endlastfoot
+\end{tabularx}
+\else
+\renewcommand{\kiwinotes}{insertkiwinoteshere}\renewcommand{\kiwiabbreviations}{insertkiwiabbreviationshere}\insertkiwitable{\fname}{#2}{#3}{#4}{#5}{#6}
+\fi
+
+}
+
+\newcommand{\kiwitextable}[7][1]{
+
+\setcounter{pmxcolumnnumber}{1}
+\renewcommand{\istable}{1}
+\renewcommand{\istextable}{1}
+\renewcommand{\myfloatdescription}{}
+\renewcommand{\dodescription}{0}
+\renewcommand{\syntab}{1}
+\renewcommand{\csvtable}{}
+\renewcommand{\tabletopnote}{}
+\renewcommand{\tmpsubstnote}{}
+\setcounter{tnote}{0}
+\renewcommand{\mypmxcaption}{#4}
+\fixglscaption{\mypmxcaption}
+{\tablefont
+\renewcommand{\mytableitemnumber}{\itemid{#6}, element #7}
+\fixnewline{\detokenize{#5}}{\doitemid}
+\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#5}}{}}{}{\renewcommand{\dodescription}{1}}
+\includecsv{#1}{file.tmp.txt}{tex}{#2}{#3}{\mypmxcaption}{\detokenize{}}{\dotight}{1}
+\csvtable
+}
+\renewcommand{\tablefont}{\tabledeffont}
+\renewcommand{\listingfont}{\listingdeffont}
+\renewcommand{\dotight}{0}
+\renewcommand{\mypmxcaption}{}
+\setlength{\tabcolsep}{\pmxtabcolsep}
+
+}
+
+%%%%%% Perl custom commands
+
+\ifnum\dopharmtexperl=1
+
+\perlnewcommand{\readhtmllabel}[2]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Path::Tiny;
+my $file = $_[0];
+my $ntable = $_[1];
+
+my $keyf;
+
+($keyf) = $file =~ /\/*([^\/]+)\.(.*?)/;
+$keyf = "tab:$keyf";
+
+return "\\renewcommand{\\csvtablelabel}{$keyf}";
+}
+\perlnewcommand{\readhtmlinfo}[5]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Path::Tiny;
+use List::Util qw( min max );
+my $file = $_[0];
+my $ntable = $_[1];
+my $colspec = $_[2];
+my $key = $_[3];
+my $cap = $_[4];
+
+my $nhead = 1;
+my $mycgnsep = "\\\\";
+
+my $align; my $keyf; my $str; my $strr; my $strrr; my $k; my $i; my $i0; my $ii; my $j; my $j0; my $J0; my $x; my $y; my $m; my $n; my $rowsum; my $colsum; my $outt; my $mcnt; my $mind; my $footnote; my $tmp; my $keyy; my $capp; my $topnote; my $foot; my $hstr; my $xstr; my $isword; my $M; my $N; my $doline;
+my @caps; my @strs; my @lines; my @teams; my @cells; my @isbold; my @istop; my @isleft; my @nrow; my @ncol; my @aligns; my @out; my @foots; my @tmp; my @tmpcells; my @matrix; my @row; my @dobreak0; my @dobreak1; my @dobreak2; my @dobreak3; my @dobreak4;
+
+$str = path($file)->slurp;
+
+($keyf) = $file =~ /\/*([^\/]+)\.(.*?)/;
+$keyf = "tab:$keyf";
+
+$str =~ s/\n */ /g;
+$str =~ s/  / /g;
+$str =~ s/&amp;/\\&/g;
+$str =~ s/&lt;/myveryuniquelessthan/g;
+$str =~ s/&gt;/myveryuniquegreaterthan/g;
+$str =~ s/\<sup\>(.*?)\<\/sup\>/\$^{$1}\$/g;
+$str =~ s/&#945/\$\\alpha\$/g;
+$str =~ s/&nbsp;/ /g;
+$str =~ s/\_/\\_/g;
+
+if ( $str =~ /Microsoft Word/ ) { $isword = 1; } else { $isword = 0; }
+
+$str =~ s/%/\\%/g;
+# $str =~ s/\<center\>//g;
+$str =~ s/\<br\>/ /g;
+$str =~ s/\<th/\<td <b>/g;
+$str =~ s/\<\/th\>/\<\/td\>/g;
+$str =~ s/\<span.*?\>(.*?)\<\/span\>/$1/g;
+$str =~ s/\x{00A0}//g; # remove no break spaces
+
+@caps = ($str =~ /\<h2.*?"\>(.*?)\<\/h2\>/g);
+$tmp = scalar(@caps);
+if ($tmp==0) {
+	@caps = ($str =~ /<tr><td colspan=\"[0-9]*\" style=\"font-weight: bold;\"[<>]*[a-z]*><big>(.*?)<\/big><\/center><\/td><\/tr>/g);
+	$str =~ s/<tr><td colspan=\"[0-9]*\" style=\"font-weight: bold;\"[<>]*[a-z]*><big>.*?<\/big><\/center><\/td><\/tr>//g;
+}
+$tmp = scalar(@caps);
+if ($tmp==0) { @caps = ($str =~ /\<p.*?title.*?"*\>(.*?)\<\/p\>/g); }
+$tmp = scalar(@caps);
+$i0 = 0;
+if ($tmp==0) {
+	$str =~ s/\<a.*?\>\<\/a\>//g;
+	$str =~ s/\<a.*?\>//g;
+	$str =~ s/\<\/a\>//g;
+	@caps = ($str =~ /\<p class=TableTitle.*?\>(.*?)\<\/p\>/g);
+	if (scalar(@caps)>0) { $i0 = 1; }
+}
+
+($tmp) = $str =~ /<tr><td colspan=\"[0-9]*\" style=\"font-weight: bold;\"[<>]*[a-z]*\>(.*?)<\/center><\/td><\/tr>/g;
+if (defined $tmp) {
+	$topnote = "$tmp";
+	$str =~ s/<tr><td colspan=\"[0-9]*\" style=\"font-weight: bold;\"[<>]*[a-z]*\>(.*?)<\/center><\/td><\/tr>//g;
+} else {
+	$topnote = '';
+}
+
+($tmp) = $str =~ /\<p.*?footnote.*?"\>(.*?)\<\/p\>/g;
+if (defined $tmp) {
+	$footnote = "$tmp. $mycgnsep";
+	($tmp) = $str =~ /\<div class="source"\>(.*?) *\<\/div\>/g;
+	if (defined $tmp) { $footnote = "$footnote$tmp. $mycgnsep"; }
+} else {
+	$footnote = '';
+}
+
+@strs = ($str =~ /\<table(.*?)\<\/table\>/g);
+
+$k = $ntable - 1;
+
+$strr = $strs[$k];
+
+$strrr = $strr;
+$strr =~ s/\<\/p\> *\<p.*?\>/ /g;
+
+if ( $isword==1 & $strr =~ /Abbreviations/ ) {
+	($tmp) = $strr =~ /\<p class=TableNote.*?\>(.*?)\.*\<\/p\>/;
+	if (defined $tmp) { $footnote = "$tmp. $mycgnsep" }
+	($tmp) = $strr =~ /\<p class=TableNoteCxSpMiddle.*?\>(.*?)\.*\<\/p\>/;
+	if (defined $tmp) { $footnote = "$footnote$tmp. $mycgnsep" }
+	($tmp) = $strr =~ /\<p class=TableNoteCxSpLast.*?\>(.*?)\.*\<\/p\>/;
+	if (defined $tmp) { $footnote = "$footnote$tmp. $mycgnsep" }
+	$footnote =~ s/\<b\>(.*?)\<\/b\>/$1/g;
+	$footnote =~ s/\<span.*?\>(.*?)\.* *\<\/span\>/$1/g;
+}
+
+# open(FILE, '>:utf8', 'debug.txt');
+# print FILE "$strr";
+# close(FILE);
+
+if ( $isword==1 & $strrr =~ /MsoNormalCxSpMiddle/ ) {
+	@foots = ($strrr =~ /\<p class=MsoNormalCxSpMiddle.*?\>(.*?)\.*\<\/p\>/g);
+	$strr =~ s/\<p class=MsoNormalCxSpMiddle.*?\>.*?\.*\<\/p\>//g;
+	$footnote = join( ". $mycgnsep", @foots );
+	$footnote =~ s/\<b\>(.*?)\<\/b\>/$1/g;
+	$footnote =~ s/\<span.*?\>(.*?)\.* *\<\/span\>/$1/g;
+	$footnote =~ s/ *$//g;
+	$footnote = "$footnote. ";
+}
+
+@foots = ($strr =~ /\<p class=TableNote.*?\>(.*?)\.* *\<\/p\>/g);
+$tmp = scalar(@foots);
+if ( $tmp!=0 ) {
+	$footnote = join( ". $mycgnsep", @foots );
+	$footnote = "$footnote. $mycgnsep";
+	$footnote =~ s/\<b\>(.*?)\<\/b\>/$1/g;
+}
+$strr =~ s/\<p class=TableNote.*?\>(.*?)\.* *\<\/p\>//g;
+
+@foots = ($strr =~ /<tr><td colspan=\"[0-9]+\".*?><small>(.*?)<\/small><\/td><\/tr>/g);
+$tmp = scalar(@foots);
+if ( $tmp==0 ) {
+	$foot = '';
+} else {
+	$foot = join( ". $mycgnsep", @foots );
+	$foot =~ s/ $//g;
+	if ( $footnote eq "" ) {
+		$footnote = "$foot. $mycgnsep";
+	} else {
+		$footnote = "$footnote$foot. $mycgnsep";
+	}
+}
+
+@lines = ($strr =~ /\<tr.*?\>(.*?)\<\/tr\>/g);
+if ($i0==1) { @lines = @lines[1..scalar(@lines)-1]; }
+$m = scalar(@lines);
+
+$M = $m; $N = 0;
+for ($i = 0; $i < $m; $i++) {
+	@cells = ($lines[$i] =~ /\<td(.*?)\<\/td\>/g);
+	$n = scalar(@cells);
+	for ($j = 0; $j < $n; $j++) {
+		$N = max($N, $n);
+	}
+}
+for ($i = 0; $i < $M; $i++) { for ($j = 0; $j < $N; $j++) { $matrix[$i][$j] = 0; } }
+
+@out = ();
+$ii = 0;
+$mcnt = 0;
+$mind = 0;
+for ($i = 0; $i < $m; $i++) {
+	@cells = ($lines[$i] =~ /\<td(.*?)\<\/td\>/g);
+	@tmp = @cells;
+	$n = scalar(@cells);
+	@isbold = (0) x $n;
+	@istop = (0) x $n;
+	@isleft = (0) x $n;
+	@nrow = (1) x $n;
+	@ncol = (1) x $n;
+	@aligns = ('l') x $n;
+	@row = (); for ($j = 0; $j < $N; $j++) { $row[$j] = ""; }
+	$j0 = -1;
+	for ($j = 0; $j < $n; $j++) {
+		($tmp) = $cells[$j] =~ /rowspan\="*([0-9]+)"*/g;
+		if (defined $tmp) { $nrow[$j] = $tmp; }
+		
+		($tmp) = $cells[$j] =~ /colspan\="*([0-9]+)"*/g;
+		if (defined $tmp) { $ncol[$j] = $tmp; }
+		
+		($tmp) = $cells[$j] =~ /text-align\: ([a-z])[a-z]+;/g;
+		if (defined $tmp) { $aligns[$j] = $tmp; }
+		($tmp) = $cells[$j] =~ /\<(c)enter\>/g;
+		if (defined $tmp) { $aligns[$j] = $tmp; }
+		
+		($tmp) = $cells[$j] =~ /<b>/g;
+		if ($tmp) { $isbold[$j] = 1; }
+		
+		($tmp) = $cells[$j] =~ /border-top\:/g;
+		if ($tmp) { $istop[$j] = 1; }
+		
+		($tmp) = $cells[$j] =~ /border-top\:/g;
+		if ($tmp) { $istop[$j] = 1; }
+		
+		$cells[$j] =~ s/\<b\>//g;
+		$cells[$j] =~ s/\<\/b\>//g;
+		$cells[$j] =~ s/\<\center\>//g;
+		$cells[$j] =~ s/\<\/center\>//g;
+		if ($isword==0) { 
+			($cells[$j]) = $cells[$j] =~ /.*\>(.*)$/g;
+		} else {
+			$cells[$j] =~ s/.*?\<p.*?\>(.*?)\<\/p\>/$1/g;
+			$cells[$j] =~ s/.*\>(.*)$//g;
+		}		
+		$cells[$j] =~ s/\<b\>/\\textbf\{/g;
+		$cells[$j] =~ s/\<\/b\>/\}/g;
+		$cells[$j] =~ s/\<\/center\>//g;
+		if ($i==0 & $nrow[$j]>1) { $nhead = max($nhead,$nrow[$j]); }
+		if ($i<$nhead) { $isbold[$j] = 1; }
+		
+		if ($isbold[$j]) { $cells[$j] = "\\textbf\{$cells[$j]\}"; }
+		$cells[$j] =~ s/\\textbf\{ *\}//g;
+		
+		for ($y = $j0+1; $y <= $N-1; $y++) { if ($matrix[$i][$y]==0) { $j0 = $y; last; } }
+		
+		if ($nrow[$j]>1 | $ncol[$j]>1) {
+			for ($x = $i; $x <= $i+$nrow[$j]-1; $x++) { for ($y = $j0; $y <= $j0+$ncol[$j]-1; $y++) { $matrix[$x][$y] = $nrow[$j]; } }
+			if ($cells[$j] ne "" & $cells[$j] ne " ") {
+				$row[$j0] = $cells[$j];
+				if ($ncol[$j]>1) {
+					$row[$j0] = "\\multicolumn\{$ncol[$j]\}\{\$$aligns[$j]\}\{$row[$j0]\}";
+					for ($x = $j0+1; $x <= $j0+$ncol[$j]-1; $x++) {
+						$row[$x] = "myveryuniquedelete";
+					}
+				}
+				if ($nrow[$j]>1) {
+					if ($j0==0 & $i-1>=0) { $dobreak0[$i-1] = 1; }
+					if ($j0==1 & $i-1>=0) { $dobreak1[$i-1] = 1; }
+					if ($j0==2 & $i-1>=0) { $dobreak2[$i-1] = 1; }
+					if ($j0==3 & $i-1>=0) { $dobreak3[$i-1] = 1; }
+					if ($j0==4 & $i-1>=0) { $dobreak4[$i-1] = 1; }
+					$row[$j0] = "\\multirow\{$nrow[$j]\}\{\\hsize\}\{$row[$j0]\}";
+				}
+			} else {
+				$row[$j0] = "";
+			}
+		} else {
+			$row[$j0] = $cells[$j];
+			if ($aligns[$j] eq 'c') { $row[$j0] = "\\centering $row[$j0]"; }
+			if ($aligns[$j] eq 'r') { $row[$j0] = "\\raggedleft $row[$j0]"; }
+		}
+	}
+	if ($matrix[$i][0]<=1 & $i-1>=0) { $dobreak0[$i-1] = 2; }
+	$out[$i] = join(" & ", @row);
+	$out[$i] =~ s/\& myveryuniquedelete//g;
+	$out[$i] =~ s/( \& )*$//g;
+}
+$rowsum = $M;
+$colsum = $N;
+
+# open(FILE, '>:utf8', 'debug.txt');
+# for ($i = 0; $i < $M; $i++) { for ($j = 0; $j < $N; $j++) { print FILE "$matrix[$i][$j] "; } print FILE "\n"; }
+# # for ($i = 0; $i < $M; $i++) { print FILE "$row[$i] "; print FILE "\n"; }
+# close(FILE);
+
+if ( $colspec eq "" ) {
+	$align = join("", ('L') x $colsum);
+} else {
+	$align = $colspec;
+	$align =~ s/[a-z]/l/g;
+	$align =~ s/[A-Z]/L/g;
+}
+@tmp = ($align =~ /L|l/g);
+if ( scalar(@tmp) < $colsum ) { die "Not enough columns specified compared to contents of $file!"; }
+@tmp = ($align =~ /[\[\]]/g);
+if ( scalar(@tmp) > 0 ) { die "Column swapping not allowed for KIWI tables ($file)!"; }
+
+for ($i = 0; $i < $rowsum; $i++) {
+	if ($i<$rowsum-1) {
+		if ($dobreak0[$i]==1) {
+			$out[$i] = "$out[$i] \\\\ \\midrule";
+		} elsif ($dobreak0[$i]==2) {
+			$out[$i] = "$out[$i] \\\\";
+		} elsif ($dobreak1[$i]==1) {
+			$out[$i] = "$out[$i] \\\\* \\cmidrule{2-$N}";
+		} elsif ($dobreak2[$i]==1) {
+			$out[$i] = "$out[$i] \\\\* \\cmidrule{3-$N}";
+		} elsif ($dobreak3[$i]==1) {
+			$out[$i] = "$out[$i] \\\\* \\cmidrule{4-$N}";
+		} elsif ($dobreak4[$i]==1) {
+			$out[$i] = "$out[$i] \\\\* \\cmidrule{5-$N}";
+		} else {
+			if ($i>0) { $out[$i] = "$out[$i] \\\\*"; } else { $out[$i] = "$out[$i] \\\\"; }
+		}
+	} else {
+		$out[$i] = "$out[$i]";
+	}
+}
+$tmp = join("\n", @out);
+$tmp =~ s/myveryuniquelessthan/</g;
+$tmp =~ s/myveryuniquegreaterthan/>/g;
+$tmp =~ s/\\\\\** *\n*\r*$//g;
+$tmp =~ s/^ *\\\\\** *\n//g;
+$footnote =~ s/myveryuniquelessthan/</g;
+$footnote =~ s/myveryuniquegreaterthan/>/g;
+$topnote =~ s/myveryuniquelessthan/</g;
+$topnote =~ s/myveryuniquegreaterthan/>/g;
+open(FILE, '>:utf8', 'file.tmp.txt');
+print FILE "$tmp";
+if ($rowsum<2) { print FILE "\n \\\\\\multicolumn\{$colsum\}\{c\}\{No elements\}"; }
+close(FILE);
+
+$key =~ s/^ *$//g;
+$cap =~ s/^ *$//g;
+
+if ($key ne '') {
+	$keyy = $key;
+} else {
+	$keyy = $keyf;
+}
+if ($cap ne '') {
+	$capp = $cap;
+} else {
+	$capp = $caps[$k];
+	$capp =~ s/Table *X:*\.* //g;
+}
+$capp =~ s/\\gls/\\acrshort/g;
+$capp =~ s/\\Gls/\\Acrshort/g;
+$capp =~ s/\\glspl/\\acrshortpl/g;
+$capp =~ s/\\Glspl/\\Acrshortpl/g;
+#return "\\renewcommand{\\tabletopnote}{$topnote}\\renewcommand{\\htmlcommand}{\\includecsv{$nhead}{file.tmp.txt}{tex}{$align}{$key}{$capp}{}{\\dotight}{2}}\\renewcommand{\\htmlfootnote}{\\xspace{}$footnote}";
+return "\\renewcommand{\\tabletopnote}{$topnote}\\renewcommand{\\htmlcommand}{\\includecsv{$nhead}{file.tmp.txt}{tex}{$align}{$key}{$capp}{}{\\dotight}{1}}";
+}
+\perlnewcommand{\insertkiwitable}[6]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use Encoding::FixLatin qw(fix_latin);
+my $file = $_[0];
+my $ntable = $_[1];
+my $align = $_[2];
+my $label = $_[3];
+my $caption = $_[4];
+my $description = $_[5];
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = '';
+
+my $str; my $tab; my $table; my $lines; my $tmpstr; my $teststr; my $headnumkiwi; my $alignkiwi; my $captionkiwi; my $descriptionkiwi; my $tablekiwi; my $labelkiwi; my $outstr; my $kiwinotes; my $kiwiabbreviations;
+my @tabs;
+
+open $lines, '<:raw', "$file"; $str = do { local $/; <$lines> }; close $lines;
+$str =~ s/\n/myveryuniquenewline/g;
+
+#\{
+@tabs = ($str =~ /(\\pmxtextablemyveryuniquenewline\[.*?\%\@table\_end\@myveryuniquenewline\})/g); #\]
+$tab = $tabs[$ntable-1];
+$tab =~ s/myveryuniquenewline/\n/g;
+
+$tmpstr = fix_latin($tab); $teststr = $tab;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file, element $ntable. Look for <?> in PDF.\n";} $tab = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $tab = $tmpstr; }
+if ( $tab =~ /[^$asciichar]+/ ) { $tab = $tmpstr; }
+
+$align =~ s/^ *$//g;
+$label =~ s/^ *$//g;
+$caption =~ s/^ *$//g;
+$description =~ s/^ *$//g;
+
+($labelkiwi) = $file =~ /\/*([^\/]+)\.(.*?)/; $labelkiwi = "tab:$labelkiwi-$ntable";
+($headnumkiwi) = $tab =~ /\%\@headnum\_start\@\n(.+?)\n\%\@headnum\_end\@/s;
+($alignkiwi) = $tab =~ /\%\@align\_start\@\n(.+?)\n\%\@align\_end\@/s;
+($captionkiwi) = $tab =~ /\%\@caption\_start\@\n(.+?)\n\%\@caption\_end\@/s;
+($descriptionkiwi) = $tab =~ /\%\@description\_start\@\n(.+?)\n\%\@description\_end\@/s;
+($tablekiwi) = $tab =~ /\%\@table\_start\@\n(.+?)\n\%\@table\_end\@/s;
+
+($kiwiabbreviations) = $descriptionkiwi =~ /(Abbreviations:.+?)\\newline/s;
+$kiwinotes = $descriptionkiwi;
+$kiwinotes =~ s/Abbreviations:.+?\\newline//g;
+$descriptionkiwi = "\\ifitemid\\newline\\fi{}$descriptionkiwi";
+
+if ( $align ne "" ) { $alignkiwi = $align; }
+if ( $label ne "" ) { $labelkiwi = $label; };
+if ( $caption ne "" ) { $captionkiwi = $caption; }
+if ( $description ne "" ) {
+	$descriptionkiwi = $description;
+	$descriptionkiwi =~ s/insertkiwinoteshere/$kiwinotes/g;
+	$descriptionkiwi =~ s/insertkiwiabbreviationshere/$kiwiabbreviations/g;
+}
+$tablekiwi =~ s/([^\\])%/$1\\%/g;
+
+open(FILE, '>:utf8', 'file.tmp.txt');
+print FILE "$tablekiwi";
+close(FILE);
+
+$outstr = "\\kiwitextable
+[$headnumkiwi]
+{$alignkiwi}
+{$labelkiwi}
+{$captionkiwi}
+{$descriptionkiwi}
+{$file}
+{$ntable}";
+
+return "$outstr\\renewcommand{\\kiwinotes}{$kiwinotes}";
+}
+\perlnewcommand{\sowfile}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+use Encode;
+use Encoding::FixLatin qw(fix_latin);
+use Spreadsheet::Read;
+use Number::Format 'format_number';
+
+my $file = $_[0];
+
+if ( ! -e 'donotrunperl' ) {
+
+# Clean up
+unlink <sow*.tmp.txt>;
+
+# List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
+my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
+my $utf8char = '\x{00A0}\x{00A1}\x{00A2}\x{00A3}\x{00A4}\x{00A5}\x{00A6}\x{00A7}\x{00A8}\x{00A9}\x{00AA}\x{00AB}\x{00AC}\x{00AD}\x{00AE}\x{00AF}\x{00B0}\x{00B1}\x{00B2}\x{00B3}\x{00B4}\x{00B5}\x{00B6}\x{00B7}\x{00B8}\x{00B9}\x{00BA}\x{00BB}\x{00BC}\x{00BD}\x{00BE}\x{00BF}\x{00C0}\x{00C1}\x{00C2}\x{00C3}\x{00C4}\x{00C5}\x{00C6}\x{00C7}\x{00C8}\x{00C9}\x{00CA}\x{00CB}\x{00CC}\x{00CD}\x{00CE}\x{00CF}\x{00D0}\x{00D1}\x{00D2}\x{00D3}\x{00D4}\x{00D5}\x{00D6}\x{00D7}\x{00D8}\x{00D9}\x{00DA}\x{00DB}\x{00DC}\x{00DD}\x{00DE}\x{00DF}\x{00E0}\x{00E1}\x{00E2}\x{00E3}\x{00E4}\x{00E5}\x{00E6}\x{00E7}\x{00E8}\x{00E9}\x{00EA}\x{00EB}\x{00EC}\x{00ED}\x{00EE}\x{00EF}\x{00F0}\x{00F1}\x{00F2}\x{00F3}\x{00F4}\x{00F5}\x{00F6}\x{00F7}\x{00F8}\x{00F9}\x{00FA}\x{00FB}\x{00FC}\x{00FD}\x{00FE}\x{00FF}\x{0100}\x{0101}\x{0102}\x{0103}\x{0104}\x{0105}\x{0106}\x{0107}\x{0108}\x{0109}\x{010A}\x{010B}\x{010C}\x{010D}\x{010E}\x{010F}\x{0110}\x{0111}\x{0112}\x{0113}\x{0114}\x{0115}\x{0116}\x{0117}\x{0118}\x{0119}\x{011A}\x{011B}\x{011C}\x{011D}\x{011E}\x{011F}\x{0120}\x{0121}\x{0122}\x{0123}\x{0124}\x{0125}\x{0128}\x{0129}\x{012A}\x{012B}\x{012C}\x{012D}\x{012E}\x{012F}\x{0130}\x{0131}\x{0132}\x{0133}\x{0134}\x{0135}\x{0136}\x{0137}\x{0139}\x{013A}\x{013B}\x{013C}\x{013D}\x{013E}\x{0141}\x{0142}\x{0143}\x{0144}\x{0145}\x{0146}\x{0147}\x{0148}\x{014A}\x{014B}\x{014C}\x{014D}\x{014E}\x{014F}\x{0150}\x{0151}\x{0152}\x{0153}\x{0154}\x{0155}\x{0156}\x{0157}\x{0158}\x{0159}\x{015A}\x{015B}\x{015C}\x{015D}\x{015E}\x{015F}\x{0160}\x{0161}\x{0162}\x{0163}\x{0164}\x{0165}\x{0168}\x{0169}\x{016A}\x{016B}\x{016C}\x{016D}\x{016E}\x{016F}\x{0170}\x{0171}\x{0172}\x{0173}\x{0174}\x{0175}\x{0176}\x{0177}\x{0178}\x{0179}\x{017A}\x{017B}\x{017C}\x{017D}\x{017E}\x{0192}\x{01CD}\x{01CE}\x{01CF}\x{01D0}\x{01D1}\x{01D2}\x{01D3}\x{01D4}\x{01E2}\x{01E3}\x{01E6}\x{01E7}\x{01E8}\x{01E9}\x{01EA}\x{01EB}\x{01F0}\x{01F4}\x{01F5}\x{0218}\x{0219}\x{021A}\x{021B}\x{0232}\x{0233}\x{02C6}\x{02C7}\x{02D8}\x{02DC}\x{02DD}\x{0E3F}\x{1E02}\x{1E03}\x{1E20}\x{1E21}\x{200C}\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2015}\x{2016}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{2020}\x{2021}\x{2022}\x{2026}\x{2030}\x{2031}\x{2039}\x{203A}\x{203B}\x{203D}\x{2044}\x{204E}\x{2052}\x{20A1}\x{20A4}\x{20A6}\x{20A9}\x{20AB}\x{20AC}\x{20B1}\x{2103}\x{2116}\x{2117}\x{211E}\x{2120}\x{2122}\x{2126}\x{2127}\x{212E}\x{2190}\x{2191}\x{2192}\x{2193}\x{2329}\x{232A}\x{2422}\x{2423}\x{25E6}\x{25EF}\x{266A}';
+my $cuschar = ''; my $tmpstr; my $teststr;
+
+my $book; my $sheet; my $sheetn; my $nrow; my $ncol; my $i; my $j; my $v; my $vp; my $vpp; my $dopart; my $andstr; my $task; my $subtask; my $name; my $key; my $keyout; my $num; my $subnum; my $begstr; my $endstr; my $itemstr; my $subitemstr; my $str; my $optstr; my $authorstr; my $outstr; my $icost;
+my @letter = 'a' .. 'z';
+
+$book = ReadData($file);
+
+$sheet = $book->[$book->[0]->{'sheet'}->{'Lookup'}];
+my $ver = 1*$sheet->{'cell'}[2][2];
+
+$sheet = $book->[$book->[0]->{'sheet'}->{'Info'}];
+my $client1 = $sheet->{'cell'}[2][12];
+my $client2 = $sheet->{'cell'}[2][13];
+my $cognigen1 = $sheet->{'cell'}[2][14];
+my $cognigen2 = $sheet->{'cell'}[2][15];
+$client1 =~ s/\n/\\phantom\{\}\\newline\n/g; $client1 =~ s/(\\phantom\{\}\\newline\n)+ *$//g;
+$client2 =~ s/\n/\\phantom\{\}\\newline\n/g; $client2 =~ s/(\\phantom\{\}\\newline\n)+ *$//g;
+$cognigen1 =~ s/\n/\\phantom\{\}\\newline\n/g; $cognigen1 =~ s/(\\phantom\{\}\\newline\n)+ *$//g;
+$cognigen2 =~ s/\n/\\phantom\{\}\\newline\n/g; $cognigen2 =~ s/(\\phantom\{\}\\newline\n)+ *$//g;
+$authorstr = "\\clientauthor{\n$client1\n}\n\\clientauthor{\n$client2\n}\n\\docauthor{\n$cognigen1\n}\n\\docauthor{\n$cognigen2\n}";
+$authorstr =~ s/\n\\clientauthor\{\n*\}//g;
+$authorstr =~ s/\n\\docauthor\{\n*\}//g;
+# $outstr = "\\doctype{$sheet->{'cell'}[2][2]}\n\\doctitle{$sheet->{'cell'}[2][3]}\n\\docdate{$sheet->{'cell'}[2][4]}\n\\docstate{$sheet->{'cell'}[2][5]}\n\\drug{$sheet->{'cell'}[2][6]}\n\\brand{$sheet->{'cell'}[2][7]}\n\\indication{$sheet->{'cell'}[2][8]}\n\\clientlong{$sheet->{'cell'}[2][9]}\n\\client{$sheet->{'cell'}[2][10]}\n\\refmsa{$sheet->{'cell'}[2][11]}\n$authorstr";
+$outstr = "";
+if ($sheet->{'cell'}[2][2] ne "") {$outstr = "$outstr\\doctype{$sheet->{'cell'}[2][2]}\n";}
+if ($sheet->{'cell'}[2][3] ne "") {$outstr = "$outstr\\doctitle{$sheet->{'cell'}[2][3]}\n";}
+if ($sheet->{'cell'}[2][4] ne "") {$outstr = "$outstr\\docdate{$sheet->{'cell'}[2][4]}\n";}
+if ($sheet->{'cell'}[2][5] ne "") {$outstr = "$outstr\\docstate{$sheet->{'cell'}[2][5]}\n";}
+if ($sheet->{'cell'}[2][6] ne "") {$outstr = "$outstr\\drug{$sheet->{'cell'}[2][6]}\n";}
+if ($sheet->{'cell'}[2][7] ne "") {$outstr = "$outstr\\brand{$sheet->{'cell'}[2][7]}\n";}
+if ($sheet->{'cell'}[2][8] ne "") {$outstr = "$outstr\\indication{$sheet->{'cell'}[2][8]}\n";}
+if ($sheet->{'cell'}[2][9] ne "") {$outstr = "$outstr\\clientlong{$sheet->{'cell'}[2][9]}\n";}
+if ($sheet->{'cell'}[2][10] ne "") {$outstr = "$outstr\\client{$sheet->{'cell'}[2][10]}\n";}
+if ($sheet->{'cell'}[2][11] ne "") {$outstr = "$outstr\\refmsa{$sheet->{'cell'}[2][11]}\n";}
+$outstr = "$outstr$authorstr";
+
+$outstr =~ s/\\&/&/g; $outstr =~ s/&/\\&/g;
+$outstr =~ s/\\\_/\_/g; $outstr =~ s/\_/\\\_/g;
+$outstr =~ s/\\%/\%/g; $outstr =~ s/%/\\%/g;
+$outstr =~ s/\\#/#/g; $outstr =~ s/#/\\#/g;
+open(FILE, '>:utf8', 'sowinfo.tmp.txt');
+print FILE "$outstr";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Budget'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+$task = ""; $subtask = ""; $begstr = ""; $endstr = ""; $itemstr = ""; $subitemstr = ""; $vp = "";
+$num = 1; $subnum = 0;
+$str = "$str\\begin{task}\n";
+for $i (2..$nrow-2) {
+	$v = $sheet->{'cell'}[1][$i]; if ( !defined $v ) { $v = ""; }
+	$vp = $sheet->{'cell'}[2][$i]; if (! defined $vp) { $vp = ""; }
+	$vpp = $sheet->{'cell'}[3][$i]; if (! defined $vpp) { $vpp = ""; }
+	if (($v eq "") & ($vp eq "") & ($vpp eq "")) {} else {
+		if (($v eq "") & ($vp eq "")) { $dopart = 1; } else { $dopart = 0; }
+		
+		$begstr = ""; $endstr = "";
+		$vp = $sheet->{'cell'}[5][$i]; if (! defined $vp) { $vp = ""; }
+		if ($vp eq "T") {
+			$optstr = " (Optional)";
+		} else {
+			$optstr = "";
+		}
+		
+		$v = $sheet->{'cell'}[1][$i]; if ( !defined $v ) { $v = ""; }
+		if ( $v ne "" ) {
+			$task = $num;
+			$num = $num + 1;
+			$itemstr = "\\item ";
+		} else {
+			$itemstr = "";
+		}
+		
+		$v = $sheet->{'cell'}[2][$i]; if ( !defined $v ) { $v = ""; }
+		if ( $v ne "" ) {
+			if ( $subnum==0 ) {
+				$begstr = "\t\\begin{task}\n";
+			} else {
+				$begstr = "";
+			}
+			$subtask = $letter[$subnum];
+			$subnum = $subnum + 1;
+			$subitemstr = "\t\t\\item ";
+		} else {
+			if ( $subnum > 0 ) {
+				$endstr = "\t\\end{task}\n";
+			} else {
+				$endstr = "";
+			}
+			$subtask = "";
+			$subnum = 0;
+			$subitemstr = "";
+		}
+		
+		$v = $sheet->{'cell'}[3][$i]; if ( !defined $v ) { $v = ""; }
+		$v =~ s/[ \.]*$//g;
+		if ( $v ne "" ) {
+			$name = "$v$optstr.";
+		} else {
+			$name = "";
+		}
+		if ($dopart==1) {
+			$itemstr = "\\item[] ";
+			$name = "$v";
+		}
+		
+		$v = $sheet->{'cell'}[4][$i];
+		if ( !defined $v ) {
+			$v = "";
+			$key = $v;
+			$keyout = $v;
+		} else {
+			$key = $v;
+			$keyout = "\\makeatletter\\g\@addto\@macro\\sowkeys{$v¤}\\makeatother";
+		}
+		$name =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+		$str = "$str$endstr$itemstr$begstr$subitemstr";
+		
+		if ($dopart==1) {
+			if ($i>2) { $str = "$str\n\\item[] "; }
+			$str = "$str\\hspace{-0.6in}\\textbf{\\textit{$name}}\n";#\\item[]\n
+		} else {
+			$str = "$str\\textbf{$name} $keyout\\sowdescoutput{\\sowdescriptionkeys}{\\sowdescriptionfiles}{$key}\n";
+		}
+	}
+}
+if ( $subnum > 0 ) {
+	$endstr = "\t\\end{task}\n";
+} else {
+	$endstr = "";
+}
+$str = "$str$endstr\\end{task}";
+# $str =~ s/\\begin *{ *itemize *} *[^\[]/\\begin{itemize}[noitemsep,topsep=0pt]/g;
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/\\item\[\] *\n *\\item\[\] *\\hspace\{-0.6in\}\\textbf\{\\textit\{.+?\}\} *\n *\\end\{task\}/\\end\{task\}/g;
+open(FILE, '>:utf8', 'sowtasks.tmp.txt');
+print FILE "\n\\setlist[enumerate,1]{left=0in..0.3in}
+\\setlist[itemize,1]{left=0in..0.3in}\n$str\n\\setlist[enumerate,1]{left=0.3in..0.6in}
+\\setlist[itemize,1]{left=0.3in..0.6in}\n";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Budget'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+$task = ""; $subtask = ""; $vp = "";
+$num = 1; $subnum = 0;
+for $i (1..($nrow)) {
+	$v = $sheet->{'cell'}[1][$i]; if ( !defined $v ) { $v = ""; }
+	$vp = $sheet->{'cell'}[2][$i]; if (! defined $vp) { $vp = ""; }
+	$vpp = $sheet->{'cell'}[3][$i]; if (! defined $vpp) { $vpp = ""; }
+	if (($v eq "") & ($vp eq "") & ($vpp eq "")) {} else {
+		if (($v eq "") & ($vp eq "")) { $dopart = 1; } else { $dopart = 0; }
+		for $j (1..($ncol)) {
+			$v = $sheet->{'cell'}[$j][$i];
+			$vp = $sheet->{'cell'}[5][$i]; if (! defined $vp) { $vp = ""; }
+			if ($j < $ncol) { $andstr = " myveryuniqueand "; } else { $andstr = ""; }
+			if (defined $v) {
+				if ($v =~ /^[-0-9\.]+$/) {
+					if (($i>1) & ($j==$ncol)) {
+						$v = format_number(sprintf("%.0f", $v));
+						$v = "\\\$$v";
+						$v =~ s/\\\$-(.+)/\(\\\$$1\)/g;
+					} else {
+						$v = sprintf("%.1f", $v);
+					}
+				}
+				if ($i==1) { $v = "\\textbf{$v}"; }
+				
+				if ( ($i>1) & ($i<$nrow-1) ) {
+					if ( ($j==1) & (defined $v) & ($v ne "") ) {
+						$task = $num;
+						$num = $num + 1;
+						$v = "\\midrule $task.";
+					}
+					if ( ($j==1) & ($dopart==1) ) { $v = "\\midrule $v"; }
+					if ( ($j==3) & ($dopart==1) ) { $v = "\\textbf{\\textit{$v}}"; }
+					if ( $j==2 ) {
+						if ( (defined $v) & ($v ne "") ) {
+							$subtask = $letter[$subnum];
+							$subnum = $subnum + 1;
+							$v = "$subtask";
+						} else {
+							$subtask = "";
+							$subnum = 0;
+							$v = "";
+						}
+					}
+					if ( ($j==3) & ($subtask ne "") ) {
+						$v = "$subtask.\\hangindent=\\hanglength\\hspace{0.5cm}$v";
+						$subtask = "";
+					}
+				}
+				if ($ver <= 1) {
+					if ( ($i>=$nrow-1) & (($j==3) | ($j==$ncol)) & ($v ne "") ) { $v = "\\textbf{$v}"; }
+				} else {
+					if ( ($i>=$nrow-2) & (($j==3) | ($j==$ncol)) & ($v ne "") ) { $v = "\\textbf{$v}"; }
+				}
+				if ( ($j==3) & ($vp eq "T") ) {
+					$optstr = " (Optional)";
+				} else {
+					$optstr = "";
+				}
+				$v =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+				$str = "$str$v$optstr$andstr";
+			} else {
+				$str = "$str$andstr";
+			}
+		}
+		if ($i < $nrow) { $str = "$str \\\\\n"; }
+		if ($ver <= 1) {
+			if ($i >= $nrow-1) { $str = "$str\\midrule"; }
+			if ($i eq $nrow-2) { $str = "$str\\midrule"; }
+		} else {
+			if ($i >= $nrow-2) { $str = "$str\\midrule"; }
+			if ($i eq $nrow-3) { $str = "$str\\midrule"; }
+		}
+	}
+}
+$str =~ s/\n\\midrule( & )+ \\\\\n/\n/g;
+$str =~ s/\\midrule *\\midrule +/\\midrule /g;
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/myveryuniqueand/&/g;
+open(FILE, '>:utf8', 'sowbudget.tmp.txt');
+print FILE "$str\n";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Schedule'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+for $i (1..($nrow)) {
+	for $j (1..($ncol)) {
+		$v = $sheet->{'cell'}[$j][$i];
+		if ($j < $ncol) { $andstr = " myveryuniqueand "; } else { $andstr = ""; }
+		if (defined $v) {
+			if ($v =~ /^[0-9\.]+$/) {
+				if (($i>1) & ($j==4)) {
+					$v = format_number(sprintf("%.0f", $v));
+					$v = "\\\$$v";
+				} else {
+					$v = sprintf("%.0f%%", $v*100);
+				}
+			}
+			if ($i==1) { $v = "\\textbf{$v}"; }
+			if ( ($i==$nrow) & (($j==1) | ($j==$ncol))) { $v = "\\textbf{$v}"; }
+			$v =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+			$str = "$str$v$andstr";
+		} else {
+			$str = "$str$andstr";
+		}
+	}
+	if ($i < $nrow) { $str = "$str \\\\\\midrule\n"; }
+}
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/myveryuniqueand/&/g;
+open(FILE, '>:utf8', 'sowschedule.tmp.txt');
+print FILE "$str\n";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Rates'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+for $i (1..($nrow)) {
+	for $j (1..($ncol)) {
+		$v = $sheet->{'cell'}[$j][$i];
+		if ($j < $ncol) { $andstr = " myveryuniqueand "; } else { $andstr = ""; }
+		if (defined $v) {
+			$v =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+			if (($i>1) & ($j==2)) {
+				$v = format_number(sprintf("%.0f", $v));
+				$v = "\\\$$v";
+			}
+			if ($i==1) { $v = "\\textbf{$v}"; }
+			$str = "$str$v$andstr";
+		} else {
+			$str = "$str$andstr";
+		}
+	}
+	if ($i < $nrow) { $str = "$str \\\\\\midrule\n"; }
+}
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/myveryuniqueand/&/g;
+open(FILE, '>:utf8', 'sowrates.tmp.txt');
+print FILE "$str\n";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Studies'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+for $i (1..($nrow)) {
+	for $j (1..($ncol)) {
+		$v = $sheet->{'cell'}[$j][$i];
+		if ($j < $ncol) { $andstr = " myveryuniqueand "; } else { $andstr = ""; }
+		if (defined $v) {
+			$v =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+			if ($i==1) { $v = "\\textbf{$v}"; }
+			$str = "$str$v$andstr";
+		} else {
+			$str = "$str$andstr";
+		}
+	}
+	if ($i < $nrow) { $str = "$str \\\\\\midrule\n"; }
+}
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/myveryuniqueand/&/g;
+open(FILE, '>:utf8', 'sowstudies.tmp.txt');
+print FILE "$str\n";
+close(FILE);
+
+$str = "";
+$sheet = $book->[$book->[0]->{'sheet'}->{'Models'}];
+$nrow = $sheet->{'maxrow'}; $ncol = $sheet->{'maxcol'};
+for $i (1..($nrow)) {
+	for $j (1..($ncol)) {
+		$v = $sheet->{'cell'}[$j][$i];
+		if ($j < $ncol) { $andstr = " myveryuniqueand "; } else { $andstr = ""; }
+		if (defined $v) {
+			$v =~ s/\n/\\phantom\{\}\\newline\{\}/g;
+			if ($i==1) { $v = "\\textbf{$v}"; }
+			$str = "$str$v$andstr";
+		} else {
+			$str = "$str$andstr";
+		}
+	}
+	if ($i < $nrow) { $str = "$str \\\\\\midrule\n"; }
+}
+$tmpstr = fix_latin($str); $teststr = $str;
+$tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -e 'fixfiles' ) {print STDERR "LaTeX Warning: Unsupported symbol(s) in $file. Look for <?> in PDF.\n";} $str = $tmpstr; }
+eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { $str = $tmpstr; }
+if ( $str =~ /[^$asciichar]+/ ) { $str = $tmpstr; }
+$str =~ s/\\&/&/g; $str =~ s/&/\\&/g;
+$str =~ s/\\%/\%/g; $str =~ s/%/\\%/g;
+$str =~ s/\\#/#/g; $str =~ s/#/\\#/g;
+$str =~ s/myveryuniqueand/&/g;
+open(FILE, '>:utf8', 'sowmodels.tmp.txt');
+print FILE "$str\n";
+close(FILE);
+
+}
+
+return "\\newcommand{\\SoWTaskList}{\\input{sowtasks.tmp.txt}}\\newcommand{\\SoWBudget}{sowbudget.tmp.txt}\\newcommand{\\SoWRates}{sowrates.tmp.txt}\\newcommand{\\SoWSchedule}{sowschedule.tmp.txt}\\newcommand{\\SoWStudies}{sowstudies.tmp.txt}\\newcommand{\\SoWModels}{sowmodels.tmp.txt}\\input{sowinfo.tmp.txt}";
+}
+\perlnewcommand{\sowdescinput}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $key = $_[0];
+my $desc = $_[1];
+my $num = $_[2];
+
+my $file = "sowdescfile$num.tmp.txt";
+ 
+open(FILE, '>:utf8', "$file");
+print FILE "$desc";
+close(FILE);
+
+my $str = "\\makeatletter\\g\@addto\@macro\\sowdescriptionkeys{$key¤}\\g\@addto\@macro\\sowdescriptionfiles{$file¤}\\makeatother";
+
+return "$str";
+}
+\perlnewcommand{\sowdescoutput}[3]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $key = $_[0];
+my $file = $_[1];
+my $key0 = $_[2];
+
+$key =~ s/¤$//g;
+$file =~ s/¤$//g;
+
+my @keys = split '¤', $key;
+my @files = split '¤', $file;
+
+my $out; my $idx; my $fh; my $str;
+if ( grep( /^$key0$/, @keys ) ) {
+	($idx) = grep { $keys[$_] ~~ $key0 } 0 .. $#keys;
+	# open $fh, '<:raw', "$files[$idx]"; $str = do { local $/; <$fh> }; close $fh; $out = "$str";
+	$out = "\\input{$files[$idx]}";
+} else {
+	$out = "\\textcolor{red}{DESCRIPTION KEY \"$key0\" NOT DEFINED IN DOCUMENT.}";
+}
+
+return "$out";
+}
+\perlnewcommand{\kiwialltables}[1]{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $pth = $_[0];
+
+my $str; my $lines; my $tab; my $i; my $j; my $k;
+my @tabs; my @files;
+
+@files = glob "$pth/*.tex";
+open(FILE, '>:utf8', 'kiwialltables.txt');
+for ($i = 0; $i < @files; $i++) {
+open $lines, '<:raw', "$files[$i]"; $str = do { local $/; <$lines> }; close $lines;
+$str =~ s/\n/myveryuniquenewline/g;
+#\{
+@tabs = ($str =~ /(\\pmxtextablemyveryuniquenewline\[.*?\%\@table\_end\@myveryuniquenewline\})/g); #\]
+$k = 1;
+for ($j = 0; $j < @tabs; $j++) {
+print FILE "
+\\kiwitable
+{$files[$i]} % filename
+{$k} % table number in file
+{} % alignment; {} defaults to value from file
+{} % label; {} defaults to \"filename-1\" (w/o file extension)
+{} % caption; {} defaults to value from file
+{} % description; {} defaults to description from file
+
+\\clearpage
+";
+$k = $k + 1;
+}
+}
+close(FILE);
+return;
+}
+\perlnewcommand{\loadrspversion}{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+my $str; my $lines;
+my $file = '/rsp-build-info';
+
+if (-e $file) {
+	open $lines, '<:raw', $file; $str = do { local $/; <$lines> }; close $lines;
+	$str =~ s/\r*\n*//g;
+	$str =~ s/ +/ /g;
+	return "\\newcommand{\\rspversion}{$str}";
+} else {
+	return;
+}
+}
+\perlnewcommand{\makedie}{
+use strict;
+use warnings;
+use open OUT => ':raw';
+binmode(STDOUT, ":utf8");
+
+unlink 'batch.txt';
+open(FILE, '>:utf8', 'die.txt');
+close(FILE);
+
+return;
+}
+
+\else
+
+\newcommand{\readhtmllabel}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\readhtmlinfo}[5]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\kiwitable}[6]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\sowfile}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\sowdesc}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\sowdescoutput}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\kiwialltables}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\loadrspversion}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+
+\fi
+
+%%% Print the version stamp for RSP if present to the .pdf file
+\loadrspversion
+\ifdefined\rspversion\hypersetup{pdfproducer={\rspversion}}\fi
+
+%%% Check if user trying to use F12 outside of RSP
+% \ifsow\else\IfFileExists{batch.txt}{\IfFileExists{/rsp-build-info}{}{\makedie\PackageError{Cognigen}{Finalized compilation (F12) only allowed on Rstudio Server!}{}}}{}\fi
+
+\endinput

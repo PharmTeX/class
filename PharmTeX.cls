@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
 %%% Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2021/02/25}
-\def\pharmtexversion{2.2}
+\def\pharmtexdate{2021/04/28}
+\def\pharmtexversion{2.3}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -159,6 +159,12 @@
 \DeclareOption{nodraftmode}{\draftmodefalse\cdraftmodetrue}
 \DeclareOption{draftmode}{\draftmodetrue\cdraftmodetrue}
 
+%%% Option for qc
+\newif\ifqc\qcfalse
+\newif\ifcqc\cqcfalse
+\DeclareOption{noqc}{\qcfalse\cqctrue}
+\DeclareOption{qc}{\qctrue\cqctrue}
+
 %%% Option for fasttmode
 \newif\iffast\fastfalse
 \newif\ifcfast\cfastfalse
@@ -291,6 +297,15 @@
 \ifdraftmode
 	\renewcommand{\Watermark}{Draft}
 	\ifcwatermark\else\watermarktrue\fi
+	\ifcglosshyper\else\glosshypertrue\fi
+	\ifcwebhyper\else\webhypertrue\fi
+	\ifcitemhyper\else\itemhypertrue\fi
+	\ifcartihyper\else\artihypertrue\fi
+	\ifcsamepagelinks\else\samepagelinkstrue\fi
+\fi
+
+%%% Settings for qc
+\ifqc
 	\ifcglosshyper\else\glosshypertrue\fi
 	\ifcwebhyper\else\webhypertrue\fi
 	\ifcitemhyper\else\itemhypertrue\fi
@@ -961,6 +976,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \renewcommand{\csvtable}{}
 \section*{\centering\numberlistname}
 \phantomsection
+\addtocounter{numberappendix}{-1}
 \hypertarget{numberlisttarget}{}
 \hypertarget{itemnumber\thelonitemid}{}
 \label{numberlist}
@@ -1005,6 +1021,7 @@ ITEM \newunderscorename{} NOT FOUND%
 %\begin{landscape}
 \section*{\centering\itemlistname}
 \phantomsection
+\addtocounter{numberappendix}{-1}
 \hypertarget{itemlisttarget}{}
 \label{itemlist}
 \addtocontents{toc}{\@backslashchar contentsline {section}{\itemlistname}{\@backslashchar pageref{itemlist}}{itemlisttarget}}
@@ -1443,7 +1460,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \renewcommand\thelstlisting{A\arabic{section}.\arabic{lstlisting}}
 \renewcommand{\citelocation}{A\arabic{section}.}
 
-\ifnum\totvalue{numberappendix}>1
+\ifnum\totvalue{numberappendix}>0
 \bookmark[level=0,dest=app]{APPENDICES}
 \fi
 
@@ -2480,16 +2497,6 @@ ITEM \GlsFile.tex NOT FOUND.
 \clearpage
 \fi
 
-% Insert List of Appendices
-\ifloa\ifnum\totvalue{numberappendix}>1
-\hypertarget{loa}{}
-\renewcommand{\loabookmark}{\bookmark[level=1,dest=loa]{LIST OF APPENDICES}}
-\phantomsection\label{loalabel}
-\addtocontents{toc}{\protect\contentsline{section}{LIST OF APPENDICES}{\protect\pageref{loalabel}}{loa}}
-\listofappendix
-\clearpage
-\fi\fi
-
 \ifloftfirst\else
 \coverbookmark
 \sigbookmark
@@ -2498,7 +2505,6 @@ ITEM \GlsFile.tex NOT FOUND.
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
 \tocbookmark
-\loabookmark
 \fi
 
 % Insert List of Tables
@@ -2517,6 +2523,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 %\fi
 
+% Insert List of Figures
 \iflof
 \iflot\iflofcl\clearpage\fi\fi
 %% The code below (commented out) will only insert LoF if any figures are present in document
@@ -2533,6 +2540,17 @@ ITEM \GlsFile.tex NOT FOUND.
 \fi
 %\fi
 
+% Insert List of Appendices
+\ifloa\ifnum\totvalue{numberappendix}>0
+\clearpage
+\hypertarget{loa}{}
+\renewcommand{\loabookmark}{\bookmark[level=1,dest=loa]{LIST OF APPENDICES}}
+\phantomsection\label{loalabel}
+\addtocontents{toc}{\protect\contentsline{section}{LIST OF APPENDICES}{\protect\pageref{loalabel}}{loa}}
+\listofappendix
+\loabookmark
+\fi\fi
+
 % Insert glossary here if not synonly mode
 \ifsynonly\else
 \insertglossary
@@ -2547,7 +2565,6 @@ ITEM \GlsFile.tex NOT FOUND.
 \synbookmark
 \ifsynopsis\addsynsec{none}{}{}\cussyncmd\fi
 \tocbookmark
-\loabookmark
 \fi
 \ifsynonly\else\glsbookmark\fi
 
