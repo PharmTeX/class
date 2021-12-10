@@ -183,7 +183,7 @@ my $artid = $_[0];
 my $docopy = $_[1];
 if ($artid =~ /RA[0-9]+/) {
 	opendir D, '.';
-	my @filelist = grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D)));
+	my @filelist = grep(/.{1,}\.(?!paz)/i, grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D))));
 	closedir D;
 	my $nl = scalar @filelist;
 	if ($nl > 0) {return "\\renewcommand{\\ioutput}{0}\\renewcommand{\\fname}{$filelist[0]}";}
@@ -850,13 +850,14 @@ my $i;
 sub uniq { my %seen; grep !$seen{$_}++, @_; }
 my $itemnumbers = "$itemartifact;$itemrfile";
 $itemnumbers =~ s/ *//g;
+$itemnumbers =~ s/^;//g;
 my @itemnum = split ";", $itemnumbers;
 
 # Artifacts
 my @af = split ",", $afiles; my $na = scalar @af;
 my $nl; my @aff; my @tmpfile; my @isaf = ("1") x $na;
 for ($i=0; $i <= $na-1; $i++) { @tmpfile = glob $af[$i] . "_*"; $aff[$i] = @tmpfile[0]; }
-for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID \\artiref\{$af[$i]\}"; }
+for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID $af[$i]"; }
 
 # Inline/R files
 my @rf = split "myveryuniqueseparator", $rfiles; @rf = @rf[1..$#rf]; my @rff;
@@ -871,7 +872,7 @@ for ($i=0; $i <= $nr-1; $i++) {
 	($ext) = $rff[$i] =~ /^.+\.([^.]+)$/;
 	($name) = $rff[$i] =~ /(^.+)\.[^.]+$/;
 	if ($ext eq "pdf") {
-		$delfiles[$i] = "\"$name.pax\", \"$name.pay\"";
+		$delfiles[$i] = "\"$name.pax\", \"$name.pay\", \"$name.paz\"";
 	}
 }
 my $allfile = join( ', ', @delfiles );
@@ -929,14 +930,13 @@ if ($dotime==1) {
 # Create table body
 if ($nr > 0) {
 	for ($i=0; $i <= $nr-1; $i++) {
-		# $rf[$i] =~ s/\//}\/\\detokenize{/g;
 		if ($isaf[$i] eq "1") { $iid = "$rf[$i]"; }
 		else { $iid = "$rf[$i]"; }
 		
 		if ($i==0) {
-			$newlines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\itemreref{$items[$i]} & \\path{$iid} & $times[$i]";
+			$newlines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\itemreref{$itemnum[$i]} & \\path{$iid} & $times[$i]";
 		} else {
-			$newlines[$i] = "\\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$items[$i]}{}}\\itemreref{$items[$i]} & \\path{$iid} & $times[$i]";
+			$newlines[$i] = "\\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\itemreref{$itemnum[$i]} & \\path{$iid} & $times[$i]";
 		}
 	}
 }
@@ -1164,7 +1164,7 @@ while ($data =~ m/BookmarkTitle: (.*)\nBookmarkLevel: (\d*\.?\d+)\nBookmarkPageN
 	if (($level <= 5) && ($doprint) && ($douse)) {$pdfmakecontents = "$pdfmakecontents\\addtocontents{toc}{\\\@backslashchar contentsline {$sec}{$stringc}{$cpage}{pmxapp$section.$page}}\n";}
 }
 
-my $mkfile = 0; my $file = "$fbase.pay";
+my $mkfile = 0; my $file = "$fbase.paz";
 my $str = "\\renewcommand{\\pdfmakeinclude}{$pdfmakeinclude}\\renewcommand{\\pdfmakebookmark}{$pdfmakebookmark}\\renewcommand{\\pdfmakecontents}{$pdfmakecontents}";
 
 my $tmpstr = fix_latin($str); my $teststr = $str;
