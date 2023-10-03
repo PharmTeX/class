@@ -1,5 +1,5 @@
 %%% PharmTeX Package, part of the PharmTeX platform.
-%%% Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 %%% Define PharmTeX Package for LaTeX
@@ -52,10 +52,12 @@
     \endhead
     \endfoot}%
 }
-\newcommand{\glsfile}[1]{\checkfile{#1}{GlsFile}\IfFileExists{\GlsFile.tex}{\ifmathimg\fixgls{\GlsFile}{1}\else\fixgls{\GlsFile}{0}\fi}{}}
+\newcommand{\glsfile}[1]{\checkartifact{#1}\edef\glossaryitemnumber{\theitemnumber}\ifx\fname\empty\checkfile{#1}{GlsFile}{\artiregex}\else\checkfile{\fname}{GlsFile}{\artiregex}\fi\IfFileExists{\GlsFile.tex}{\ifmathimg\fixgls{\GlsFile}{1}\else\fixgls{\GlsFile}{0}\fi}{}}
+% \newcommand{\glsfile}[1]{\checkfile{#1}{GlsFile}{\artiregex}\IfFileExists{\GlsFile.tex}{\ifmathimg\fixgls{\GlsFile}{1}\else\fixgls{\GlsFile}{0}\fi}{}}
 \ifglosshyper
 \else
 \glsdisablehyper
+\renewcommand*{\glsdohyperlink}[2]{\@glsshowtarget{#1}#2}
 \fi
 
 %%% Define \ACRLONG command to allow uppercase of all first letters
@@ -172,7 +174,7 @@
 \ifnum\dopharmtexperl=1
 
 \RequirePackage{perltex}
-\perlnewcommand{\findartifact}[2]{
+\perlnewcommand{\findartifact}[3]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -181,52 +183,66 @@ use PDF::API2;
 use File::Copy qw(copy);
 my $artid = $_[0];
 my $docopy = $_[1];
-if ($artid =~ /RA[0-9]+/) {
-	opendir D, '.';
-	my @filelist = grep(/.{1,}\.(?!paz)/i, grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D))));
-	closedir D;
-	my $nl = scalar @filelist;
-	if ($nl > 0) {return "\\renewcommand{\\ioutput}{0}\\renewcommand{\\fname}{$filelist[0]}";}
-	else {return "\\renewcommand{\\ioutput}{0}\\let\\fname\\empty";}
+my $artiregex = $_[2];
+
+my $fname = '';
+my $pth = '';
+my $ext = '';
+my $isrfile = 1;
+my @filelist; my $nl = 0;
+if ($artid =~ /${artiregex}/) {
+	if (($docopy==1) && (-e 'pmxinputfiles')) {
+		opendir D, 'pmxinputfiles';
+		@filelist = grep(/.{1,}\.(?!paz)/i, grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D))));
+		closedir D;
+		$nl = scalar @filelist;
+	}
+	if ($nl > 0) {} else {
+		opendir D, '.';
+		@filelist = grep(/.{1,}\.(?!paz)/i, grep(/.{1,}\.(?!pay)/i, grep(/.{1,}\.(?!pax)/i, grep(/$artid\_.{1,}/i, readdir D))));
+		closedir D;
+		$nl = scalar @filelist;
+	}
+	if ($nl > 0) {$artid = $filelist[0];}
+	$isrfile = 0;
 }
-else {
-	my ($fname) = $artid =~ /\/*([^\/]+?)$/;
-	my ($pth) = $artid =~ /(.*)\//;
-	my ($ext) = $artid =~ /\.([^.]+?)$/;
+my ($fname) = $artid =~ /\/*([^\/]+?)$/;
+my ($pth) = $artid =~ /(.*)\//;
+my ($ext) = $artid =~ /\.([^.]+?)$/;
+if (defined $pth) {
 	$pth =~ s/^\//s-/g;
 	$pth =~ s/\//-/g;
 	$pth =~ s/([a-zA-Z])\:/$1/g;
 	$pth =~ s/\./d/g;
-	if (length($pth)>0) {
-		$fname = "pmxinputfiles/$fname---$pth.$ext";
-	} else {
-		$fname = "pmxinputfiles/$fname";
-	}
-	if ($docopy==1) {
-		if (!-e 'pmxinputfiles') { mkdir('pmxinputfiles'); }
-		if (!-f $fname) { if (-f $artid) { copy $artid, $fname; } }
-		$artid = $fname;
-	}
-	if (-f $artid) {
-		my ($ext) = $artid =~ /\.([^.]+?)$/; my $pages;
-		if ($ext eq 'pdf') {
-			my $pdf = PDF::API2->open($artid);
-			$pages = $pdf->pages;
-		}
-		else {
-			$pages = 1;
-		}
-		if ($pages > 0) {
-			return "\\renewcommand{\\ioutput}{1}\\renewcommand{\\fname}{$artid}";
-		}
-		else {
-			return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty";
-		}
+	$fname = "pmxinputfiles/$fname---$pth.$ext";
+} else {
+	$fname = "pmxinputfiles/$fname";
+}
+if ($docopy==1) {
+	if (!-e 'pmxinputfiles') { mkdir('pmxinputfiles'); }
+	if (!-e $fname) { if (-e $artid) { copy $artid, $fname; } }
+	$artid = $fname;
+}
+if (-e $artid) {
+	my ($ext) = $artid =~ /\.([^.]+?)$/; my $pages;
+	if ($ext eq 'pdf') {
+		my $pdf = PDF::API2->open($artid);
+		$pages = $pdf->pages;
 	}
 	else {
-		return "\\renewcommand{\\ioutput}{1}\\let\\fname\\empty";
+		$pages = 1;
 	}
-}}
+	if ($pages > 0) {
+		return "\\renewcommand{\\ioutput}{$isrfile}\\renewcommand{\\fname}{$artid}";
+	}
+	else {
+		return "\\renewcommand{\\ioutput}{$isrfile}\\let\\fname\\empty";
+	}
+}
+else {
+	return "\\renewcommand{\\ioutput}{$isrfile}\\let\\fname\\empty";
+}
+}
 \perlnewcommand{\dotwice}{
 use strict;
 use warnings;
@@ -401,15 +417,18 @@ if ( -e "$file-tmpfixfile.tex" ) {
 }
 
 }}
-\perlnewcommand{\checkfile}[2]{
+\perlnewcommand{\checkfile}[3]{
 use strict;
 use warnings;
 use open OUT => ':raw';
 binmode(STDOUT, ":utf8");
 my $str = $_[0];
 my $name = $_[1];
+my $artiregex = $_[2];
 $str =~ s/\.[^\.]+$//g;
-return "\\edef\\$name\{$str\}";
+my $dotwice = "";
+if ($str =~ /${artiregex}/) { $dotwice = "\\dotwicecmd"; }
+return "$dotwice\\edef\\$name\{$str\}";
 }
 \perlnewcommand{\includecsv}[9]{
 use 5.010;
@@ -844,9 +863,8 @@ my $itemrfile = $_[4];
 my $docopy = $_[5];
 my $dotime = $_[6];
 my $nhead = 1;
-my $header = "ITEM & PATH & UPDATE (GMT)";
 my $ncoltot = 2;
-my $i;
+my $i; my $j;
 sub uniq { my %seen; grep !$seen{$_}++, @_; }
 my $itemnumbers = "$itemartifact;$itemrfile";
 $itemnumbers =~ s/ *//g;
@@ -857,7 +875,7 @@ my @itemnum = split ";", $itemnumbers;
 my @af = split ",", $afiles; my $na = scalar @af;
 my $nl; my @aff; my @tmpfile; my @isaf = ("1") x $na;
 for ($i=0; $i <= $na-1; $i++) { @tmpfile = glob $af[$i] . "_*"; $aff[$i] = @tmpfile[0]; }
-for ($i=0; $i <= $na-1; $i++) { $af[$i] = "Artifact ID $af[$i]"; }
+# for ($i=0; $i <= $na-1; $i++) { $af[$i] = "\\artifacttext $af[$i]"; }
 
 # Inline/R files
 my @rf = split "myveryuniqueseparator", $rfiles; @rf = @rf[1..$#rf]; my @rff;
@@ -866,21 +884,8 @@ my @items = (1..$nitems);
 my $nr = scalar @rf; my @newlines; my @isrf = ("0") x $nr;
 @isaf = (@isaf, @isrf);
 
-my @delfiles; my $ext; my $name;
-open(FILE, '>:utf8', 'delauxitems.pl');
-for ($i=0; $i <= $nr-1; $i++) {
-	($ext) = $rff[$i] =~ /^.+\.([^.]+)$/;
-	($name) = $rff[$i] =~ /(^.+)\.[^.]+$/;
-	if ($ext eq "pdf") {
-		$delfiles[$i] = "\"$name.pax\", \"$name.pay\", \"$name.paz\"";
-	}
-}
-my $allfile = join( ', ', @delfiles );
-print FILE "use strict;\nuse warnings;\nuse open OUT => ':raw';\nbinmode(STDOUT, \":utf8\");$allfile";
-close(FILE);
-
 # Initialize some variables
-my $iid; my $fname; my $pth; my $checkfile;
+my $iid; my $fname; my $pth; my $checkfile; my $ext;
 my $sec; my $min; my $hour; my $mday; my $mon; my $year; my $wday; my $yday; my $isdst; my $tmpstr;
 my @times; my @timesn; my @idx;
 
@@ -891,10 +896,11 @@ if ($nr > 0) {
 			($fname) = $rff[$i] =~ /\/*([^\/]+?)$/;
 			($pth) = $rff[$i] =~ /(.*)\//;
 			($ext) = $rff[$i] =~ /\.([^.]+?)$/;
-			$pth =~ s/\//-/g;
-			$pth =~ s/([a-zA-Z])\:/$1/g;
-			$pth =~ s/\./d/g;
-			if (length($pth)>0) {
+			if (defined $pth) {
+				$pth =~ s/^\//s-/g;
+				$pth =~ s/\//-/g;
+				$pth =~ s/([a-zA-Z])\:/$1/g;
+				$pth =~ s/\./d/g;
 				$checkfile = "pmxinputfiles/$fname---$pth.$ext";
 			} else {
 				$checkfile = "pmxinputfiles/$fname";
@@ -927,6 +933,22 @@ if ($dotime==1) {
 @times = @times[@idx];
 @timesn = @timesn[@idx];
 
+my $file = 'ARTEFACTID_searchresults.csv';
+open my $lines, '<:raw', $file; my $str = do { local $/; <$lines> }; close $lines;
+$str =~ s/\r//g;
+my @lines = split "\n", $str;
+my $nline = scalar @lines; my $ncol;
+$nline = $nline - 1;
+my @arts = ("") x $nline;
+for (my $i = 1; $i <= $nline; $i++){
+	my @cells = split ",", $lines[$i];
+	$ncol = scalar @cells;
+	$arts[$i-1] = $cells[1];
+}
+# open(FILE, '>:utf8', 'debug.txt');
+# print FILE "@arts";
+# close(FILE);
+
 # Create table body
 if ($nr > 0) {
 	for ($i=0; $i <= $nr-1; $i++) {
@@ -934,27 +956,32 @@ if ($nr > 0) {
 		else { $iid = "$rf[$i]"; }
 		
 		if ($i==0) {
-			$newlines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\itemreref{$itemnum[$i]} & \\path{$iid} & $times[$i]";
+			$newlines[$i] = "\\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\ifitemhyper\\hyperlink{itemnumber$itemnum[$i]}{Item $itemnum[$i]}\\else{}Item $itemnum[$i]\\fi & \\path{$iid} & $times[$i]";
 		} else {
-			$newlines[$i] = "\\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\itemreref{$itemnum[$i]} & \\path{$iid} & $times[$i]";
+			$newlines[$i] = "\\\\ \\raisebox{\\ht\\strutbox}{\\hypertarget{itemnumberlist$itemnum[$i]}{}}\\ifitemhyper\\hyperlink{itemnumber$itemnum[$i]}{Item $itemnum[$i]}\\else{}Item $itemnum[$i]\\fi & \\path{$iid} & $times[$i]";
 		}
 	}
 }
 my $newline = join('', @newlines);
 
+my $header = "ITEM & PATH & UPDATE (GMT)";
+
 # Use the lines below to have LIST OF ITEMS on the first page ONLY of the itemlist table
 # Use \@{} on left/right side of table specification to remove whitespace around table
+
+# Print table
 my $retstr = "
 \\renewcommand{\\csvtable}{
 \\catcode`\\%=12 \\catcode`\\#=12
-\\begin{longtable*}{\@{}p{1.15cm}\@{\\mysp}p{\\maxwidth-2\\tabcolsep-2.35cm-1.15cm}\@{\\mysp}\@{\\extracolsep{\\fill}}*{1}{>{\\raggedleft\\arraybackslash}p{2.35cm}}\@{}}
+\\begin{tabularx}{\\maxwidth}{\@{}l\@{\\mysp}L{1}\@{\\mysp}r\@{}}
 	\\toprule $header \\\\\\toprule\\endfirsthead
 	\\toprule $header \\\\\\toprule\\endhead
 	\\endfoot\\bottomrule\\endlastfoot
 	 $newline
-\\end{longtable*}
+\\end{tabularx}
 \\catcode`\\%=14 \\catcode`\\#=6
 }";
+
 $retstr =~ s/[\t,\n]//g;
 
 if ($dotime==1) {$retstr = "\\renewcommand{\\itemlistname}{LIST OF ITEMS (BY MODIFICATION TIME)}$retstr";}
@@ -985,7 +1012,7 @@ if ( $str =~ /^[\n ]*$/ ) {
 
 return "$outstr";
 }
-\perlnewcommand{\makesubfig}[4]{
+\perlnewcommand{\makesubfig}[5]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -995,6 +1022,7 @@ my $str = $_[0];
 my $lbl = $_[1];
 my $cap = $_[2];
 my $figcapbelow = $_[3];
+my $artiregex = $_[4];
 
 my $isbreak;
 if ($str =~ /\|\|/){
@@ -1011,7 +1039,7 @@ my @letters = < a b c d e f g h i j k l m n o p q r s t u v x y z A B C D E F G 
 if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	$lbl =~ /^ *([^\[]{1,}) *\[/; my $lblmain = $1; $lbl =~ s/^$lblmain//g;
 	@lbllst = ($lbl =~ /\[ *([^\[\]]{1,}) *\]/g);
-	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi} myveryuniquemarker$letters[$i-1]"/eg;
+	$str =~ s/${artiregex}| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbllst[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname}\\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{0cm}/g;
 	if ($figcapbelow == 1) {
 		$str =~ s/\|\|/\\pagebreak\\end{figure} \\clearpage \\begin{figure}[H] \\ContinuedFloat/g;
@@ -1028,7 +1056,7 @@ if ((index($lbl, '&') != -1) || (index($lbl, '|') != -1)) {
 	}
 }
 else {
-	$str =~ s/(RA[0-9]{3,})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi} myveryuniquemarker$letters[$i-1]"/eg;
+	$str =~ s/(${artiregex})| *([^\&\|]+\.[a-zA-Z0-9]+) */$i++ >= @letters ? "": " \\checkartifact{$1$2} \\subcaptionbox\[\]{\\ifitemid\\itemid{$1$2}\\fi \\label{$lbl$letters[$i-1]}}{\\ifx\\fname\\empty ITEM \\renewcommand{\\newunderscorename}{}\\fixunderscore{$1$2}\\newunderscorename{} NOT FOUND \\else \\expandafter\\includegraphics\\expandafter\[\\optsubfig$letters[$i-1]\]{\\fname} \\fi} myveryuniquemarker$letters[$i-1]"/eg;
 	$str =~ s/&/\\hspace{-1cm}/g;
 	if ($figcapbelow == 1) {
 		$str =~ s/\|\|/\\pagebreak\\end{figure} \\clearpage \\begin{figure}[H] \\ContinuedFloat/g;
@@ -1209,7 +1237,7 @@ if ($mysyncnt eq "none") {$mysyncmd = "$mysyncmd"}
 else {$mysyncmd = "$mysyncmd\\bookmark[level=$mysynlev,dest=mysynhyper$mysyncnt]{$mysynstr}\n";}
 return "\\renewcommand{\\cussyncmd}{$mysyncmd}"
 }
-\perlnewcommand{\createfiles}[7]{
+\perlnewcommand{\createfiles}[9]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -1219,12 +1247,29 @@ my $OS = "$^O";
 my $name = $_[0];
 my $docname = $_[1];
 my $artifacts = $_[2];
-my $dogetartifacts = $_[3];
-my $doprintsig = $_[4];
-my $missingrfiles = $_[5];
-my $sigpages = $_[6];
+my $missingartifacts = $_[3];
+my $dogetartifacts = $_[4];
+my $doprintsig = $_[5];
+my $missingrfiles = $_[6];
+my $sigpages = $_[7];
+my $artiregex = $_[8];
 
-my $narti = () = $artifacts =~ /,/gi; $narti = $narti + 1;
+# my @allarti = split ",", $artifacts;
+# @allarti = uniq(@allarti);
+# my $i; my @files;
+# for ($i = 0; $i < @allarti; $i++) {
+	# $allarti[$i] = my @wildfiles = ('<*.bib.sav>', '<*-tmpfixfile.*>', '<*.pax>', '<*.pay>', '<*.paz>', '<*.tmppdf.pdf>', '<noperltex-*.tex>', '<"$name-eqn*">', '<"$name-math*">', '<"$name-tex.*">', '<*.tmp.txt>', '<X*.aux>', '<X*.bbl>', '<X*.bib>', '<X*.blg>');
+# }
+my $allarti = $artifacts;
+if ($artifacts ne "") {
+	$allarti =~ s/,/*">', '<"/g;
+	$allarti = "my \@files = ('<\"$allarti*\">');\neval(\"\\\@files = (\".join(\", \", \@files).\");\");\nunlink \@files;";
+}
+open(FILE, '>:utf8', 'delartifacts.pl');
+print FILE "use strict;\nuse warnings;\nuse File::Copy qw(copy);\n$allarti";
+close(FILE);
+
+my $narti = () = $missingartifacts =~ /,/gi; $narti = $narti + 1;
 $docname =~ s/\\xspace *//g;
 
 # Print list of missing files (non-artifacts)
@@ -1237,7 +1282,7 @@ if ( $nmrf > 0 ) {
 }
 
 # Print list of artifacts to download
-my @arti = split ",", $artifacts;
+my @arti = split ",", $missingartifacts;
 @arti = uniq(@arti);
 if ($dogetartifacts == 1) {
 	open(FILE, '>:utf8', 'missingartifacts.txt');
@@ -1578,8 +1623,8 @@ binmode(STDOUT, ":utf8");
 my $file = $_[0];
 my ($fname) = $file =~ /\/*([^\/]+?)$/;
 $fname =~ s/(.+)\..+?$/$1/g;
-my $fbase = "$fname.tmppax";
-$fname = "$fname.tmppax.pdf";
+my $fbase = "$fname.tmppdf";
+$fname = "$fname.tmppdf.pdf";
 if (!-e $fname) { copy $file, $fname; }
 return "\\renewcommand{\\fname}{$fname}\\renewcommand{\\fbase}{$fbase}";
 }
@@ -1677,7 +1722,7 @@ my $body = join(" \\\\ ", @lines);
 
 my $retstr = "
 \\catcode`\\%=12 \\catcode`\\#=12
-\\begin{tabularx}{\\maxwidth}{\@{}l\@{\\mysp}l\@{\\mysp}l\@{\\mysp}L{0.6}\@{\\mysp}r\@{}}
+\\begin{tabularx}{\\maxwidth}{\@{}l\@{\\mysp}l\@{\\mysp}l\@{\\mysp}L{1}\@{\\mysp}r\@{}}
 	\\toprule $header \\\\\\toprule\\endfirsthead
 	\\toprule $header \\\\\\toprule\\endhead
 	\\endfoot\\bottomrule\\endlastfoot
@@ -1714,7 +1759,7 @@ print FILE "$str";
 close(FILE);
 return;
 }
-\perlnewcommand{\fixinputfile}[1]{
+\perlnewcommand{\fixinputfile}[2]{
 use strict;
 use warnings;
 use open OUT => ':raw';
@@ -1722,6 +1767,7 @@ binmode(STDOUT, ":utf8");
 use Encode;
 use Encoding::FixLatin qw(fix_latin);
 my $file = $_[0];
+my $artiregex = $_[1];
 
 # List of non-standard UTF-8 characters supported by inputenc and fontenc in pdfLaTeX
 my $asciichar = '|a-zA-Z\{\}\s%\.\/\-:;,0-9@=\\\\\"\'\(\)_~\$\!&\`\?+#\^<>\[\]\*';
@@ -1736,14 +1782,17 @@ $tmpstr =~ s/([^$asciichar$utf8char$cuschar])/<\?>/g; if ( defined $1 ) { if ( -
 eval { decode( "utf8", $teststr, Encode::FB_CROAK ) }; if ( $@ ) { if ($mkfile==0) {$mkfile = 1; $str = $tmpstr;} }
 if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 
+my $dotwice = "";
+if ($file =~ /${artiregex}/) { $dotwice = "\\dotwice"; }
+
 if ($mkfile==1) {
 	copy("$file", "$file.tmp.txt");
 	open(FILE, '>:utf8', "$file");
 	print FILE "$str";
 	close(FILE);
-	return "\\input{$file}\\removeinputfile{$file}";
+	return "$dotwice\\input{$file}\\removeinputfile{$file}";
 } else {
-	return "\\input{$file}";
+	return "$dotwice\\input{$file}";
 }
 }
 \perlnewcommand{\removeinputfile}[1]{
@@ -1925,43 +1974,45 @@ return;
 \IfFileExists{noperlfirst.txt}{\RequirePackage{noperltex}}{}
 \newcounter{perlcount}\setcounter{perlcount}{0}
 
-\newcommand{\findartifact}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\dotwice}{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\includetex}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\inputtext}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixbib}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixgls}[2]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\checkfile}[2]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\includecsv}[9]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\includemetacsv}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\makesubfigopt}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\makesubfig}[4]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\printlstlisting}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\printtmplisting}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\pdfloadfile}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixpax}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\addsynsec}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\createfiles}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixnewline}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
-\newcommand{\nlmixr}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\saveeqnfile}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\savemathfiles}[7]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixunderscore}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixglscaption}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\getpmxcolspec}[3]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\copytmppdffile}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\loadlistofnumbers}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\loadlistofnumbersvalue}[6]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\printlistofnumbers}[4]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\checkpharmtex}{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\printdocpdfname}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixinputfile}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\removeinputfile}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\checkemptybib}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\addmultibib}[1]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\fixmultibib}[2]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
-\newcommand{\savefile}[2]{\addtocounter{perlcount}{1}\oldinput{noperltex-\theperlcount}}
+\newcommand{\findartifact}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\dotwice}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includetex}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\inputtext}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixbib}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixgls}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\checkfile}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includecsv}[9]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\includemetacsv}[7]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\makesubfigopt}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\makesubfig}[5]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printlstlisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printtmplisting}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\pdfloadfile}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixpax}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\addsynsec}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\createfiles}[8]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixnewline}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\nlmixr}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\saveeqnfile}[7]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\savemathfiles}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\nonemptyglossary}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixunderscore}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixglscaption}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\getpmxcolspec}[3]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\replacegls}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\copytmppdffile}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\loadlistofnumbers}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\loadlistofnumbersvalue}[6]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printlistofnumbers}[4]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\checkpharmtex}{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\printdocpdfname}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixinputfile}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\removeinputfile}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\checkemptybib}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixlistof}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\addmultibib}[1]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\fixmultibib}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
+\newcommand{\savefile}[2]{\addtocounter{perlcount}{1}\input{noperltex-\theperlcount}}
 
 \fi
 

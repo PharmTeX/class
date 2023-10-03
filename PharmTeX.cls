@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
-%%% Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2021/12/10}
-\def\pharmtexversion{2.4}
+\def\pharmtexdate{2022/03/09}
+\def\pharmtexversion{2.5}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -98,7 +98,6 @@
 \DeclareOption{printsigpage}{\printsigpagetrue\cprintsigpagetrue}
 
 %%% Option to show signature page
-\newif\ifprintsigpage\printsigpagetrue
 \newif\ifsigpage\sigpagetrue
 \newif\ifcsigpage\csigpagefalse
 \DeclareOption{nosigpage}{\sigpagefalse\csigpagetrue}
@@ -394,6 +393,7 @@
 \usepackage{printlen, upgreek, csvsimple, pbox, arrayjobx, xstring, pgf, ifthen, pax, filecontents, ifplatform}
 \usepackage{verbatim, newfile, totcount, framed, alltt, environ}
 \usepackage{tikz}
+\usepackage[en-US]{datetime2} % provide \todayiso date format
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes.misc}
 \usetikzlibrary{calc}
@@ -513,6 +513,7 @@
 \def\today{\two@digits{\the\day}~\ifcase\month\or JAN\or FEB\or MAR\or APR\or MAY\or JUN\or JUL\or AUG\or SEP\or OCT\or NOV\or DEC\fi~\number\year}
 
 %%% Settings for artifactid
+\newcommand{\artifacttext}{artifact ID\xspace}
 \newcommand{\aid}{}
 \newcommand{\afid}{}
 \ifartihyper
@@ -523,26 +524,19 @@
 \newcommand{\folderref}[1]{#1\xspace}
 \fi
 \ifartifactid
-\newcommand{\artifactid}[1]{Artifact ID \artiref{#1}\xspace}
+\newcommand{\artifactid}[1]{\artifacttext \artiref{#1}\xspace}
 \else
-\newcommand{\artifactid}[1]{Artifact ID (omitted)\xspace}
+\newcommand{\artifactid}[1]{\artifacttext (omitted)\xspace}
 \renewcommand{\artiref}[1]{(omitted)\xspace}
 \renewcommand{\folderref}[1]{(omitted)\xspace}
-\artifactlistfalse
 \fi
 
 %%% Settings for itemid
-\ifitemhyper
-\newcommand{\itemref}{\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}}
-\newcommand{\itemreref}[1]{\renewcommand{\newunderscorename}{}\fixunderscore{#1}\hyperlink{itemnumber#1}{Item \newunderscorename{}}}
-\else
-\newcommand{\itemref}{Item \theitemnumber}
-\newcommand{\itemreref}[1]{\renewcommand{\newunderscorename}{}\fixunderscore{#1}Item \newunderscorename{}}
-\fi
+\newcommand{\itemref}{\ifitemhyper\hyperlink{itemnumberlist\theitemnumber}{Item \theitemnumber}\else{}Item \theitemnumber\fi}
 \newcommand{\ioutput}{0}
 \newcommand{\itemid}[1]{}
 \ifitemid
-\renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, Artifact ID \artiref{#1}\fi}
+\renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, \artifacttext \artiref{#1}\fi}
 \else
 \renewcommand{\itemid}[1]{}
 \renewcommand{\artiref}[1]{(omitted)\xspace}
@@ -553,6 +547,10 @@
 \newlength\maxwidth\newlength\maxheight
 \setlength{\maxwidth}{\textwidth}\setlength{\maxheight}{\textheight}
 \newlength{\myspacer}\setlength{\myspacer}{14.5pt}
+
+%%% Regex for artifacts
+\newcommand{\artiregex}{RA[0-9]{3,}}
+\newcommand{\artiregexsubfig}{(RA[0-9]{3,})}
 
 %%% Create string to store artifact IDs.
 %%% The \findartifacts perl command determines in the first input from \pmxXXXXX is a filepath or an artifact.
@@ -572,7 +570,7 @@
 \newcommand\additemrfile{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemrfile\expandafter{\expandafter;\exptmp}}
 \newcommand\additemartifact{\edef\exptmp{\theitemnumber}\expandafter\g@addto@macro\expandafter\itemartifact\expandafter{\expandafter;\exptmp}}
 \newcommand{\checkartifact}[1]{%
-\findartifact{#1}{\docopy}%
+\findartifact{#1}{\docopy}{\artiregex}%
 \addtocounter{itemnumber}{1}%
 \ifnum\ioutput=1%
 \additemrfile%
@@ -643,6 +641,8 @@
 \newcommand*{\getlength}[1]{\strip@pt#1} % get length as number without units
 \newcommand*\makeAlph[1]{\ifnum#1<27\symbol{\numexpr96+#1}\else\PackageError{PharmTeX}{Number exceeds the number of letters in the alphabet.}{}\fi}
 \newcommand{\citelocation}{}
+\def\twodigits#1{\ifnum#1<10 0\fi\the#1}
+\def\todayiso{\the\year-\twodigits\month-\twodigits\day}
 
 %%% Set page margins
 % Headheight:
@@ -714,6 +714,7 @@
 
 %%% Include .tex doc from another run
 %%% This is used for socalled daughter steps where another LatexReport step can be loaded into the present one. All code between \begin{document} and \references is included in the spot where the \pmxinclude command is put in the mother document. It will download the daughter .tex document and print a file called "dotwice" telling runlatex.bat to compile latex an extra time and include any artifacts from the daughter document.
+\newcommand{\dotwicecmd}{\dotwice}
 \newcommand{\newunderscorename}{}
 \newcommand{\includetexdoc}{}
 % \perlnewcommand{\dotwice}{
@@ -859,25 +860,30 @@ ITEM \newunderscorename{} NOT FOUND%
 \checkartifact{#2}
 {\tablefont
 \ifx\fname\empty
+\renewcommand{\mytableitemnumber}{\itemid{#2}}
+\fixnewline{\detokenize{#7}}{\doitemid}
+\ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \begin{tabularx}{\maxwidth}{C{1}} \tablabel{\mypmxcaption}{#5}
 	\\\toprule
 	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endfirsthead\caption[]{\mypmxcaption}\\\toprule
 	 ITEM \newunderscorename{} NOT FOUND \\\midrule\endhead
 	\endfoot\bottomrule\endlastfoot
 \end{tabularx}
+\vspace{-1.6\baselineskip}
+\ifitemid\ifnum\istextable=1\ifshowinlinetable\mytableitemnumber.\xspace\fi\else\mytableitemnumber.\xspace\fi\fi\tmpsubstnote\myfloatdescription
 \else
 \renewcommand{\mytableitemnumber}{\itemid{#2}}
 \fixnewline{\detokenize{#7}}{\doitemid}
 \ifitemid{}\renewcommand{\dodescription}{1}\fi\ifthenelse{\equal{\detokenize{#7}}{}}{}{\renewcommand{\dodescription}{1}}
 \includecsv{#1}{\fname}{#3}{#4}{#5}{\mypmxcaption}{\detokenize{#8}}{\dotight}{0}
 \csvtable
+\fi
 }
 \renewcommand{\tablefont}{\tabledeffont}
 \renewcommand{\listingfont}{\listingdeffont}
 \renewcommand{\dotight}{0}
 \renewcommand{\mypmxcaption}{}
 \setlength{\tabcolsep}{\pmxtabcolsep}
-\fi
 
 }
 
@@ -978,7 +984,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \phantomsection
 \addtocounter{numberappendix}{-1}
 \hypertarget{numberlisttarget}{}
-\hypertarget{itemnumber\thelonitemid}{}
+% \IfFileExists{batch.txt}{}{\hypertarget{itemnumber\thelonitemid}{}}
 \label{numberlist}
 \addtocontents{toc}{\@backslashchar contentsline {section}{\numberlistname}{\@backslashchar pageref{numberlist}}{numberlisttarget}}
 \bookmark[level=1,dest=numberlisttarget,startatroot]{\numberlistname}
@@ -1023,6 +1029,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \phantomsection
 \addtocounter{numberappendix}{-1}
 \hypertarget{itemlisttarget}{}
+% \IfFileExists{batch.txt}{\hypertarget{itemnumber\thelonitemid}{}}{}
 \label{itemlist}
 \addtocontents{toc}{\@backslashchar contentsline {section}{\itemlistname}{\@backslashchar pageref{itemlist}}{itemlisttarget}}
 \bookmark[level=1,dest=itemlisttarget,startatroot]{\itemlistname}
@@ -1031,10 +1038,11 @@ ITEM \newunderscorename{} NOT FOUND%
 {10.95}{\footnotesize}
 {12}{\scriptsize}
 }[]
-\setlength\LTcapwidth{\maxwidth} % default: 4in
-\setlength\LTleft{0pt}           % default: \parindent
-\setlength\LTright{0pt}          % default: \fill
+% \setlength\LTcapwidth{\maxwidth} % default: 4in
+% \setlength\LTleft{0pt}           % default: \parindent
+% \setlength\LTright{0pt}          % default: \fill
 \csvtable
+\addtocounter{table}{-1}
 %\end{landscape}
 \fi\fi
 \normalsize
@@ -1066,7 +1074,7 @@ ITEM \newunderscorename{} NOT FOUND%
 \makesubfigopt{#5}
 \iffigcapbelow\renewcommand{\figcapbelow}{1}\else\renewcommand{\figcapbelow}{0}\fi
 \begin{figure}[H]
-\makesubfig{#1}{#2}{\mypmxcaption}{\figcapbelow}
+\makesubfig{#1}{#2}{\mypmxcaption}{\figcapbelow}{\artiregexsubfig}
 \descfont\ifthenelse{\equal{\detokenize{#4}}{}}{}{\myfloatdescription}
 \end{figure}
 \vspace{-0.8\baselineskip}
@@ -1381,7 +1389,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{section}%
       \ifx\@pptempa\@pptempb
-\oldacl@pp{loa}{##2}{\appendixname\space ##3}%
+\ifloa\oldacl@pp{loa}{##2}{\appendixname\space ##3}\else\oldacl@pp{##1}{##2}{\appendixname\space ##3}\fi%
       \else
         \oldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1395,7 +1403,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subsection}%
       \ifx\@pptempa\@pptempb
-% \ooldacl@pp{loa}{##2}{\appendixname\space ##3}%
+\ifloa\oldacl@pp{loa}{##2}{A##3}\else\oldacl@pp{##1}{##2}{A##3}\fi%
       \else
         \ooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1409,7 +1417,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subsubsection}%
       \ifx\@pptempa\@pptempb
-% \oooldacl@pp{loa}{##2}{\appendixname\space ##3}%
+\ifloa\oooldacl@pp{loa}{##2}{A##3}\else\oooldacl@pp{##1}{##2}{A##3}\fi%
       \else
         \oooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1423,7 +1431,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{paragraph}%
       \ifx\@pptempa\@pptempb
-% \ooooldacl@pp{loa}{##2}{\appendixname\space ##3}%
+\ifloa\ooooldacl@pp{loa}{##2}{A##3}\else\ooooldacl@pp{##1}{##2}{A##3}\fi%
       \else
         \ooooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1437,7 +1445,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
     \ifx\@pptempa\@pptempb
       \def\@pptempa{##2}\def\@pptempb{subparagraph}%
       \ifx\@pptempa\@pptempb
-% \oooooldacl@pp{loa}{##2}{\appendixname\space ##3}%
+\ifloa\oooooldacl@pp{loa}{##2}{A##3}\else\oooooldacl@pp{##1}{##2}{A##3}\fi%
       \else
         \oooooldacl@pp{##1}{##2}{##3}%
       \fi
@@ -1445,9 +1453,9 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
       \oooooldacl@pp{##1}{##2}{##3}%
     \fi}
 
-\titleformat{\section}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thenumberappendix}{}}\bookmark[level=1,dest=app\thenumberappendix]{\appendixname~\thenumberappendix. ##1}\appendixname~\thesection.}{4pt}{##1}
-\titleformat{\subsection}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thesubsection}{}}\bookmark[level=2,dest=app\thesubsection]{A\thesubsection. ##1}A\thesubsection.}{4pt}{##1}
-\titleformat{\subsubsection}{\normalsize\bfseries}{\raisebox{\ht\strutbox}{\hypertarget{app\thesubsubsection}{}}\bookmark[level=2,dest=app\thesubsubsection]{A\thesubsubsection. ##1}A\thesubsubsection.}{4pt}{##1}
+\titleformat{\section}{\normalsize\bfseries}{\ifloa\raisebox{\ht\strutbox}{\hypertarget{app\thenumberappendix}{}}\bookmark[level=1,dest=app\thenumberappendix]{\appendixname~\thenumberappendix. ##1}\fi\appendixname~\thesection.}{4pt}{##1}
+\titleformat{\subsection}{\normalsize\bfseries}{\ifloa\raisebox{\ht\strutbox}{\hypertarget{app\thesubsection}{}}\bookmark[level=2,dest=app\thesubsection]{A\thesubsection. ##1}\fi{}A\thesubsection.}{4pt}{##1}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\ifloa\raisebox{\ht\strutbox}{\hypertarget{app\thesubsubsection}{}}\bookmark[level=2,dest=app\thesubsubsection]{A\thesubsubsection. ##1}\fi{}A\thesubsubsection.}{4pt}{##1}
 \titleformat{\paragraph}{\normalsize\bfseries}{A\theparagraph.}{4pt}{##1}
 \titleformat{\subparagraph}{\normalsize\bfseries}{A\thesubparagraph.}{4pt}{##1}
 \counterwithin{equation}{section}
@@ -1479,7 +1487,7 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \crefalias{paragraph}{apppar}
 \crefalias{subparagraph}{appsubpar}
 \let\stdsection\section
-\renewcommand\section{\ifnum\thenumberappendix>0\ifnum\theappcitenum>0\fixmultibib{\RefFile}{XA\alph{numberappendix}}\csname bibliographyXA\alph{numberappendix}\endcsname{XA\alph{numberappendix}.bib}\fi\fi\setcounter{appcitenum}{0}\stepcounter{numberappendix}\expandafter\let\csname citen\expandafter\endcsname\csname citeXA\alph{numberappendix}\endcsname\let\oriciten\citen\renewcommand\citen{\stepcounter{appcitenum}\oriciten}\expandafter\let\csname citea\expandafter\endcsname\csname citetXA\alph{numberappendix}\endcsname\let\oricitea\citea\renewcommand\citea{\stepcounter{appcitenum}\oricitea}\expandafter\let\csname Citea\expandafter\endcsname\csname CitetXA\alph{numberappendix}\endcsname\let\oriCitet\Citet\renewcommand\Citet{\stepcounter{appcitenum}\oriCitet}\expandafter\let\csname citey\expandafter\endcsname\csname citeyearXA\alph{numberappendix}\endcsname\let\oricitey\citey\renewcommand\citey{\stepcounter{appcitenum}\oricitey}\clearpage\ifappgls\glsresetall\fi\ifnum\thenumberappendix=1\hypertarget{app}{}\fi\stdsection}
+\renewcommand\section{\ifdefined\RefFileOrig\ifnum\thenumberappendix>0\ifnum\theappcitenum>0\fixmultibib{\RefFile}{XA\alph{numberappendix}}\csname bibliographyXA\alph{numberappendix}\endcsname{XA\alph{numberappendix}.bib}\fi\fi\fi\setcounter{appcitenum}{0}\stepcounter{numberappendix}\expandafter\let\csname citen\expandafter\endcsname\csname citeXA\alph{numberappendix}\endcsname\let\oriciten\citen\renewcommand\citen{\stepcounter{appcitenum}\oriciten}\expandafter\let\csname citea\expandafter\endcsname\csname citetXA\alph{numberappendix}\endcsname\let\oricitea\citea\renewcommand\citea{\stepcounter{appcitenum}\oricitea}\expandafter\let\csname Citea\expandafter\endcsname\csname CitetXA\alph{numberappendix}\endcsname\let\oriCitet\Citet\renewcommand\Citet{\stepcounter{appcitenum}\oriCitet}\expandafter\let\csname citey\expandafter\endcsname\csname citeyearXA\alph{numberappendix}\endcsname\let\oricitey\citey\renewcommand\citey{\stepcounter{appcitenum}\oricitey}\clearpage\ifappgls\glsresetall\fi\ifnum\thenumberappendix=1\hypertarget{app}{}\fi\stdsection}
 }
 \makeatother
 \else
@@ -1841,11 +1849,11 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \newcommand{\docqcdate}[1]{\newcommand{\DocQCDate}{#1\xspace}}
 \newcommand{\doctype}[1]{\newcommand{\DocType}{#1\xspace}}
 \newcommand{\docstate}[1]{\newcommand{\DocState}{#1\xspace}}
-\newcommand{\docpdfname}[1]{\ifsynonly\def\DocPDFName{#1-synopsis}\else\def\DocPDFName{#1}\fi}
-\newcommand{\logo}[2][scale=1]{\newcommand{\Logo}{\includegraphics[#1]{#2}}}
-\newcommand{\refstyle}[1]{\checkfile{#1}{RefStyle}}
-\newcommand{\reffile}[1]{\checkfile{#1}{RefFile}\fixbib{\RefFile}\edef\RefFileOrig{#1}}
-\newcommand{\lonfile}[1]{\newcommand{\LonFile}{#1}\checkartifact{\LonFile}\newcounter{lonitemid}\setcounter{lonitemid}{\theitemnumber}\ifx\fname\empty\PackageError{PharmTeX}{\@backslashchar lonfile not found, but is needed for \@backslashchar rout to work.}{}\else\loadlistofnumbers{\LonFile}\fi}
+\newcommand{\docpdfname}[1]{\AtEndPreamble{\ifsynonly\def\DocPDFName{#1-synopsis}\else\def\DocPDFName{#1}\fi}}
+\newcommand{\logo}[2][scale=1]{\edef\LogoOrig{#2}\checkartifact{#2}\edef\LogoFileName{\fname}\edef\logoitemnumber{\theitemnumber}\newcommand{\Logo}{\hypertarget{itemnumber\logoitemnumber}{}\ifx\fname\empty{}\LogoOrig{} NOT FOUND\else\includegraphics[#1]{\LogoFileName}\fi}}
+\newcommand{\refstyle}[1]{\checkfile{#1}{RefStyle}{\artiregex}}
+\newcommand{\reffile}[1]{\edef\RefFileOrig{#1}\checkartifact{#1}\edef\reffileitemnumber{\theitemnumber}\edef\RefFile{\fname}\ifx\fname\empty\checkfile{#1}{RefFile}{\artiregex}\else\checkfile{\fname}{RefFile}{\artiregex}\fi\fixbib{\RefFile}}
+\newcommand{\lonfile}[1]{\edef\LonFileOrig{#1}\checkartifact{#1}\newcommand{\LonFile}{\fname}\newcounter{lonitemid}\setcounter{lonitemid}{\theitemnumber}\ifx\fname\empty\PackageError{PharmTeX}{\@backslashchar lonfile not found, but is needed for \@backslashchar rout to work.}{}\else\loadlistofnumbers{\LonFile}\fi}
 \newcommand{\synopsis}[1]{\newcommand{\insertsynopsis}{#1}}
 \newcommand{\signaturepage}[2][1]{\newcommand{\SignaturePageNo}{#1}\newcommand{\SignaturePage}{#2}}
 \newcommand{\coverpage}[2][1]{\newcommand{\CoverPageNo}{#1}\newcommand{\CoverPage}{#2}}
@@ -1862,7 +1870,6 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \newcommand{\CoverLine}{}
 \newcommand{\coverline}[2]{\g@addto@macro\CoverLine{#1 & \multicolumn{3}{p{0.69\maxwidth}|}{#2} \\ \hline}}
 
-\newcommand{\dimf}{0.46}
 \newcounter{nauthor}
 \setcounter{nauthor}{1}
 \newcommand{\DocAuthor}{}
@@ -1874,18 +1881,18 @@ ITEM \newunderscorename{} OMITTED DUE TO "noexpdf" OPTION.\label{#4}
 \quad\vspace{-1.5\myspacer}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\maxwidth}{|L{0.25}|L{0.25}L{0.25}L{0.25}|} \hline
-\multicolumn{1}{|>{\centering\arraybackslash}p{0.24\maxwidth}|}{\multirow{4}{*}{\ifdefined\Logo\Logo\fi}} & \multicolumn{3}{>{\centering\arraybackslash}p{0.69\maxwidth}|}{\multirow{4}{*}{\ifdefined\doctype\textbf{\DocType\ifsynonly~(SYNOPSIS)\fi}\fi}} \\
-& \multicolumn{3}{c|}{} \\
-& \multicolumn{3}{c|}{} \\
-& \multicolumn{3}{c|}{} \\ \hline
-Report Title: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocTitle} \\ \hline
-Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
-\CoverLine
-\ifdefined\DocAuthora \multicolumn{2}{|p{\dimf\maxwidth}}{\DocAuthora} & \multicolumn{2}{p{\dimf\maxwidth}|}{\ifdefined\DocAuthorb\DocAuthorb\fi} \\ \fi
-\ifdefined\DocAuthorc \multicolumn{2}{|p{\dimf\maxwidth}}{~\newline\DocAuthorc} & \multicolumn{2}{p{\dimf\maxwidth}|}{\ifdefined\DocAuthord~\newline\DocAuthord\fi} \\ \fi
-\ifdefined\DocAuthore \multicolumn{2}{|p{\dimf\maxwidth}}{~\newline\DocAuthore} & \multicolumn{2}{p{\dimf\maxwidth}|}{\ifdefined\DocAuthorf~\newline\DocAuthorf\fi} \\ \fi
-\ifdefined\DocAuthorg \multicolumn{2}{|p{\dimf\maxwidth}}{~\newline\DocAuthorg} & \multicolumn{2}{p{\dimf\maxwidth}|}{\ifdefined\DocAuthorh~\newline\DocAuthorh\fi} \\ \fi
-\ifdefined\DocAuthori \multicolumn{2}{|p{\dimf\maxwidth}}{~\newline\DocAuthori} & \multicolumn{2}{p{\dimf\maxwidth}|}{\ifdefined\DocAuthorj~\newline\DocAuthorj\fi} \\ \fi
+\multirow[c]{4}{=}{\ifdefined\Logo\Logo\fi\centering} & \multicolumn{3}{>{\hsize=\dimexpr0.75\hsize+3\tabcolsep\centering\arraybackslash}X|}{\multirow[c]{4}{=}{\ifdefined\DocType\textbf{\DocType\ifsynonly~(SYNOPSIS)\fi}\fi\centering}} \\
+ & & & \\
+ & & & \\
+ & & & \\ \hline
+\ifdefined\DocTitle Report Title: & \multicolumn{3}{>{\hsize=\dimexpr0.75\hsize+3\tabcolsep\raggedright\arraybackslash}X|}{\DocTitle} \\ \hline \fi
+\ifdefined\DocDate Date Issued: & \multicolumn{3}{>{\hsize=\dimexpr0.75\hsize+3\tabcolsep\raggedright\arraybackslash}X|}{\DocDate} \\ \hline \fi
+\ifdefined\CoverLine\CoverLine\fi
+\ifdefined\DocAuthora \multicolumn{2}{|>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X}{\DocAuthora} & \multicolumn{2}{>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X|}{\ifdefined\DocAuthorb\DocAuthorb\fi} \\ \fi
+\ifdefined\DocAuthorc \multicolumn{2}{|>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X}{~\newline\DocAuthorc} & \multicolumn{2}{>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X|}{\ifdefined\DocAuthord~\newline\DocAuthord\fi} \\ \fi
+\ifdefined\DocAuthore \multicolumn{2}{|>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X}{~\newline\DocAuthore} & \multicolumn{2}{>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X|}{\ifdefined\DocAuthorf~\newline\DocAuthorf\fi} \\ \fi
+\ifdefined\DocAuthorg \multicolumn{2}{|>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X}{~\newline\DocAuthorg} & \multicolumn{2}{>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X|}{\ifdefined\DocAuthorh~\newline\DocAuthorh\fi} \\ \fi
+\ifdefined\DocAuthori \multicolumn{2}{|>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X}{~\newline\DocAuthori} & \multicolumn{2}{>{\hsize=\dimexpr0.5\hsize+2\tabcolsep\raggedright\arraybackslash}X|}{\ifdefined\DocAuthorj~\newline\DocAuthorj\fi} \\ \fi
 \ifdefined\DocAuthora\hline\fi
 \end{tabularx}
 \renewcommand{\arraystretch}{1.2}
@@ -1936,10 +1943,10 @@ Date Issued: & \multicolumn{3}{p{0.69\maxwidth}|}{\DocDate} \\ \hline
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\maxwidth}{|l|L{1}|} \hline
 \multicolumn{2}{|c|}{\textbf{}} \\
-\multicolumn{2}{|c|}{\textbf{\DocType}} \\ \hline
-Report Title: & \DocTitle \\ \hline
-Date Issued: & \DocDate \\ \hline
-\ApproverLine
+\ifdefined\DocType \multicolumn{2}{|c|}{\textbf{\DocType}} \\ \hline \fi
+\ifdefined\DocTitle Report Title: & \DocTitle \\ \hline \fi
+\ifdefined\DocDate Date Issued: & \DocDate \\ \hline \fi
+\ifdefined\ApproverLine\ApproverLine\fi
 \end{tabularx}
 \renewcommand{\arraystretch}{1.2}
 \addtocounter{table}{-1}
@@ -2017,17 +2024,16 @@ Date Issued: & \DocDate \\ \hline
 \bibliographystyle{unsrt}
 \fi
 
-\ifdefined\RefFile
+\ifdefined\RefFileOrig
 %\ifnum\thecitenum>0
-\checkartifact{\RefFileOrig}
-\hypertarget{itemnumber\theitemnumber}{}
+% \hypertarget{itemnumber\reffileitemnumber}{}
 %\fi
-\ifx\fname\empty
-ITEM \RefFile.bib NOT FOUND.
+\ifx\RefFile\empty
+Bibliography file \RefFileOrig{} NOT FOUND.
 \savefile{pmxref-tmpfixfile.bib}{}
 \bibliography{pmxref-tmpfixfile.bib}
 \else
-\bibliography{\RefFile}
+\bibliography{\RefFile.bib}
 \fi
 
 \else
@@ -2046,6 +2052,7 @@ ITEM \RefFile.bib NOT FOUND.
 \newcounter{synrefcnt}\setcounter{synrefcnt}{0}
 \newcommand{\synreferences}{
 
+\ifdefined\RefFileOrig
 \ifnum\thesynrefcnt>0
 \begingroup
 \fixmultibib{\RefFile}{XS}
@@ -2061,6 +2068,7 @@ ITEM \RefFile.bib NOT FOUND.
 \bibliographyXS{XS.bib}
 
 \endgroup
+\fi
 \fi
 
 }
@@ -2267,8 +2275,8 @@ ITEM \RefFile.bib NOT FOUND.
 \useportrait
 
 % Run input files via a perl filter to harmonize encoding to utf8
-\let\pmxinput\fixinputfile
-\let\SweaveInput\fixinputfile
+\renewcommand{\pmxinput}[1]{\fixinputfile{#1}{\artiregex}}
+\renewcommand{\SweaveInput}[1]{\fixinputfile{#1}{\artiregex}}
 
 % Check for location of PharmTeX directory
 \checkpharmtex
@@ -2307,6 +2315,9 @@ ITEM \CoverPage{} NOT FOUND
 \else
 \hypertarget{cov}{}
 %\thispagestyle{empty}
+\ifdefined\reffileitemnumber\hypertarget{itemnumber\reffileitemnumber}{}\fi
+\ifdefined\glossaryitemnumber\hypertarget{itemnumber\glossaryitemnumber}{}\fi
+\ifdefined\thelonitemid\hypertarget{itemnumber\thelonitemid}{}\fi
 \insertcoverpage
 \clearpage
 \fi
@@ -2388,17 +2399,29 @@ ITEM \QAPage{} NOT FOUND
 \renewcommand{\glsbookmark}{\bookmark[level=1,dest=gls]{\glossaryname}}
 \glstocfalse
 
+
 \ifdefined\GlsFile
 
-\IfFileExists{nonemptyglossary.txt}{
-\checkartifact{\GlsFile.tex}
-\hypertarget{itemnumber\theitemnumber}{}
-}{}
+% \IfFileExists{nonemptyglossary.txt}{\hypertarget{itemnumber\glossaryitemnumber}{}}{}
 
-\ifx\fname\empty
-ITEM \GlsFile.tex NOT FOUND.
+\IfFileExists{\GlsFile.tex}{}{ITEM \GlsFile.tex NOT FOUND.}
+% \ifx\fname\empty
+% ITEM \GlsFile.tex NOT FOUND.
+% \fi
 \fi
-\fi
+
+% \ifdefined\GlsFile
+
+% \IfFileExists{nonemptyglossary.txt}{
+% \checkartifact{\GlsFile.tex}
+% \hypertarget{itemnumber\theitemnumber}{}
+% }{}
+
+% \ifx\fname\empty
+% ITEM \GlsFile.tex NOT FOUND.
+% \fi
+% \fi
+
 
 \ifglossarypostdot
 \printglossary[title=\protect\centering\glossaryname,toctitle=\glossaryname,style=mystyle,type=\acronymtype,nogroupskip=true,nonumberlist]
@@ -2438,7 +2461,7 @@ ITEM \GlsFile.tex NOT FOUND.
 \ifdefined\synopsisintro
 \synopsisintro
 \else
-\textbf{\DocTitle}
+\ifdefined\DocTitle\textbf{\DocTitle}\fi
 \fi\fi\fi
 \synsecs
 \setcounter{section}{0}
@@ -2482,8 +2505,9 @@ ITEM \GlsFile.tex NOT FOUND.
 \mainbody
 \ifdefined\insertsynopsis\ifsynopsis
 \clearpage
-\glsresetall
 \fi\fi
+\glsresetall
+\glsenablehyper
 
 % Insert Table of Contents
 \iftoc
@@ -2593,10 +2617,10 @@ ITEM \GlsFile.tex NOT FOUND.
 \ifprintsigpage\ifdefined\DocApprovera\ifdraftmode\else\ifdefined\SignaturePage\else\ifsigpage\renewcommand{\doprintsig}{1}\fi\fi\fi\fi\fi
 \newcommand{\dogetartifacts}{1}\IfStrEqCase{\missingartifacts}{{}{\renewcommand{\dogetartifacts}{0}}}
 \ifdraftmode
-\createfiles{\jobname}{\DocPDF\DocPDFWord}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % DRAFT MODE: download only MISSING artifacts when at least 1 artifact is missing
-%\createfiles{\jobname}{\DocPDF}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % DRAFT MODE: download ALL artifacts (possibly again) when at least 1 artifact is missing
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\missingartifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers}{\artiregex} % DRAFT MODE: print only MISSING artifacts when at least 1 artifact is missing
+% \createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers}{\artiregex} % DRAFT MODE: print ALL artifacts when at least 1 artifact is missing
 \else
-\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers} % BATCH MODE: download ALL artifacts
+\createfiles{\jobname}{\DocPDF\DocPDFWord}{\artifacts}{\artifacts}{\dogetartifacts}{\doprintsig}{\missingrfiles}{\sigpagenumbers}{\artiregex} % BATCH MODE: print ALL artifacts
 \fi
 
 % Compile mathimg

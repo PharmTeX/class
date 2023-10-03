@@ -1,6 +1,6 @@
 #!/bin/bash
 # PharmTeX Linux start script, part of the PharmTeX platform.
-# Copyright (C) 2021 Christian Hove Claussen (contact@pharmtex.org).
+# Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
 # This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 # Path to texfs
@@ -20,17 +20,57 @@ OLDINFOPATH="INFOPATH"
 if [ -d "$LDIR" ]; then
 	source $LDIR/bin/setpath
 fi
+texhash > /dev/null 2>&1
 
-# Check for name, extension, and mode
-if [ "$NAME" == "" ]; then
-	NAME=$(basename "$1")
-	MODE="$2"
+# Check for Rstudio Sweave
+if [ -f run-counter ]; then
+	read -r i<run-counter
 fi
-EXT="${NAME##*.}"
-if [ "$EXT" == "$NAME" ]; then
-	EXT="tex"
+if [ "$1" == "--version" ] && [ -z "$2" ] && [ -z "$3" ]; then
+	echo 1 > run-counter
+	exit
+elif [ "$1" == "-synctex=1" ] && [ "$i" = 1 ]; then
+	echo 2 > run-counter
+	exit
+elif [ "$1" == "-synctex=1" ] && [ "$i" = 2 ]; then
+	i=3
+	sweave=1
+	if [ -f run-counter ]; then
+		rm run-counter
+	fi
+	NAME=$(basename "${*: -1}")
+	EXT="${NAME##*.}"
+	if [ "$EXT" == "$NAME" ]; then
+		EXT="Rnw"
+	fi
+	NAME="${NAME%.*}"
+	if [ -n "$PHARMTEX_MODE" ]; then
+		MODE="$PHARMTEX_MODE"
+	else
+		MODE="full"
+	fi
+else
+	sweave=0
+	if [ "$NAME" == "" ]; then
+		NAME=$(basename "$1")
+		MODE="$2"
+	fi
+	EXT="${NAME##*.}"
+	if [ "$EXT" == "$NAME" ]; then
+		if [ -e "$NAME.Rnw" ]; then
+			EXT="Rnw"
+		else
+			EXT="tex"
+		fi
+	fi
+	NAME="${NAME%.*}"
+	
 fi
-NAME="${NAME%.*}"
+
+# Load Texlive manager if requested and exit
+if [ "$NAME" == "texpath" ]; then
+	return
+fi
 
 # Load Texlive manager if requested and exit
 if [ "$NAME" == "texman" ]; then
