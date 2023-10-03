@@ -1,8 +1,8 @@
 %%% PharmTeX class, part of the PharmTeX platform.
-%%% Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2023 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
-\def\pharmtexdate{2022/03/09}
-\def\pharmtexversion{2.5}
+\def\pharmtexdate{2023/09/28}
+\def\pharmtexversion{2.6}
 
 %%% Define PharmTeX Class for LaTeX
 \NeedsTeXFormat{LaTeX2e}
@@ -394,6 +394,7 @@
 \usepackage{verbatim, newfile, totcount, framed, alltt, environ}
 \usepackage{tikz}
 \usepackage[en-US]{datetime2} % provide \todayiso date format
+\usepackage{soul,pdfcomment} % source code-generated PDF comments
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes.misc}
 \usetikzlibrary{calc}
@@ -536,7 +537,7 @@
 \newcommand{\ioutput}{0}
 \newcommand{\itemid}[1]{}
 \ifitemid
-\renewcommand{\itemid}[1]{\ifnum\ioutput=1\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace\else\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, \artifacttext \artiref{#1}\fi}
+\renewcommand{\itemid}[1]{\ifthenelse{\equal{\ioutput}{1}}{\renewcommand{\ioutput}{0}\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref\xspace}{\raisebox{3cm}[0pt][0pt]{\hypertarget{itemnumber\theitemnumber}{}}\itemref, \artifacttext \artiref{#1}}}
 \else
 \renewcommand{\itemid}[1]{}
 \renewcommand{\artiref}[1]{(omitted)\xspace}

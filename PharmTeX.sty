@@ -1,5 +1,5 @@
 %%% PharmTeX Package, part of the PharmTeX platform.
-%%% Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
+%%% Copyright (C) 2023 Christian Hove Claussen (contact@pharmtex.org).
 %%% This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 %%% Define PharmTeX Package for LaTeX
@@ -821,7 +821,7 @@ if ( $str =~ /[^$asciichar]+/ ) { $mkfile = 1; $str = $tmpstr; }
 if ($domake==2){
 	$str =~ s/\\\\ \\end{tabularx}/\\\\ \\bottomrule \\end{tabularx}/g;
 } else {
-	my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\ltcols}{l}{\\hspace{\\dimexpr-0.21cm+\\pmxtabcolsep-\\tabcolsep}\\makebox[0pt][l]{\\parbox{\\tptlwidth}{\\rule[2mm]{\\tptlwidthh}{1pt}\\newline\\ifitemid\\ifnum\\istextable=1\\ifshowinlinetable\\mytableitemnumber.\\xspace\\fi\\else\\mytableitemnumber.\\xspace\\fi\\fi\\tmpsubstnote\\myfloatdescription}}}\\else\\bottomrule\\fi";
+	my $descstr = "\\ifnum\\dodescription=1\\multicolumn{\\ltcols}{l}{\\hspace{\\dimexpr-0.21cm+\\pmxtabcolsep-\\tabcolsep}\\makebox[0pt][l]{\\parbox{\\tptlwidth}{\\rule[2mm]{\\tptlwidthh}{1pt}\\newline \\ifitemid \\ifnum\\istextable=1 \\ifshowinlinetable \\mytableitemnumber.\\xspace \\fi \\else \\mytableitemnumber.\\xspace \\fi \\fi \\tmpsubstnote\\myfloatdescription}}} \\else \\bottomrule \\fi";
 	$str =~ s/\\\\ *\\end{tabularx}/\\\\* $descstr \\end{tabularx}/g; # Add description to table
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # PharmTeX perl start script, part of the PharmTeX platform.
-# Copyright (C) 2022 Christian Hove Claussen (contact@pharmtex.org).
+# Copyright (C) 2023 Christian Hove Claussen (contact@pharmtex.org).
 # This program is free software: You can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program (see file named LICENSE). If not, see <https://www.gnu.org/licenses/>.
 
 # Load packages
@@ -341,7 +341,7 @@ if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("user
 	copy 'useroptions.txt', 'useroptionscomp.txt';
 	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" \"$inifile\"");
 	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
-	if ( $mode eq 'fmt' ) { $ENV{PATH} = "$oldpath"; if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }; exit; }
+	if ( $mode eq 'fmt' ) { system('mktexlsr'); $ENV{PATH} = "$oldpath"; if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }; exit; }
 }
 
 # If knitr insert R settings and clean out knitr generated preamble
