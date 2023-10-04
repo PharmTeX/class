@@ -69,7 +69,7 @@ fi
 
 # Load Texlive manager if requested and exit
 if [ "$NAME" == "texpath" ]; then
-	return
+	exit
 fi
 
 # Load Texlive manager if requested and exit

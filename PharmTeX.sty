@@ -1465,7 +1465,7 @@ for ($i=0; $i <= $nline; $i++) {
 	close(FILEI);
 	if ( $i < $nline ) { $nl = "\\\\"; } else { $nl = ''; }
 	print FILE "&\\vcenter{\\hbox{\\raisebox{-1.5\\ht\\strutbox}{\\includegraphics[scale=$scale]{$namei.png}}}}$nn$star$ref$nl\n";
-	if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$namei.tex\" eqn"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$namei.tex\" eqn"); }
+	if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$namei.tex\" eqn"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$namei.tex\" eqn"); }
 	system("pdfcrop \"$namei.pdf\"");
 	system("pdftopng -r 600 \"$namei-crop.pdf\" \"$namei.png\"");
 	copy "$namei.png-000001.png", "$namei.png";
@@ -1525,7 +1525,7 @@ foreach $file (@files) {
 	}
 	print FILE "\\documentclass[nocoverpage,nosigpage,noqapage,nosynopsis,noloa,notoc,nolot,nolof,noglossary,noitemid]{PharmTeX}\n\\usepackage{PharmTeX}\n\\IfFileExists{preamble.Rnw}{\\input{preamble.Rnw}}{\\IfFileExists{preamble.tex}{\\input{preamble.tex}}{}}\n\\pagestyle{empty}\n\\begin{document}\n\\ensuremath{$str}\n\\references\n\\appendix\n\\itemlist\n\\end{document}";
 	close(FILE);
-	if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.tex\" eqn"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.tex\" eqn"); }
+	if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.tex\" eqn"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.tex\" eqn"); }
 	system("pdfcrop \"$name.pdf\"");
 	system("pdftopng -r 600 \"$name-crop.pdf\" \"$name.png\"");
 	copy "$name.png-000001.png", "$name.png";

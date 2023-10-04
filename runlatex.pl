@@ -30,7 +30,7 @@ if ( not defined $mode ) { $mode = 'batch'; }
 my $modeorig = $mode;
 
 # Check for supported modes
-if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear clean jabref guide > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
+if ( grep $_ eq $mode, < batch full fast eqn sub err fmt noperl clear clean jabref texman guide > ) {} else { die "Unsupported run mode in PharmTeX\n"; }
 
 # PharmTeX directory
 my $ldir = $ENV{LDIR};
@@ -64,7 +64,7 @@ if ( "$OS" eq 'MSWin32' ) {
 	$oss = 'Linux';
 	$artiscript = "$pharmtexdir/downloadartifacts.pl";
 }
-if (( -e "$file" ) && ( ! grep $_ eq $mode, < clear clean jabref guide > )) {
+if (( -e "$file" ) && ( ! grep $_ eq $mode, < clear clean jabref texman guide > )) {
 	open $fh, '<:raw', "$file"; $str = do { local $/; <$fh> }; close $fh;
 	($bver) = $str =~ /PharmTeX software collection v\. ([0-9]+\.[0-9]+) created/;
 	open(FILE, '>', 'bundleversion.txt'); print FILE "$bver"; close(FILE);
@@ -103,7 +103,7 @@ if ( $mode eq 'sub' ) {
 if ( $mode eq 'eqn' ) { $sub = 1; }
 
 # Set $domove = 1 for non-batch runs to enable moving most of the auxiliary files to the directory "auxfiles"
-if ( grep $_ eq $mode, < batch eqn sub clear clean jabref guide > ) {
+if ( grep $_ eq $mode, < batch eqn sub clear clean jabref texman guide > ) {
 	$domove = 0;
 } else {
 	$domove = 1;
@@ -172,6 +172,13 @@ if ( $mode eq 'jabref' ) {
 	exit;
 }
 
+# Start Tex Live package manager if requested
+if ( $mode eq 'texman' ) {
+	print STDERR "Starting Tex Live package manager - may take a few seconds to open\n\n";
+	if ( $OS eq 'MSWin32' ) { system("start /b tlshell"); } else { system("tlshell &"); }
+	exit;
+}
+
 # Open user guide if requested
 if ( $mode eq 'guide' ) {
 	print STDERR "Opening cheat sheet - may take a few seconds\n\n";
@@ -230,7 +237,7 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Word compatibility enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$word"; } else { $opt = "$opt,$word"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 1\n\n";
-					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.$ext\" sub"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-word.log";
 					$opt = $opto;
 				}
@@ -238,7 +245,7 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Synopsis printing enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$syn"; } else { $opt = "$opt,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 1\n\n";
-					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.$ext\" sub"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis.log";
 					$opt = $opto;
 				}
@@ -246,17 +253,17 @@ if ( $mode eq 'eqn' ) {
 					print STDERR "Word compatibility and synopsis printing enabled - run may take longer than usual\n\n"; system("");
 					if ( "$opt" eq "" ) { $opt = "$word"; } else { $opt = "$opt,$word"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 1 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.$ext\" sub"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-word.log";
 					$opt = $opto;
 					if ( "$opt" eq "" ) { $opt = "$syn"; } else { $opt = "$opt,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 2 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.$ext\" sub"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis.log";
 					$opt = $opto;
 					if ( "$opt" eq "" ) { $opt = "$word,$syn"; } else { $opt = "$opt,$word,$syn"; } open(FILE, '>', 'fixedoptions.txt'); print FILE "$opt"; close(FILE);
 					print STDERR "Running subjob 3 of 3\n\n";
-					if ( $OS eq 'MSWin32' ) { system("perl %PHARMTEXDIR%\\runlatex.pl \"$name.$ext\" sub"); } else { system("perl \$PHARMTEXDIR/runlatex.pl \"$name.$ext\" sub"); }
+					if ( $OS eq 'MSWin32' ) { system("perl \"%PHARMTEXDIR%\\runlatex.pl\" \"$name.$ext\" sub"); } else { system("perl \"\$PHARMTEXDIR/runlatex.pl\" \"$name.$ext\" sub"); }
 					copy "$name.log", "$name-synopsis-word.log";
 					$opt = $opto;
 				}
