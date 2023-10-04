@@ -37,10 +37,6 @@ my $ldir = $ENV{LDIR};
 my $cptex = 1;
 my $pharmtexdir = $ENV{PHARMTEXDIR};
 
-# Kill command
-my $killout = "";
-my $kill = "ERROR! A process stalled in Windows. Please rerun PharmTeX";
-if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 
 # Copy PharmTeX class files to texfs
 if( defined $ENV{CPTEX} ) { $cptex = $ENV{CPTEX}; }
@@ -340,7 +336,6 @@ if (( ! -e 'PharmTeX.fmt' ) || ( ! -e 'useroptionscomp.txt' ) || ( compare("user
 	if ( $mode ne 'eqn' ) {	$txt = "Compiling PharmTeX class\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = ''; }
 	copy 'useroptions.txt', 'useroptionscomp.txt';
 	system("$pdflatex -interaction=$compmode -ini \"\&pdflatex\" \"$inifile\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	if ( $mode eq 'fmt' ) { system('mktexlsr'); $ENV{PATH} = "$oldpath"; if ($domove==1) { eval("\@movefilesreg = ((".join(", ", @movefiles)."), ".join(", ", @wildfiles).");"); for $copyfile (@movefilesreg) { copy("$copyfile", "auxfiles"); unlink "$copyfile"; }; }; exit; }
 }
 
@@ -362,7 +357,6 @@ if ( $knit == 1 ) {
 if ( $mode eq 'noperl' ) {
 	$txt = "\nDetaching PharmTeX from Perl\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("perltex -makesty -nosafe -latex=$pdflatex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode \"¨\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	open(FILE, '>', 'noperlfirst.txt'); close(FILE);
 	open(FILE, '>', 'noperl.txt'); close(FILE);
 	$mode = 'fast';
@@ -378,7 +372,6 @@ if ( $mode eq 'fast' ) {
 	$txt = "Compiling document using Perltex\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	unlink "fixfiles";
 	
 	# If artifacts and/or other input files are missing, print warning
@@ -398,7 +391,6 @@ if ( $mode eq 'err' ) {
 	restore_streams();
 	open(FILE, '>', 'fixfiles'); close(FILE);
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=$runmode -synctex=$synctex \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	unlink "fixfiles";
 	redirect_streams();
 }
@@ -414,7 +406,6 @@ if ( $mode eq 'full' ) {
 	$txt = "Compiling document using Perltex (step 1/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	open(FILE, '>', 'fixfiles'); close(FILE);
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	unlink "fixfiles";
 	
 	# Download artifacts
@@ -422,8 +413,7 @@ if ( $mode eq 'full' ) {
 	if ( -e 'dotwice' ) {
 		$txt = "\nCompiling document using Perltex (step 1/6, rerun)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 		system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
-		if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
-		do $artiscript;
+			do $artiscript;
 		unlink 'dotwice';
 	}
 	
@@ -441,13 +431,10 @@ if ( $mode eq 'full' ) {
 	system("bibtex \"$name\""); my @aux = <X*.aux>;	foreach (@aux) {$_ =~ s/(.+)\.[^.]+?$/$1/g; system("bibtex $_");}
 	$txt = "\nCompiling document using Perltex (step 4/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	$txt = "\nCompiling document using Perltex (step 5/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode -draftmode \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	$txt = "\nCompiling document using Perltex (step 6/6)\n\n"; restore_streams(); print STDERR $txt; redirect_streams(); print $txt; $txt = '';
 	system("$perltex -fmt=\"$fmtfile\" -jobname=\"$name\" -shell-escape -interaction=batchmode -synctex=$synctex \"$nametex.$ext\"");
-	if ( "$OS" eq 'MSWin32' ) { $killout = `kill`; }; if ($killout =~ /1/) { restore_streams(); die $kill; }
 	unlink "donotrunperl";
 	
 	# If artifacts and/or other input files are missing, print warning
