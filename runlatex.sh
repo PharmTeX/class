@@ -8,9 +8,11 @@ BSTDIR="$LDIR/texlive/texmf-local/bibtex/bst/pharmtex"; export BSTDIR
 CLSDIR="$LDIR/texlive/texmf-local/tex/latex/pharmtex"; export CLSDIR
 
 # If no options set, prompt user
+USERINP=0
 if [ "$1" == "" ]; then
 	read -p 'File to edit = ' NAME
 	MODE=gui
+	USERINP=1
 fi
 
 # Change paths if PharmTeX bundle is present
@@ -51,7 +53,7 @@ elif [ "$1" == "-synctex=1" ] && [ "$i" = 2 ]; then
 	fi
 else
 	sweave=0
-	if [ "$NAME" == "" ]; then
+	if [ $USERINP == 0 ]; then
 		NAME=$(basename "$1")
 		MODE="$2"
 	fi
@@ -64,7 +66,6 @@ else
 		fi
 	fi
 	NAME="${NAME%.*}"
-	
 fi
 
 # Load Texlive manager if requested and exit
